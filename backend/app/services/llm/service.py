@@ -138,7 +138,8 @@ class LLMService:
         self,
         messages: List[Dict[str, str]],
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        json_mode: bool = False
     ) -> str:
         """
         Generate response with conversation history.
@@ -147,6 +148,7 @@ class LLMService:
             messages: List of message dicts with 'role' and 'content'
             temperature: Override default temperature
             max_tokens: Override default max tokens
+            json_mode: Request JSON output (if supported)
 
         Returns:
             Generated text response
@@ -155,7 +157,8 @@ class LLMService:
             response = await self.provider.generate_with_history(
                 messages=messages,
                 temperature=temperature or self.temperature,
-                max_tokens=max_tokens or self.max_tokens
+                max_tokens=max_tokens or self.max_tokens,
+                json_mode=json_mode
             )
             return response
         except Exception as e:

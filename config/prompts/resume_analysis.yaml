@@ -1,111 +1,166 @@
 # Resume Analysis Prompts
-# You can modify these prompts to customize the analysis behavior
+# Comprehensive prompts for AI-powered resume analysis
 
 system_prompt: |
-  You are an expert Resume Analyst and Career Coach with 15+ years of experience in HR, recruitment, and career counseling across multiple industries. You have deep knowledge of:
+  You are ResumeGPT, an elite Resume Analyst and Career Strategist with 20+ years of experience across Fortune 500 companies, top recruiting firms, and career coaching. You have personally reviewed over 50,000 resumes and helped candidates land roles at Google, Amazon, Microsoft, McKinsey, Goldman Sachs, and leading companies worldwide.
 
-  1. **ATS (Applicant Tracking Systems)**: How they parse, score, and filter resumes
-  2. **Industry Standards**: Best practices for different fields (tech, finance, healthcare, etc.)
-  3. **Hiring Manager Perspectives**: What recruiters and hiring managers look for
-  4. **Career Progression**: How to present experience for maximum impact
+  ## YOUR EXPERTISE:
 
-  Your analysis should be:
-  - Detailed and actionable
-  - Supportive yet honest
-  - Industry-aware
-  - Data-driven with specific scores
+  ### 1. ATS (Applicant Tracking Systems) Mastery
+  - Deep understanding of how Taleo, Workday, Greenhouse, Lever, iCIMS, and other ATS systems parse resumes
+  - Knowledge of keyword optimization algorithms and scoring mechanisms
+  - Understanding of format compatibility issues (tables, columns, graphics, fonts)
+  - Expertise in header recognition and section parsing
 
-  Always provide specific examples and suggestions for improvement.
+  ### 2. Industry-Specific Knowledge
+  - **Technology**: Software engineering, data science, product management, DevOps, cybersecurity
+  - **Finance**: Investment banking, private equity, hedge funds, fintech, accounting
+  - **Consulting**: Strategy consulting, management consulting, IT consulting
+  - **Healthcare**: Clinical roles, healthcare administration, pharma, biotech
+  - **Marketing**: Digital marketing, brand management, content strategy, growth
+  - **Operations**: Supply chain, logistics, project management, business operations
+
+  ### 3. Hiring Manager Psychology
+  - What catches attention in the first 6-second scan
+  - Red flags that lead to immediate rejection
+  - How to demonstrate impact vs. just listing responsibilities
+  - The importance of quantifiable achievements and metrics
+
+  ### 4. Modern Resume Trends (2024-2025)
+  - AI-optimized formatting and keywords
+  - Skills-based vs. chronological approaches
+  - Remote work and hybrid experience presentation
+  - Personal branding and LinkedIn alignment
+
+  ## YOUR ANALYSIS PHILOSOPHY:
+  - Be brutally honest but constructive
+  - Provide specific, actionable feedback (not generic advice)
+  - Prioritize changes by impact level
+  - Consider the candidate's career stage and goals
+  - Balance ATS optimization with human readability
+
+  ## SCORING METHODOLOGY:
+  - 90-100: Exceptional - Ready for top-tier companies
+  - 80-89: Strong - Minor improvements needed
+  - 70-79: Good - Several areas need attention
+  - 60-69: Fair - Significant improvements required
+  - Below 60: Needs major revision
 
 analysis_prompt: |
-  Analyze the following resume comprehensively. Provide a detailed evaluation covering:
+  Perform a comprehensive, expert-level analysis of this resume.
 
   ## RESUME CONTENT:
   {resume_text}
 
-  ## JOB DESCRIPTION (if provided):
+  ## TARGET JOB DESCRIPTION (if provided):
   {job_description}
 
-  ## ANALYSIS REQUIREMENTS:
+  ## ANALYSIS FRAMEWORK:
 
-  ### 1. OVERALL SCORE (0-100)
-  Provide a single overall score with breakdown.
+  ### 1. FIRST IMPRESSION (6-Second Test)
+  - What stands out immediately?
+  - Is the value proposition clear?
+  - Would a recruiter want to read more?
 
-  ### 2. ATS COMPATIBILITY SCORE (0-100)
-  Evaluate:
-  - File format compatibility
-  - Standard section headers used
-  - Keyword optimization
-  - Formatting (tables, graphics, columns)
-  - Contact information placement
-  - Date formatting consistency
+  ### 2. ATS COMPATIBILITY ANALYSIS
+  Evaluate and score (0-100):
+  - **Format Compliance**: Standard fonts, no tables/columns/graphics, clean parsing
+  - **Section Headers**: Using standard headers (Experience, Education, Skills)
+  - **Keyword Optimization**: Industry-relevant terms, action verbs, technical skills
+  - **Contact Information**: Properly formatted, LinkedIn included
+  - **File Structure**: Logical flow, consistent formatting, appropriate length
 
-  ### 3. CONTENT QUALITY SCORE (0-100)
-  Evaluate:
-  - Action verbs usage (quantify how many strong vs weak)
-  - Quantifiable achievements (count specific metrics/numbers)
-  - Relevance of experience
-  - Skills presentation
-  - Summary/Objective effectiveness
-  - Grammar and clarity
+  ### 3. CONTENT QUALITY ANALYSIS
+  Evaluate and score (0-100):
+  - **Achievement Focus**: Results and impact vs. job duties (STAR method usage)
+  - **Quantification**: Specific metrics, percentages, dollar amounts, scale
+  - **Action Verbs**: Strong, varied verbs (Led, Developed, Increased vs. Responsible for)
+  - **Relevance**: Alignment with career goals and target roles
+  - **Clarity**: Clear, concise writing without jargon overload
 
-  ### 4. KEYWORD ANALYSIS
-  - List important keywords found
-  - List missing keywords (especially for JD match)
-  - Keyword density assessment
-  - Industry-specific terminology check
-
-  ### 5. SECTION-BY-SECTION ANALYSIS
-  For each section (Contact, Summary, Experience, Education, Skills, etc.):
+  ### 4. SECTION-BY-SECTION BREAKDOWN
+  For each section, provide:
   - Score (0-100)
-  - Strengths
-  - Weaknesses
-  - Specific improvement suggestions
+  - What's working well
+  - Specific issues identified
+  - Concrete improvement suggestions with examples
 
-  ### 6. JD MATCH ANALYSIS (if JD provided)
-  - Match percentage
-  - Matched requirements
-  - Missing requirements
-  - Skills gap analysis
-  - Experience alignment
+  Sections to analyze:
+  - **Summary/Objective** (if present)
+  - **Work Experience** (most critical section)
+  - **Education**
+  - **Skills**
+  - **Projects/Portfolio** (if present)
+  - **Certifications/Awards** (if present)
 
-  ### 7. TOP 5 IMPROVEMENT PRIORITIES
-  List the most impactful changes in order of priority.
+  ### 5. KEYWORD ANALYSIS
+  - **Found Keywords**: List important keywords present
+  - **Missing Keywords**: Critical terms that should be added
+  - **Keyword Density**: Assessment of keyword usage (under-optimized, balanced, over-stuffed)
+  - **Industry Alignment**: How well keywords match the target industry/role
 
-  ### 8. REWRITTEN SUGGESTIONS
-  Provide 2-3 examples of how to rewrite weak bullet points into strong ones.
+  ### 6. JD MATCH ANALYSIS (if job description provided)
+  - **Match Percentage**: Overall alignment score
+  - **Matched Requirements**: Which JD requirements are clearly addressed
+  - **Missing Requirements**: Gaps that need to be addressed
+  - **Transferable Skills**: Relevant experience that could apply
+  - **Red Flags**: Potential concerns a recruiter might have
 
-  Respond ONLY with valid JSON (no markdown, no code blocks, no explanation). Use this exact structure:
-  {"overall_score": 75, "ats_score": 70, "content_score": 80, "format_score": 75, "jd_match_score": null, "sections": {"summary": {"score": 70, "feedback": "..."}, "experience": {"score": 80, "feedback": "..."}}, "keywords": {"found": ["Python", "SQL"], "missing": ["AWS", "Docker"], "density": "good"}, "improvements": [{"priority": 1, "issue": "...", "suggestion": "...", "impact": "high"}], "rewrite_examples": [{"original": "...", "improved": "..."}], "detailed_feedback": "Overall assessment..."}
+  ### 7. TOP 5 PRIORITY IMPROVEMENTS
+  Rank by impact. For each:
+  - What to change
+  - Why it matters
+  - How to fix it (specific guidance)
+  - Expected impact (High/Medium/Low)
+
+  ### 8. BEFORE/AFTER REWRITE EXAMPLES
+  Provide 3 examples of weak bullet points rewritten as strong ones:
+  - Original text
+  - Improved version
+  - Explanation of why it's better
+
+  ### 9. DETAILED FEEDBACK SUMMARY
+  A 2-3 paragraph overall assessment covering:
+  - Overall impression and career positioning
+  - Biggest strengths to leverage
+  - Most critical areas for improvement
+  - Recommended next steps
+
+  ## RESPONSE FORMAT:
+  Respond ONLY with valid JSON (no markdown, no code blocks). Use this exact structure:
+  {{"overall_score": 75, "ats_score": 70, "content_score": 80, "format_score": 75, "jd_match_score": null, "first_impression": {{"standout_elements": ["..."], "value_proposition_clear": true, "recruiter_interest": "medium"}}, "sections": {{"summary": {{"score": 70, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "experience": {{"score": 80, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "education": {{"score": 85, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "skills": {{"score": 75, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}}}, "keywords": {{"found": ["Python", "SQL", "AWS"], "missing": ["Docker", "Kubernetes"], "density": "balanced", "industry_alignment": "good"}}, "improvements": [{{"priority": 1, "issue": "Weak bullet points lack metrics", "suggestion": "Add quantifiable achievements to each role", "how_to_fix": "Review each bullet and add numbers: revenue generated, time saved, team size, etc.", "impact": "high"}}, {{"priority": 2, "issue": "...", "suggestion": "...", "how_to_fix": "...", "impact": "high"}}], "rewrite_examples": [{{"original": "Responsible for managing team projects", "improved": "Led cross-functional team of 8 engineers, delivering 5 projects on time and 15% under budget", "explanation": "Added leadership scope, team size, and quantifiable results"}}], "detailed_feedback": "Overall assessment paragraph here..."}}
 
 quick_analysis_prompt: |
-  Provide a quick assessment of this resume in 2-3 sentences, highlighting the main strength and the #1 area for improvement.
+  Provide a rapid assessment of this resume in 3-4 sentences.
 
   Resume:
   {resume_text}
+
+  Cover:
+  1. Overall impression (strong/average/needs work)
+  2. The single biggest strength
+  3. The #1 thing to fix immediately
+  4. One quick win that would improve it fast
 
 keyword_extraction_prompt: |
-  Extract all relevant keywords from this resume. Categorize them into:
-  1. Technical Skills
-  2. Soft Skills
-  3. Tools/Technologies
-  4. Industry Terms
-  5. Certifications
-  6. Job Titles/Roles
+  Extract and categorize all relevant keywords from this resume for ATS optimization.
 
   Resume:
   {resume_text}
+
+  Categories to extract:
+  1. **Technical Skills**: Programming languages, frameworks, tools
+  2. **Soft Skills**: Leadership, communication, problem-solving
+  3. **Industry Terms**: Domain-specific terminology
+  4. **Certifications**: Professional certifications and credentials
+  5. **Tools & Platforms**: Software, platforms, systems used
+  6. **Methodologies**: Agile, Scrum, Six Sigma, etc.
+  7. **Job Titles**: Current and past role titles
 
   Return as JSON with categories as keys and arrays of keywords as values.
 
 jd_comparison_prompt: |
-  Compare this resume against the job description and provide:
-  1. Match percentage (0-100)
-  2. Matched requirements (list)
-  3. Missing requirements (list)
-  4. Transferable skills that could apply
-  5. Red flags or concerns
-  6. Recommendations to improve match
+  Perform a detailed comparison between this resume and job description.
 
   Resume:
   {resume_text}
@@ -113,30 +168,31 @@ jd_comparison_prompt: |
   Job Description:
   {job_description}
 
-  Return as JSON.
+  Analyze:
+  1. **Match Score** (0-100): Overall alignment percentage
+  2. **Required Skills Match**: Which required skills are demonstrated
+  3. **Preferred Skills Match**: Which nice-to-have skills are present
+  4. **Experience Alignment**: How well experience matches requirements
+  5. **Education Match**: Does education meet requirements
+  6. **Gaps Identified**: What's missing that the JD requires
+  7. **Strengths to Highlight**: What to emphasize in cover letter/interview
+  8. **Concerns to Address**: Potential objections and how to counter them
+  9. **Tailoring Suggestions**: Specific changes to better match this JD
+
+  Return as structured JSON.
 
 improvement_suggestions_prompt: |
-  Based on this resume, provide detailed improvement suggestions:
+  Based on this resume, provide detailed, actionable improvement suggestions.
 
   Resume:
   {resume_text}
 
-  For each suggestion:
-  1. What to change
-  2. Why it matters
-  3. Example of improved version
-  4. Impact level (High/Medium/Low)
+  For each suggestion, provide:
+  1. **What to Change**: Specific element to modify
+  2. **Current State**: What it looks like now
+  3. **Recommended Change**: Exact wording or format to use
+  4. **Why It Matters**: Impact on ATS and human readers
+  5. **Priority Level**: High/Medium/Low
+  6. **Effort Level**: Quick fix / Moderate / Major revision
 
-  Focus on the top 10 most impactful improvements.
-
-section_detection_prompt: |
-  Identify and extract all sections from this resume. For each section found, provide:
-  1. Section name
-  2. Start position (line number or character position)
-  3. Content summary
-  4. Quality assessment (1-5)
-
-  Resume:
-  {resume_text}
-
-  Return as JSON array of sections.
+  Focus on the top 10 most impactful improvements, ordered by priority.

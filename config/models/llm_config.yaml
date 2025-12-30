@@ -2,7 +2,7 @@
 # Change the 'default' value to switch between providers
 # Add your API keys in the .env file
 
-default: "groq"  # Options: openai, claude, gemini, ollama, groq
+default: "gemini"  # Options: openai, claude, gemini, ollama, groq
 
 providers:
   openai:

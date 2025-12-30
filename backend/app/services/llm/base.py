@@ -30,7 +30,8 @@ class BaseLLMProvider(ABC):
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        json_mode: bool = False
     ) -> str:
         """Generate response with conversation history"""
         pass

@@ -20,6 +20,8 @@ class OpenAIProvider(BaseLLMProvider):
         self.model = model
         self.base_url = base_url or "https://api.openai.com/v1"
         self.api_key = get_api_key("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY.")
 
     async def generate(
         self,
@@ -79,6 +81,8 @@ class ClaudeProvider(BaseLLMProvider):
     def __init__(self, model: str = "claude-3-5-sonnet-20241022"):
         self.model = model
         self.api_key = get_api_key("ANTHROPIC_API_KEY")
+        if not self.api_key:
+            raise ValueError("Anthropic API key not found. Please set ANTHROPIC_API_KEY.")
         self.base_url = "https://api.anthropic.com/v1"
 
     async def generate(
@@ -95,14 +99,16 @@ class ClaudeProvider(BaseLLMProvider):
             messages=messages,
             system=system_prompt,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            json_mode=json_mode
         )
 
     async def generate_with_history(
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        json_mode: bool = False
     ) -> str:
         # Extract system message if present
         system = None
@@ -118,7 +124,8 @@ class ClaudeProvider(BaseLLMProvider):
             messages=claude_messages,
             system=system,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            json_mode=json_mode
         )
 
     async def _call_api(
@@ -126,8 +133,11 @@ class ClaudeProvider(BaseLLMProvider):
         messages: List[Dict],
         system: Optional[str],
         temperature: float,
-        max_tokens: int
+        max_tokens: int,
+        json_mode: bool = False
     ) -> str:
+        if json_mode:
+            messages.insert(0, {"role": "user", "content": "Only return a valid JSON object."})
         async with httpx.AsyncClient() as client:
             payload = {
                 "model": self.model,
@@ -160,6 +170,8 @@ class GeminiProvider(BaseLLMProvider):
     def __init__(self, model: str = "gemini-1.5-pro"):
         self.model = model
         self.api_key = get_api_key("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ValueError("Google API key not found. Please set GOOGLE_API_KEY.")
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
 
     async def generate(
@@ -173,10 +185,16 @@ class GeminiProvider(BaseLLMProvider):
         full_prompt = prompt
         if system_prompt:
             full_prompt = f"{system_prompt}\n\n{prompt}"
+        if json_mode:
+            full_prompt = f"Only return a valid JSON object.\n\n{full_prompt}"
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}",
+                f"{self.base_url}/models/{self.model}:generateContent",
+                headers={
+                    "x-goog-api-key": self.api_key,
+                    "Content-Type": "application/json"
+                },
                 json={
                     "contents": [{"parts": [{"text": full_prompt}]}],
                     "generationConfig": {
@@ -194,10 +212,13 @@ class GeminiProvider(BaseLLMProvider):
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        json_mode: bool = False
     ) -> str:
         # Convert to Gemini format
         contents = []
+        if json_mode:
+            messages.insert(0, {"role": "user", "content": "Only return a valid JSON object."})
         for msg in messages:
             role = "user" if msg["role"] in ["user", "system"] else "model"
             contents.append({
@@ -207,7 +228,11 @@ class GeminiProvider(BaseLLMProvider):
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}",
+                f"{self.base_url}/models/{self.model}:generateContent",
+                headers={
+                    "x-goog-api-key": self.api_key,
+                    "Content-Type": "application/json"
+                },
                 json={
                     "contents": contents,
                     "generationConfig": {
@@ -291,9 +316,11 @@ class OllamaProvider(BaseLLMProvider):
 class GroqProvider(BaseLLMProvider):
     """Groq provider (fast inference)"""
 
-    def __init__(self, model: str = "llama-3.3-70b-versatile"):
+    def __init__(self, model: str = "llama-3.1-70b-versatile"):
         self.model = model
         self.api_key = get_api_key("GROQ_API_KEY")
+        if not self.api_key:
+            raise ValueError("Groq API key not found. Please set GROQ_API_KEY.")
         self.base_url = "https://api.groq.com/openai/v1"
 
     async def generate(
