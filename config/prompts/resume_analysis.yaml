@@ -1,0 +1,154 @@
+# Resume Analysis Prompts
+# You can modify these prompts to customize the analysis behavior
+
+system_prompt: |
+  You are an expert Resume Analyst and Career Coach with 15+ years of experience in HR, recruitment, and career counseling across multiple industries. You have deep knowledge of:
+
+  1. **ATS (Applicant Tracking Systems)**: How they parse, score, and filter resumes
+  2. **Industry Standards**: Best practices for different fields (tech, finance, healthcare, etc.)
+  3. **Hiring Manager Perspectives**: What recruiters and hiring managers look for
+  4. **Career Progression**: How to present experience for maximum impact
+
+  Your analysis should be:
+  - Detailed and actionable
+  - Supportive yet honest
+  - Industry-aware
+  - Data-driven with specific scores
+
+  Always provide specific examples and suggestions for improvement.
+
+analysis_prompt: |
+  Analyze the following resume comprehensively. Provide a detailed evaluation covering:
+
+  ## RESUME CONTENT:
+  {resume_text}
+
+  ## JOB DESCRIPTION (if provided):
+  {job_description}
+
+  ## ANALYSIS REQUIREMENTS:
+
+  ### 1. OVERALL SCORE (0-100)
+  Provide a single overall score with breakdown.
+
+  ### 2. ATS COMPATIBILITY SCORE (0-100)
+  Evaluate:
+  - File format compatibility
+  - Standard section headers used
+  - Keyword optimization
+  - Formatting (tables, graphics, columns)
+  - Contact information placement
+  - Date formatting consistency
+
+  ### 3. CONTENT QUALITY SCORE (0-100)
+  Evaluate:
+  - Action verbs usage (quantify how many strong vs weak)
+  - Quantifiable achievements (count specific metrics/numbers)
+  - Relevance of experience
+  - Skills presentation
+  - Summary/Objective effectiveness
+  - Grammar and clarity
+
+  ### 4. KEYWORD ANALYSIS
+  - List important keywords found
+  - List missing keywords (especially for JD match)
+  - Keyword density assessment
+  - Industry-specific terminology check
+
+  ### 5. SECTION-BY-SECTION ANALYSIS
+  For each section (Contact, Summary, Experience, Education, Skills, etc.):
+  - Score (0-100)
+  - Strengths
+  - Weaknesses
+  - Specific improvement suggestions
+
+  ### 6. JD MATCH ANALYSIS (if JD provided)
+  - Match percentage
+  - Matched requirements
+  - Missing requirements
+  - Skills gap analysis
+  - Experience alignment
+
+  ### 7. TOP 5 IMPROVEMENT PRIORITIES
+  List the most impactful changes in order of priority.
+
+  ### 8. REWRITTEN SUGGESTIONS
+  Provide 2-3 examples of how to rewrite weak bullet points into strong ones.
+
+  Respond in JSON format:
+  ```json
+  {
+    "overall_score": 0,
+    "ats_score": 0,
+    "content_score": 0,
+    "format_score": 0,
+    "jd_match_score": 0,
+    "sections": {...},
+    "keywords": {...},
+    "improvements": [...],
+    "rewrite_examples": [...]
+  }
+  ```
+
+quick_analysis_prompt: |
+  Provide a quick assessment of this resume in 2-3 sentences, highlighting the main strength and the #1 area for improvement.
+
+  Resume:
+  {resume_text}
+
+keyword_extraction_prompt: |
+  Extract all relevant keywords from this resume. Categorize them into:
+  1. Technical Skills
+  2. Soft Skills
+  3. Tools/Technologies
+  4. Industry Terms
+  5. Certifications
+  6. Job Titles/Roles
+
+  Resume:
+  {resume_text}
+
+  Return as JSON with categories as keys and arrays of keywords as values.
+
+jd_comparison_prompt: |
+  Compare this resume against the job description and provide:
+  1. Match percentage (0-100)
+  2. Matched requirements (list)
+  3. Missing requirements (list)
+  4. Transferable skills that could apply
+  5. Red flags or concerns
+  6. Recommendations to improve match
+
+  Resume:
+  {resume_text}
+
+  Job Description:
+  {job_description}
+
+  Return as JSON.
+
+improvement_suggestions_prompt: |
+  Based on this resume, provide detailed improvement suggestions:
+
+  Resume:
+  {resume_text}
+
+  For each suggestion:
+  1. What to change
+  2. Why it matters
+  3. Example of improved version
+  4. Impact level (High/Medium/Low)
+
+  Focus on the top 10 most impactful improvements.
+
+section_detection_prompt: |
+  Identify and extract all sections from this resume. For each section found, provide:
+  1. Section name
+  2. Start position (line number or character position)
+  3. Content summary
+  4. Quality assessment (1-5)
+
+  Resume:
+  {resume_text}
+
+  Return as JSON array of sections.

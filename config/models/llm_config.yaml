@@ -1,0 +1,51 @@
+# LLM Configuration
+# Change the 'default' value to switch between providers
+# Add your API keys in the .env file
+
+default: "openai"  # Options: openai, claude, gemini, ollama, groq
+
+providers:
+  openai:
+    model: "gpt-4o"  # Options: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+    api_key_env: "OPENAI_API_KEY"
+    base_url: null  # Use default
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 60
+
+  claude:
+    model: "claude-3-5-sonnet-20241022"  # Options: claude-3-opus, claude-3-sonnet, claude-3-haiku
+    api_key_env: "ANTHROPIC_API_KEY"
+    base_url: null
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 60
+
+  gemini:
+    model: "gemini-1.5-pro"  # Options: gemini-1.5-pro, gemini-1.5-flash
+    api_key_env: "GOOGLE_API_KEY"
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 60
+
+  ollama:
+    model: "llama3.1"  # Options: llama3.1, mistral, codellama, etc.
+    base_url: "http://localhost:11434"
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 120
+
+  groq:
+    model: "llama-3.1-70b-versatile"  # Fast inference
+    api_key_env: "GROQ_API_KEY"
+    base_url: "https://api.groq.com/openai/v1"
+    temperature: 0.7
+    max_tokens: 4096
+    timeout: 30
+
+# Model selection for specific tasks (override default)
+task_models:
+  resume_analysis: null  # Uses default
+  interview_questions: null  # Uses default
+  response_evaluation: null  # Uses default
+  report_generation: null  # Uses default

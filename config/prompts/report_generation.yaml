@@ -1,0 +1,210 @@
+# Report Generation Prompts
+# Prompts for generating comprehensive interview and analysis reports
+
+interview_report_prompt: |
+  Generate a comprehensive interview performance report based on the following data:
+
+  ## CANDIDATE INFORMATION:
+  - Resume Summary: {resume_summary}
+  - Target Position: {job_title}
+  - Company/Industry: {company_industry}
+
+  ## INTERVIEW DATA:
+  - Duration: {duration}
+  - Number of Questions: {num_questions}
+  - Interview Type: {interview_type}
+
+  ## QUESTION-BY-QUESTION PERFORMANCE:
+  {question_responses}
+
+  ## AGGREGATE SCORES:
+  {aggregate_scores}
+
+  ## GENERATE REPORT WITH:
+
+  ### 1. EXECUTIVE SUMMARY
+  - Overall assessment (2-3 sentences)
+  - Recommendation (Strong Hire / Hire / Maybe / No Hire)
+  - Key highlights
+
+  ### 2. PERFORMANCE METRICS
+  Create a detailed breakdown:
+  - Technical Knowledge: X/100
+  - Communication Skills: X/100
+  - Problem-Solving Ability: X/100
+  - Cultural Fit: X/100
+  - Leadership Potential: X/100
+  - Overall Score: X/100
+
+  ### 3. STRENGTHS ANALYSIS
+  Top 5 demonstrated strengths with specific examples from responses
+
+  ### 4. AREAS FOR IMPROVEMENT
+  Top 5 areas needing development with specific recommendations
+
+  ### 5. SKILL ASSESSMENT MATRIX
+  For each key skill from the JD:
+  - Skill name
+  - Demonstrated level (Beginner/Intermediate/Advanced/Expert)
+  - Evidence from interview
+  - Gap analysis
+
+  ### 6. BEHAVIORAL COMPETENCIES
+  Assess based on responses:
+  - Teamwork & Collaboration
+  - Initiative & Proactivity
+  - Adaptability
+  - Time Management
+  - Conflict Resolution
+
+  ### 7. COMMUNICATION ANALYSIS
+  - Clarity of expression
+  - Structure of responses
+  - Use of examples
+  - Listening skills (follow-up handling)
+  - Professional vocabulary
+
+  ### 8. DETAILED FEEDBACK BY QUESTION
+  For each question:
+  - Question asked
+  - Response summary
+  - Score
+  - What was done well
+  - What could be improved
+  - Ideal response example
+
+  ### 9. IMPROVEMENT ROADMAP
+  Personalized 30-60-90 day plan:
+  - Immediate actions (30 days)
+  - Short-term development (60 days)
+  - Medium-term growth (90 days)
+
+  ### 10. INTERVIEW TIPS FOR NEXT TIME
+  Specific, actionable tips based on observed patterns
+
+  Return as structured JSON for UI rendering.
+
+resume_report_prompt: |
+  Generate a comprehensive resume analysis report:
+
+  ## RESUME DATA:
+  {resume_text}
+
+  ## ANALYSIS RESULTS:
+  {analysis_results}
+
+  ## JOB DESCRIPTION (if provided):
+  {job_description}
+
+  ## GENERATE REPORT WITH:
+
+  ### 1. OVERALL ASSESSMENT
+  - Overall Score: X/100
+  - ATS Compatibility: X/100
+  - Content Quality: X/100
+  - Format & Design: X/100
+  - JD Match: X/100 (if applicable)
+
+  ### 2. VISUAL SCORE BREAKDOWN
+  Data for radar chart:
+  - Experience Relevance
+  - Skills Match
+  - Education Fit
+  - Achievement Impact
+  - Keywords Optimization
+  - Format Quality
+
+  ### 3. SECTION-BY-SECTION ANALYSIS
+  For each resume section:
+  - Current state assessment
+  - Score (0-100)
+  - Specific issues found
+  - Recommended improvements
+  - Before/After examples
+
+  ### 4. KEYWORD ANALYSIS
+  - Present keywords (categorized)
+  - Missing critical keywords
+  - Keyword density analysis
+  - Recommended additions
+
+  ### 5. ATS OPTIMIZATION GUIDE
+  - Current ATS score
+  - Parsing issues found
+  - Format recommendations
+  - Header standardization needs
+
+  ### 6. COMPETITIVE ANALYSIS
+  How this resume compares to typical candidates for this role
+
+  ### 7. PRIORITY ACTION ITEMS
+  Ranked list of changes to make:
+  1. Critical (must fix)
+  2. Important (should fix)
+  3. Nice to have (optional)
+
+  ### 8. REWRITTEN EXAMPLES
+  5-10 examples of improved bullet points
+
+  ### 9. TAILORING SUGGESTIONS
+  If JD provided:
+  - Specific modifications for this job
+  - Missing requirements to address
+  - Experience to highlight
+
+  Return as structured JSON.
+
+combined_report_prompt: |
+  Generate a unified candidate assessment report combining resume analysis and interview performance:
+
+  ## RESUME ANALYSIS:
+  {resume_analysis}
+
+  ## INTERVIEW PERFORMANCE:
+  {interview_performance}
+
+  ## GENERATE COMPREHENSIVE REPORT:
+
+  ### 1. CANDIDATE PROFILE SUMMARY
+  Holistic view of the candidate
+
+  ### 2. CLAIMS VS PERFORMANCE
+  Compare resume claims with interview demonstrations
+
+  ### 3. VERIFIED SKILLS
+  Skills validated through interview
+
+  ### 4. AREAS OF CONCERN
+  Gaps between resume and demonstrated abilities
+
+  ### 5. OVERALL RECOMMENDATION
+  Final assessment with confidence level
+
+  ### 6. DEVELOPMENT PLAN
+  Comprehensive improvement roadmap
+
+quick_feedback_prompt: |
+  Provide quick, encouraging feedback on the interview response:
+
+  Question: {question}
+  Response: {response}
+  Score: {score}
+
+  Generate 2-3 sentences of constructive feedback that:
+  1. Acknowledges what was done well
+  2. Suggests one specific improvement
+  3. Maintains an encouraging tone
+
+progress_summary_prompt: |
+  Generate a mid-interview progress summary:
+
+  ## QUESTIONS COMPLETED: {completed}/{total}
+
+  ## PERFORMANCE SO FAR:
+  {performance_data}
+
+  Provide:
+  1. Current overall score
+  2. Trending direction (improving/stable/declining)
+  3. Areas being demonstrated well
+  4. Areas needing more demonstration in remaining questions
