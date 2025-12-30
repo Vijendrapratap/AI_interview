@@ -22,10 +22,10 @@ providers:
     timeout: 60
 
   gemini:
-    model: "gemini-1.5-pro"  # Options: gemini-1.5-pro, gemini-1.5-flash
+    model: "gemini-2.0-flash"  # Options: gemini-2.0-flash, gemini-2.5-pro, gemini-2.5-flash
     api_key_env: "GOOGLE_API_KEY"
     temperature: 0.7
-    max_tokens: 4096
+    max_tokens: 8192
     timeout: 60
 
   ollama:

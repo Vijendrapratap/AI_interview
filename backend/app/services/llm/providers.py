@@ -167,7 +167,7 @@ class ClaudeProvider(BaseLLMProvider):
 class GeminiProvider(BaseLLMProvider):
     """Google Gemini provider"""
 
-    def __init__(self, model: str = "gemini-1.5-pro"):
+    def __init__(self, model: str = "gemini-2.0-flash"):
         self.model = model
         self.api_key = get_api_key("GOOGLE_API_KEY")
         if not self.api_key:

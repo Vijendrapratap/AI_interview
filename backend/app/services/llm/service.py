@@ -86,7 +86,7 @@ class LLMService:
             )
         elif name == "gemini":
             return GeminiProvider(
-                model=config.get("model", "gemini-1.5-pro")
+                model=config.get("model", "gemini-2.0-flash")
             )
         elif name == "ollama":
             return OllamaProvider(
