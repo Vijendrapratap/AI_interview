@@ -75,20 +75,8 @@ analysis_prompt: |
   ### 8. REWRITTEN SUGGESTIONS
   Provide 2-3 examples of how to rewrite weak bullet points into strong ones.
 
-  Respond in JSON format:
-  ```json
-  {
-    "overall_score": 0,
-    "ats_score": 0,
-    "content_score": 0,
-    "format_score": 0,
-    "jd_match_score": 0,
-    "sections": {...},
-    "keywords": {...},
-    "improvements": [...],
-    "rewrite_examples": [...]
-  }
-  ```
+  Respond ONLY with valid JSON (no markdown, no code blocks, no explanation). Use this exact structure:
+  {"overall_score": 75, "ats_score": 70, "content_score": 80, "format_score": 75, "jd_match_score": null, "sections": {"summary": {"score": 70, "feedback": "..."}, "experience": {"score": 80, "feedback": "..."}}, "keywords": {"found": ["Python", "SQL"], "missing": ["AWS", "Docker"], "density": "good"}, "improvements": [{"priority": 1, "issue": "...", "suggestion": "...", "impact": "high"}], "rewrite_examples": [{"original": "...", "improved": "..."}], "detailed_feedback": "Overall assessment..."}
 
 quick_analysis_prompt: |
   Provide a quick assessment of this resume in 2-3 sentences, highlighting the main strength and the #1 area for improvement.

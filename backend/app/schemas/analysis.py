@@ -51,16 +51,16 @@ class AnalysisResponse(BaseModel):
     """Comprehensive analysis response"""
     analysis_id: str
     resume_id: str
-    overall_score: float = Field(..., ge=0, le=100)
-    ats_score: float = Field(..., ge=0, le=100)
-    content_score: float = Field(..., ge=0, le=100)
-    format_score: float = Field(..., ge=0, le=100)
-    jd_match_score: Optional[float] = Field(None, ge=0, le=100)
-    sections: Dict[str, SectionAnalysis] = Field(default_factory=dict)
-    keywords: KeywordAnalysis = Field(default_factory=KeywordAnalysis)
-    improvements: List[str] = Field(default_factory=list)
+    overall_score: float = Field(default=0, ge=0, le=100)
+    ats_score: float = Field(default=0, ge=0, le=100)
+    content_score: float = Field(default=0, ge=0, le=100)
+    format_score: float = Field(default=0, ge=0, le=100)
+    jd_match_score: Optional[float] = Field(default=None)
+    sections: Dict = Field(default_factory=dict)
+    keywords: Dict = Field(default_factory=dict)
+    improvements: List = Field(default_factory=list)
     detailed_feedback: str = ""
-    rewrite_examples: List[RewriteExample] = Field(default_factory=list)
+    rewrite_examples: List = Field(default_factory=list)
 
 
 class QuickAnalysisResponse(BaseModel):

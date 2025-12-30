@@ -1,7 +1,7 @@
 # TTS (Text-to-Speech) Configuration
 # Change 'default' to switch between providers
 
-default: "openai"  # Options: elevenlabs, openai, google, azure, edge
+default: "google"  # Options: elevenlabs, openai, google, azure, edge
 
 providers:
   elevenlabs:
@@ -63,7 +63,7 @@ voice_profiles:
 
 # STT (Speech-to-Text) Configuration
 stt:
-  default: "whisper"  # Options: whisper, google, azure, browser
+  default: "browser"  # Options: whisper, google, azure, browser
 
   providers:
     whisper:

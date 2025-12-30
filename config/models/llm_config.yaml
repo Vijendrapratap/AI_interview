@@ -36,12 +36,12 @@ providers:
     timeout: 120
 
   groq:
-    model: "llama-3.1-70b-versatile"  # Fast inference
+    model: "llama-3.3-70b-versatile"  # Fast inference (updated model)
     api_key_env: "GROQ_API_KEY"
     base_url: "https://api.groq.com/openai/v1"
     temperature: 0.7
     max_tokens: 4096
-    timeout: 30
+    timeout: 60
 
 # Model selection for specific tasks (override default)
 task_models:

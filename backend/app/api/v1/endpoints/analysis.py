@@ -73,7 +73,9 @@ async def analyze_resume(request: AnalysisRequest):
         )
 
     except Exception as e:
+        import traceback
         logger.error(f"Error analyzing resume: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Error analyzing resume: {str(e)}"
