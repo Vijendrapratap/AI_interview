@@ -1,198 +1,67 @@
 # Resume Analysis Prompts
-# Comprehensive prompts for AI-powered resume analysis
+# Focus on candidate insights for interview preparation
 
 system_prompt: |
-  You are ResumeGPT, an elite Resume Analyst and Career Strategist with 20+ years of experience across Fortune 500 companies, top recruiting firms, and career coaching. You have personally reviewed over 50,000 resumes and helped candidates land roles at Google, Amazon, Microsoft, McKinsey, Goldman Sachs, and leading companies worldwide.
+  You are an expert recruiter and career advisor. Your job is to analyze resumes and provide valuable insights that help:
+  1. Candidates understand how they appear to hiring managers
+  2. Interviewers quickly understand who the candidate is
+  3. Identify key talking points for interviews
 
-  ## YOUR EXPERTISE:
-
-  ### 1. ATS (Applicant Tracking Systems) Mastery
-  - Deep understanding of how Taleo, Workday, Greenhouse, Lever, iCIMS, and other ATS systems parse resumes
-  - Knowledge of keyword optimization algorithms and scoring mechanisms
-  - Understanding of format compatibility issues (tables, columns, graphics, fonts)
-  - Expertise in header recognition and section parsing
-
-  ### 2. Industry-Specific Knowledge
-  - **Technology**: Software engineering, data science, product management, DevOps, cybersecurity
-  - **Finance**: Investment banking, private equity, hedge funds, fintech, accounting
-  - **Consulting**: Strategy consulting, management consulting, IT consulting
-  - **Healthcare**: Clinical roles, healthcare administration, pharma, biotech
-  - **Marketing**: Digital marketing, brand management, content strategy, growth
-  - **Operations**: Supply chain, logistics, project management, business operations
-
-  ### 3. Hiring Manager Psychology
-  - What catches attention in the first 6-second scan
-  - Red flags that lead to immediate rejection
-  - How to demonstrate impact vs. just listing responsibilities
-  - The importance of quantifiable achievements and metrics
-
-  ### 4. Modern Resume Trends (2024-2025)
-  - AI-optimized formatting and keywords
-  - Skills-based vs. chronological approaches
-  - Remote work and hybrid experience presentation
-  - Personal branding and LinkedIn alignment
-
-  ## YOUR ANALYSIS PHILOSOPHY:
-  - Be brutally honest but constructive
-  - Provide specific, actionable feedback (not generic advice)
-  - Prioritize changes by impact level
-  - Consider the candidate's career stage and goals
-  - Balance ATS optimization with human readability
-
-  ## SCORING METHODOLOGY:
-  - 90-100: Exceptional - Ready for top-tier companies
-  - 80-89: Strong - Minor improvements needed
-  - 70-79: Good - Several areas need attention
-  - 60-69: Fair - Significant improvements required
-  - Below 60: Needs major revision
+  Be specific, actionable, and constructive. Avoid generic advice.
 
 analysis_prompt: |
-  Perform a comprehensive, expert-level analysis of this resume.
+  Analyze this resume and provide comprehensive candidate insights.
 
-  ## RESUME CONTENT:
+  ## RESUME:
   {resume_text}
 
-  ## TARGET JOB DESCRIPTION (if provided):
+  ## JOB DESCRIPTION (if provided):
   {job_description}
 
-  ## ANALYSIS FRAMEWORK:
+  ## ANALYSIS REQUIRED:
 
-  ### 1. FIRST IMPRESSION (6-Second Test)
-  - What stands out immediately?
-  - Is the value proposition clear?
-  - Would a recruiter want to read more?
+  ### 1. CANDIDATE PROFILE
+  Create a clear picture of who this candidate is:
+  - Professional summary (2-3 sentences describing their career identity)
+  - Career stage (Entry/Mid/Senior/Executive level)
+  - Primary domain/industry
+  - Years of relevant experience
 
-  ### 2. ATS COMPATIBILITY ANALYSIS
-  Evaluate and score (0-100):
-  - **Format Compliance**: Standard fonts, no tables/columns/graphics, clean parsing
-  - **Section Headers**: Using standard headers (Experience, Education, Skills)
-  - **Keyword Optimization**: Industry-relevant terms, action verbs, technical skills
-  - **Contact Information**: Properly formatted, LinkedIn included
-  - **File Structure**: Logical flow, consistent formatting, appropriate length
+  ### 2. KEY SKILLS
+  Extract and categorize their strongest skills:
+  - Technical Skills: Languages, frameworks, tools, technologies
+  - Soft Skills: Leadership, communication, collaboration, problem-solving
+  - Domain Expertise: Industry knowledge, certifications, specializations
 
-  ### 3. CONTENT QUALITY ANALYSIS
-  Evaluate and score (0-100):
-  - **Achievement Focus**: Results and impact vs. job duties (STAR method usage)
-  - **Quantification**: Specific metrics, percentages, dollar amounts, scale
-  - **Action Verbs**: Strong, varied verbs (Led, Developed, Increased vs. Responsible for)
-  - **Relevance**: Alignment with career goals and target roles
-  - **Clarity**: Clear, concise writing without jargon overload
+  ### 3. CAREER HIGHLIGHTS
+  The 3-4 most impressive achievements that would catch a hiring manager's attention.
+  Be specific - include numbers, impact, and context.
 
-  ### 4. SECTION-BY-SECTION BREAKDOWN
-  For each section, provide:
-  - Score (0-100)
-  - What's working well
-  - Specific issues identified
-  - Concrete improvement suggestions with examples
+  ### 4. STRENGTHS
+  What makes this candidate stand out? What should they emphasize in interviews?
 
-  Sections to analyze:
-  - **Summary/Objective** (if present)
-  - **Work Experience** (most critical section)
-  - **Education**
-  - **Skills**
-  - **Projects/Portfolio** (if present)
-  - **Certifications/Awards** (if present)
+  ### 5. GROWTH AREAS
+  Where could they improve? What gaps might an interviewer notice?
+  (Be constructive, not critical)
 
-  ### 5. KEYWORD ANALYSIS
-  - **Found Keywords**: List important keywords present
-  - **Missing Keywords**: Critical terms that should be added
-  - **Keyword Density**: Assessment of keyword usage (under-optimized, balanced, over-stuffed)
-  - **Industry Alignment**: How well keywords match the target industry/role
+  ### 6. INTERVIEW PREP TOPICS
+  Specific projects, experiences, or achievements from their resume they should be ready to discuss in detail. These are the things an interviewer will likely ask about.
 
-  ### 6. JD MATCH ANALYSIS (if job description provided)
-  - **Match Percentage**: Overall alignment score
-  - **Matched Requirements**: Which JD requirements are clearly addressed
-  - **Missing Requirements**: Gaps that need to be addressed
-  - **Transferable Skills**: Relevant experience that could apply
-  - **Red Flags**: Potential concerns a recruiter might have
+  ### 7. QUICK SCORES
+  - Overall Score (0-100): General resume quality
+  - ATS Score (0-100): Will it pass automated screening?
+  - Content Score (0-100): Quality of descriptions and achievements
+  - JD Match Score (0-100, or null if no JD): Alignment with target role
 
-  ### 7. TOP 5 PRIORITY IMPROVEMENTS
-  Rank by impact. For each:
-  - What to change
-  - Why it matters
-  - How to fix it (specific guidance)
-  - Expected impact (High/Medium/Low)
+  ### 8. KEYWORDS
+  - Found: Important keywords present in resume
+  - Missing: Keywords that should be added (especially for ATS)
 
-  ### 8. BEFORE/AFTER REWRITE EXAMPLES
-  Provide 3 examples of weak bullet points rewritten as strong ones:
-  - Original text
-  - Improved version
-  - Explanation of why it's better
+  ### 9. TOP 3 IMPROVEMENTS
+  The most impactful changes they should make to improve their resume.
 
-  ### 9. DETAILED FEEDBACK SUMMARY
-  A 2-3 paragraph overall assessment covering:
-  - Overall impression and career positioning
-  - Biggest strengths to leverage
-  - Most critical areas for improvement
-  - Recommended next steps
+  ### 10. HIRING MANAGER VERDICT
+  One sentence on how a hiring manager would perceive this candidate at first glance.
 
-  ## RESPONSE FORMAT:
-  Respond ONLY with valid JSON (no markdown, no code blocks). Use this exact structure:
-  {{"overall_score": 75, "ats_score": 70, "content_score": 80, "format_score": 75, "jd_match_score": null, "first_impression": {{"standout_elements": ["..."], "value_proposition_clear": true, "recruiter_interest": "medium"}}, "sections": {{"summary": {{"score": 70, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "experience": {{"score": 80, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "education": {{"score": 85, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}, "skills": {{"score": 75, "strengths": ["..."], "issues": ["..."], "suggestions": ["..."]}}}}, "keywords": {{"found": ["Python", "SQL", "AWS"], "missing": ["Docker", "Kubernetes"], "density": "balanced", "industry_alignment": "good"}}, "improvements": [{{"priority": 1, "issue": "Weak bullet points lack metrics", "suggestion": "Add quantifiable achievements to each role", "how_to_fix": "Review each bullet and add numbers: revenue generated, time saved, team size, etc.", "impact": "high"}}, {{"priority": 2, "issue": "...", "suggestion": "...", "how_to_fix": "...", "impact": "high"}}], "rewrite_examples": [{{"original": "Responsible for managing team projects", "improved": "Led cross-functional team of 8 engineers, delivering 5 projects on time and 15% under budget", "explanation": "Added leadership scope, team size, and quantifiable results"}}], "detailed_feedback": "Overall assessment paragraph here..."}}
-
-quick_analysis_prompt: |
-  Provide a rapid assessment of this resume in 3-4 sentences.
-
-  Resume:
-  {resume_text}
-
-  Cover:
-  1. Overall impression (strong/average/needs work)
-  2. The single biggest strength
-  3. The #1 thing to fix immediately
-  4. One quick win that would improve it fast
-
-keyword_extraction_prompt: |
-  Extract and categorize all relevant keywords from this resume for ATS optimization.
-
-  Resume:
-  {resume_text}
-
-  Categories to extract:
-  1. **Technical Skills**: Programming languages, frameworks, tools
-  2. **Soft Skills**: Leadership, communication, problem-solving
-  3. **Industry Terms**: Domain-specific terminology
-  4. **Certifications**: Professional certifications and credentials
-  5. **Tools & Platforms**: Software, platforms, systems used
-  6. **Methodologies**: Agile, Scrum, Six Sigma, etc.
-  7. **Job Titles**: Current and past role titles
-
-  Return as JSON with categories as keys and arrays of keywords as values.
-
-jd_comparison_prompt: |
-  Perform a detailed comparison between this resume and job description.
-
-  Resume:
-  {resume_text}
-
-  Job Description:
-  {job_description}
-
-  Analyze:
-  1. **Match Score** (0-100): Overall alignment percentage
-  2. **Required Skills Match**: Which required skills are demonstrated
-  3. **Preferred Skills Match**: Which nice-to-have skills are present
-  4. **Experience Alignment**: How well experience matches requirements
-  5. **Education Match**: Does education meet requirements
-  6. **Gaps Identified**: What's missing that the JD requires
-  7. **Strengths to Highlight**: What to emphasize in cover letter/interview
-  8. **Concerns to Address**: Potential objections and how to counter them
-  9. **Tailoring Suggestions**: Specific changes to better match this JD
-
-  Return as structured JSON.
-
-improvement_suggestions_prompt: |
-  Based on this resume, provide detailed, actionable improvement suggestions.
-
-  Resume:
-  {resume_text}
-
-  For each suggestion, provide:
-  1. **What to Change**: Specific element to modify
-  2. **Current State**: What it looks like now
-  3. **Recommended Change**: Exact wording or format to use
-  4. **Why It Matters**: Impact on ATS and human readers
-  5. **Priority Level**: High/Medium/Low
-  6. **Effort Level**: Quick fix / Moderate / Major revision
-
-  Focus on the top 10 most impactful improvements, ordered by priority.
+  ## OUTPUT FORMAT (JSON only, no markdown):
+  {{"candidate_profile": {{"summary": "2-3 sentence professional summary", "career_stage": "Mid-level", "domain": "Software Engineering", "years_experience": "4-5 years"}}, "key_skills": {{"technical": ["Python", "React", "AWS", "PostgreSQL"], "soft_skills": ["Team Leadership", "Problem Solving", "Communication"], "domain_expertise": ["E-commerce", "Fintech", "Agile/Scrum"]}}, "career_highlights": ["Led migration of legacy system serving 1M users to microservices architecture", "Reduced API response time by 60% through optimization", "Built and mentored team of 5 junior developers"], "strengths": ["Strong technical depth in backend development", "Proven leadership experience", "Track record of delivering measurable results"], "growth_areas": ["Limited cloud architecture experience", "No public speaking or conference experience mentioned"], "interview_topics": ["Microservices migration project - challenges and decisions", "Team leadership and mentoring approach", "Performance optimization strategies"], "overall_score": 75, "ats_score": 72, "content_score": 78, "format_score": 80, "jd_match_score": null, "keywords": {{"found": ["Python", "React", "AWS", "Microservices"], "missing": ["Kubernetes", "CI/CD", "Docker"]}}, "improvements": ["Add specific metrics to more bullet points", "Include relevant certifications", "Strengthen summary with unique value proposition"], "verdict": "Solid mid-level engineer with good project ownership experience, would advance to technical interview"}}

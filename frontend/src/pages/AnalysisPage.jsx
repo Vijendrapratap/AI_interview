@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
   CheckCircle,
   AlertTriangle,
@@ -8,7 +7,14 @@ import {
   FileText,
   Loader2,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  User,
+  Briefcase,
+  Award,
+  Target,
+  TrendingUp,
+  MessageSquare,
+  Lightbulb
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { analyzeResume, getResume } from '../services/api'
@@ -50,15 +56,9 @@ export default function AnalysisPage() {
   }
 
   const getScoreBg = (score) => {
-    if (score >= 80) return 'bg-green-100 border-green-300'
-    if (score >= 60) return 'bg-yellow-100 border-yellow-300'
-    return 'bg-red-100 border-red-300'
-  }
-
-  const getScoreIcon = (score) => {
-    if (score >= 80) return <CheckCircle className="w-5 h-5 text-green-600" />
-    if (score >= 60) return <AlertTriangle className="w-5 h-5 text-yellow-600" />
-    return <XCircle className="w-5 h-5 text-red-600" />
+    if (score >= 80) return 'bg-green-50 border-green-200'
+    if (score >= 60) return 'bg-yellow-50 border-yellow-200'
+    return 'bg-red-50 border-red-200'
   }
 
   if (loading) {
@@ -84,6 +84,9 @@ export default function AnalysisPage() {
     )
   }
 
+  const profile = analysis.candidate_profile || {}
+  const skills = analysis.key_skills || {}
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -104,149 +107,232 @@ export default function AnalysisPage() {
         </button>
       </div>
 
-      {/* Score Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Overall Score */}
-        <div className={`p-4 rounded-lg border-2 ${getScoreBg(analysis.overall_score)}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-600">Overall</span>
-            {getScoreIcon(analysis.overall_score)}
+      {/* Candidate Profile Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="w-8 h-8 text-primary-600" />
           </div>
-          <div className={`text-3xl font-bold ${getScoreColor(analysis.overall_score)}`}>
-            {Math.round(analysis.overall_score)}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+                {profile.career_stage || 'Professional'}
+              </span>
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                {profile.domain || 'Technology'}
+              </span>
+              {profile.years_experience && (
+                <span className="text-xs text-gray-500">
+                  {profile.years_experience} experience
+                </span>
+              )}
+            </div>
+            <p className="text-gray-700">
+              {profile.summary || analysis.detailed_feedback || 'Professional with relevant experience in their field.'}
+            </p>
           </div>
         </div>
 
-        {/* ATS Score */}
+        {/* Verdict */}
+        {analysis.verdict && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Hiring Manager's Take:</strong> {analysis.verdict}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Score Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`p-4 rounded-lg border ${getScoreBg(analysis.overall_score)}`}>
+          <span className="text-xs font-medium text-gray-600">Overall</span>
+          <div className={`text-3xl font-bold ${getScoreColor(analysis.overall_score)}`}>
+            {Math.round(analysis.overall_score || 0)}
+          </div>
+        </div>
         <div className="p-4 rounded-lg border border-gray-200 bg-white">
           <span className="text-xs font-medium text-gray-600">ATS Score</span>
           <div className={`text-2xl font-bold mt-1 ${getScoreColor(analysis.ats_score)}`}>
-            {Math.round(analysis.ats_score)}%
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-            <div
-              className="bg-primary-500 h-1.5 rounded-full"
-              style={{ width: `${analysis.ats_score}%` }}
-            />
+            {Math.round(analysis.ats_score || 0)}%
           </div>
         </div>
-
-        {/* Content Score */}
         <div className="p-4 rounded-lg border border-gray-200 bg-white">
           <span className="text-xs font-medium text-gray-600">Content</span>
           <div className={`text-2xl font-bold mt-1 ${getScoreColor(analysis.content_score)}`}>
-            {Math.round(analysis.content_score)}%
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-            <div
-              className="bg-blue-500 h-1.5 rounded-full"
-              style={{ width: `${analysis.content_score}%` }}
-            />
+            {Math.round(analysis.content_score || 0)}%
           </div>
         </div>
-
-        {/* JD Match */}
         <div className="p-4 rounded-lg border border-gray-200 bg-white">
           <span className="text-xs font-medium text-gray-600">JD Match</span>
           <div className={`text-2xl font-bold mt-1 ${analysis.jd_match_score ? getScoreColor(analysis.jd_match_score) : 'text-gray-400'}`}>
             {analysis.jd_match_score ? `${Math.round(analysis.jd_match_score)}%` : 'N/A'}
           </div>
-          {analysis.jd_match_score && (
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-              <div
-                className="bg-green-500 h-1.5 rounded-full"
-                style={{ width: `${analysis.jd_match_score}%` }}
-              />
+        </div>
+      </div>
+
+      {/* Key Skills */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+          <Award className="w-5 h-5 mr-2 text-primary-600" />
+          Key Skills
+        </h3>
+        <div className="space-y-4">
+          {skills.technical?.length > 0 && (
+            <div>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Technical</h4>
+              <div className="flex flex-wrap gap-2">
+                {skills.technical.map((skill, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {skills.soft_skills?.length > 0 && (
+            <div>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Soft Skills</h4>
+              <div className="flex flex-wrap gap-2">
+                {skills.soft_skills.map((skill, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-green-50 text-green-700 text-sm rounded-full">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {skills.domain_expertise?.length > 0 && (
+            <div>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Domain Expertise</h4>
+              <div className="flex flex-wrap gap-2">
+                {skills.domain_expertise.map((skill, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-full">
+                    {skill}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Keywords */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-900 mb-4">Keywords</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Found</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {(analysis.keywords?.found || []).slice(0, 10).map((keyword, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded"
-                >
-                  {keyword}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Missing</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {(analysis.keywords?.missing || []).slice(0, 10).map((keyword, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded"
-                >
-                  {keyword}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Improvements */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-900 mb-4">Top Improvements</h3>
-        <div className="space-y-3">
-          {(analysis.improvements || []).slice(0, 5).map((improvement, idx) => (
-            <div key={idx} className="flex items-start p-3 bg-gray-50 rounded-lg">
-              <span className="flex-shrink-0 w-5 h-5 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-xs font-medium mr-3">
-                {idx + 1}
-              </span>
-              <p className="text-sm text-gray-700">
-                {typeof improvement === 'string' ? improvement : improvement.suggestion || improvement.issue}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Rewrite Examples */}
-      {analysis.rewrite_examples?.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 mb-4">Before & After</h3>
-          <div className="space-y-4">
-            {analysis.rewrite_examples.slice(0, 2).map((example, idx) => (
-              <div key={idx} className="grid md:grid-cols-2 gap-3">
-                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                  <span className="text-xs font-medium text-red-600">Before</span>
-                  <p className="text-sm text-gray-700 mt-1">{example.original}</p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <span className="text-xs font-medium text-green-600">After</span>
-                  <p className="text-sm text-gray-700 mt-1">{example.improved}</p>
-                </div>
+      {/* Career Highlights */}
+      {analysis.career_highlights?.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-primary-600" />
+            Career Highlights
+          </h3>
+          <div className="space-y-3">
+            {analysis.career_highlights.map((highlight, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700">{highlight}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Detailed Feedback */}
-      {analysis.detailed_feedback && (
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 mb-3">Summary</h3>
-          <p className="text-sm text-gray-700 leading-relaxed">{analysis.detailed_feedback}</p>
+      {/* Strengths & Growth Areas */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Strengths */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <Target className="w-5 h-5 mr-2 text-green-600" />
+            Strengths
+          </h3>
+          <ul className="space-y-2">
+            {(analysis.strengths || []).map((strength, idx) => (
+              <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-green-500 mt-1">•</span>
+                {strength}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Growth Areas */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <Lightbulb className="w-5 h-5 mr-2 text-yellow-600" />
+            Areas to Develop
+          </h3>
+          <ul className="space-y-2">
+            {(analysis.growth_areas || analysis.improvements || []).map((area, idx) => (
+              <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-yellow-500 mt-1">•</span>
+                {typeof area === 'string' ? area : area.suggestion || area.issue}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Interview Prep Topics */}
+      {analysis.interview_topics?.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <MessageSquare className="w-5 h-5 mr-2 text-primary-600" />
+            Be Ready to Discuss
+          </h3>
+          <p className="text-sm text-gray-500 mb-3">
+            Interviewers will likely ask about these topics from your resume:
+          </p>
+          <div className="space-y-2">
+            {analysis.interview_topics.map((topic, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-primary-50 rounded-lg border border-primary-100">
+                <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                  {idx + 1}
+                </span>
+                <p className="text-sm text-gray-700">{topic}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Keywords */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="font-semibold text-gray-900 mb-4">ATS Keywords</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
+              <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+              Found in Resume
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {(analysis.keywords?.found || []).slice(0, 12).map((keyword, idx) => (
+                <span key={idx} className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
+              <AlertTriangle className="w-4 h-4 text-orange-500 mr-1" />
+              Consider Adding
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {(analysis.keywords?.missing || []).slice(0, 8).map((keyword, idx) => (
+                <span key={idx} className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Action Button */}
       <div className="flex justify-center pt-4">
         <button
           onClick={() => navigate(`/interview/${resumeId}`, { state: { jobDescription } })}
-          className="flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+          className="flex items-center px-8 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
         >
+          <MessageSquare className="w-5 h-5 mr-2" />
           Start Mock Interview
           <ArrowRight className="w-5 h-5 ml-2" />
         </button>
