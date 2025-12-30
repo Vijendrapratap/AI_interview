@@ -1,16 +1,15 @@
 # Resume Analysis Prompts
-# Focus on candidate insights for interview preparation
+# Recruiter-focused: Extract valuable candidate information quickly
 
 system_prompt: |
-  You are an expert recruiter and career advisor. Your job is to analyze resumes and provide valuable insights that help:
-  1. Candidates understand how they appear to hiring managers
-  2. Interviewers quickly understand who the candidate is
-  3. Identify key talking points for interviews
+  You are an expert technical recruiter with 15+ years of experience screening candidates.
+  Your job is to extract and present the most valuable information from resumes so hiring managers can quickly assess candidates.
 
-  Be specific, actionable, and constructive. Avoid generic advice.
+  Focus on FACTS from the resume. Extract every skill, technology, and achievement mentioned.
+  Be thorough - don't miss any technical skills or tools mentioned anywhere in the resume.
 
 analysis_prompt: |
-  Analyze this resume and provide comprehensive candidate insights.
+  Analyze this resume and extract all valuable information for a recruiter.
 
   ## RESUME:
   {resume_text}
@@ -18,50 +17,67 @@ analysis_prompt: |
   ## JOB DESCRIPTION (if provided):
   {job_description}
 
-  ## ANALYSIS REQUIRED:
+  ## EXTRACTION REQUIREMENTS:
 
-  ### 1. CANDIDATE PROFILE
-  Create a clear picture of who this candidate is:
-  - Professional summary (2-3 sentences describing their career identity)
-  - Career stage (Entry/Mid/Senior/Executive level)
-  - Primary domain/industry
-  - Years of relevant experience
+  ### 1. CANDIDATE SNAPSHOT
+  Quick overview for the recruiter:
+  - Professional title/role (what they do)
+  - Career level: Entry (0-2 yrs) / Mid (3-5 yrs) / Senior (6-10 yrs) / Staff/Principal (10+ yrs) / Executive
+  - Primary industry/domain
+  - Total years of experience
+  - Current/most recent company and role
 
-  ### 2. KEY SKILLS
-  Extract and categorize their strongest skills:
-  - Technical Skills: Languages, frameworks, tools, technologies
-  - Soft Skills: Leadership, communication, collaboration, problem-solving
-  - Domain Expertise: Industry knowledge, certifications, specializations
+  ### 2. TECHNICAL SKILLS (EXTRACT ALL - be thorough!)
+  Go through the ENTIRE resume and extract EVERY technology, tool, language, framework mentioned:
+  - Programming Languages: (e.g., Python, Java, JavaScript, C++, Go, Rust, SQL, etc.)
+  - Frameworks & Libraries: (e.g., React, Angular, Django, Spring, Node.js, TensorFlow, etc.)
+  - Databases: (e.g., PostgreSQL, MongoDB, MySQL, Redis, Elasticsearch, etc.)
+  - Cloud & DevOps: (e.g., AWS, GCP, Azure, Docker, Kubernetes, CI/CD, Jenkins, etc.)
+  - Tools & Platforms: (e.g., Git, JIRA, Figma, Tableau, Salesforce, etc.)
 
-  ### 3. CAREER HIGHLIGHTS
-  The 3-4 most impressive achievements that would catch a hiring manager's attention.
-  Be specific - include numbers, impact, and context.
+  IMPORTANT: Read every bullet point, project description, and section. Don't miss any skills!
 
-  ### 4. STRENGTHS
-  What makes this candidate stand out? What should they emphasize in interviews?
+  ### 3. SOFT SKILLS & COMPETENCIES
+  Evidence-based soft skills (only include if there's proof in the resume):
+  - Leadership indicators (team size managed, mentoring)
+  - Communication (presentations, documentation, stakeholder management)
+  - Collaboration (cross-functional work, team projects)
 
-  ### 5. GROWTH AREAS
-  Where could they improve? What gaps might an interviewer notice?
-  (Be constructive, not critical)
+  ### 4. DOMAIN EXPERTISE
+  Industries and specialized knowledge areas:
+  - Industries worked in (Fintech, Healthcare, E-commerce, etc.)
+  - Certifications (AWS Certified, PMP, Scrum Master, etc.)
+  - Specialized domains (Machine Learning, Security, Data Engineering, etc.)
 
-  ### 6. INTERVIEW PREP TOPICS
-  Specific projects, experiences, or achievements from their resume they should be ready to discuss in detail. These are the things an interviewer will likely ask about.
+  ### 5. CAREER HIGHLIGHTS
+  Top 4-5 achievements that demonstrate impact. Include:
+  - Quantified results (%, $, users, time saved)
+  - Scale of work (team size, user base, data volume)
+  - Technical complexity
+  - Business impact
 
-  ### 7. QUICK SCORES
-  - Overall Score (0-100): General resume quality
-  - ATS Score (0-100): Will it pass automated screening?
-  - Content Score (0-100): Quality of descriptions and achievements
-  - JD Match Score (0-100, or null if no JD): Alignment with target role
+  ### 6. EXPERIENCE SUMMARY
+  Brief summary of each role (most recent first):
+  - Company name and duration
+  - Role/title
+  - Key responsibility or achievement
 
-  ### 8. KEYWORDS
-  - Found: Important keywords present in resume
-  - Missing: Keywords that should be added (especially for ATS)
+  ### 7. EDUCATION & CERTIFICATIONS
+  - Degrees (institution, field, year if available)
+  - Professional certifications
+  - Relevant courses or training
 
-  ### 9. TOP 3 IMPROVEMENTS
-  The most impactful changes they should make to improve their resume.
+  ### 8. RECRUITER SCORES
+  - Overall Fit (0-100): How strong is this candidate overall?
+  - Technical Depth (0-100): How deep is their technical expertise?
+  - Experience Level (0-100): How seasoned are they?
+  - JD Match (0-100 or null): If JD provided, how well do they match?
 
-  ### 10. HIRING MANAGER VERDICT
-  One sentence on how a hiring manager would perceive this candidate at first glance.
+  ### 9. KEY TALKING POINTS
+  Top 3-4 topics an interviewer should ask about based on interesting projects or achievements in the resume.
+
+  ### 10. RECRUITER VERDICT
+  2-3 sentences: Who is this candidate? What roles are they best suited for? Should we move forward?
 
   ## OUTPUT FORMAT (JSON only, no markdown):
-  {{"candidate_profile": {{"summary": "2-3 sentence professional summary", "career_stage": "Mid-level", "domain": "Software Engineering", "years_experience": "4-5 years"}}, "key_skills": {{"technical": ["Python", "React", "AWS", "PostgreSQL"], "soft_skills": ["Team Leadership", "Problem Solving", "Communication"], "domain_expertise": ["E-commerce", "Fintech", "Agile/Scrum"]}}, "career_highlights": ["Led migration of legacy system serving 1M users to microservices architecture", "Reduced API response time by 60% through optimization", "Built and mentored team of 5 junior developers"], "strengths": ["Strong technical depth in backend development", "Proven leadership experience", "Track record of delivering measurable results"], "growth_areas": ["Limited cloud architecture experience", "No public speaking or conference experience mentioned"], "interview_topics": ["Microservices migration project - challenges and decisions", "Team leadership and mentoring approach", "Performance optimization strategies"], "overall_score": 75, "ats_score": 72, "content_score": 78, "format_score": 80, "jd_match_score": null, "keywords": {{"found": ["Python", "React", "AWS", "Microservices"], "missing": ["Kubernetes", "CI/CD", "Docker"]}}, "improvements": ["Add specific metrics to more bullet points", "Include relevant certifications", "Strengthen summary with unique value proposition"], "verdict": "Solid mid-level engineer with good project ownership experience, would advance to technical interview"}}
+  {{"candidate_profile": {{"title": "Senior Software Engineer", "career_stage": "Senior", "domain": "Backend Engineering", "years_experience": "7 years", "current_company": "Tech Corp", "current_role": "Senior Engineer"}}, "technical_skills": {{"languages": ["Python", "Java", "Go", "SQL", "JavaScript"], "frameworks": ["Django", "Spring Boot", "React", "FastAPI"], "databases": ["PostgreSQL", "MongoDB", "Redis", "Elasticsearch"], "cloud_devops": ["AWS", "Docker", "Kubernetes", "Jenkins", "Terraform"], "tools": ["Git", "JIRA", "Datadog", "Grafana"]}}, "soft_skills": ["Led team of 8 engineers", "Mentored 3 junior developers", "Presented to C-level stakeholders"], "domain_expertise": {{"industries": ["Fintech", "E-commerce"], "certifications": ["AWS Solutions Architect", "Kubernetes Administrator"], "specializations": ["Distributed Systems", "API Design", "Performance Optimization"]}}, "career_highlights": ["Architected payment system processing $50M daily transactions", "Reduced infrastructure costs by 40% through optimization", "Led migration serving 2M users with zero downtime", "Built ML pipeline reducing fraud by 35%"], "experience_summary": [{{"company": "Tech Corp", "duration": "2021-Present", "role": "Senior Engineer", "highlight": "Led backend team, architected core payment system"}}, {{"company": "StartupXYZ", "duration": "2018-2021", "role": "Software Engineer", "highlight": "Built API platform from scratch"}}], "education": [{{"degree": "MS Computer Science", "institution": "Stanford University", "year": "2018"}}, {{"degree": "BS Computer Science", "institution": "UC Berkeley", "year": "2016"}}], "certifications": ["AWS Solutions Architect Professional", "Certified Kubernetes Administrator"], "overall_score": 85, "technical_score": 88, "experience_score": 82, "jd_match_score": null, "interview_topics": ["Payment system architecture decisions", "Team leadership and scaling challenges", "Infrastructure optimization strategies", "Fraud detection ML implementation"], "verdict": "Strong senior backend engineer with proven experience in fintech and distributed systems. Excellent fit for senior/staff roles requiring technical leadership and system design expertise. Recommend moving to technical interview."}}
