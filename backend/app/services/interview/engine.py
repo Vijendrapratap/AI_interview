@@ -330,9 +330,18 @@ class InterviewEngine:
 
         # Check for missing skills
         keywords = analysis.get("keywords", {})
-        missing = keywords.get("missing_keywords", [])
         if missing:
             focus_areas.append(f"validate skills: {', '.join(missing[:3])}")
+
+        # Check for Gap Analysis / Fraud flags
+        gap_analysis = analysis.get("gap_analysis", {})
+        if gap_analysis.get("discrepancy_flag"):
+             focus_areas.append(f"INVESTIGATE DISCREPANCY: {gap_analysis.get('discrepancy_details')}")
+        
+        career_gaps = gap_analysis.get("career_gaps", [])
+        if career_gaps:
+             for gap in career_gaps:
+                 focus_areas.append(f"Explain gap: {gap.get('start')} to {gap.get('end')}")
 
         return ", ".join(focus_areas) if focus_areas else "comprehensive assessment"
 

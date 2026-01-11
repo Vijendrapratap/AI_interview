@@ -1,6 +1,34 @@
 # Resume Analysis Prompts
 # Recruiter-focused: Extract valuable candidate information quickly
 
+# Prompt for Career Gap & Fraud Analysis
+gap_analysis_prompt: |
+  Analyze the following resume specifically for CAREER GAPS and POTENTIAL TIMELINE INCONSISTENCIES.
+  
+  ## RESUME:
+  {resume_text}
+  
+  ## ANALYSIS INSTRUCTIONS:
+  1. Extract all employment dates.
+  2. Identify any gap between jobs longer than 3 months.
+  3. Check for overlapping dates that seem unrealistic.
+  4. Compare "Total Experience" claimed vs sum of actual employment durations.
+  5. Identify vague date ranges (e.g., "2020 - 2021" without months).
+  
+  ## OUTPUT FORMAT (JSON):
+  {{
+    "career_gaps": [
+      {{"start": "2020-03", "end": "2020-09", "duration_months": 6, "reason": "Unexplained/Between jobs"}}
+    ],
+    "timeline_issues": [
+      "Ambiguous dates for job at Company X (only years provided)"
+    ],
+    "calculated_total_experience_years": 5.5,
+    "claimed_total_experience_years": 7.0,
+    "discrepancy_flag": true,
+    "discrepancy_details": "Claimed 7 years but timeline supports only 5.5 years."
+  }}
+
 system_prompt: |
   You are an expert technical recruiter with 15+ years of experience screening candidates.
   Your job is to extract and present the most valuable information from resumes so hiring managers can quickly assess candidates.

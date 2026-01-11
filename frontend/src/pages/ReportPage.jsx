@@ -165,21 +165,85 @@ export default function ReportPage() {
         </div>
       </motion.div>
 
-      {/* Executive Summary */}
-      {report.executive_summary && (
+      {/* Verification & Trust Score - NEW */}
+      <div className="grid md:grid-cols-2 gap-6">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="card"
+          className={`card border-l-4 ${report.verification_status?.overall === 'verified' ? 'border-green-500' : 'border-orange-500'}`}
         >
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Brain className="w-5 h-5 mr-2 text-primary-600" />
-            Executive Summary
+            <Award className={`w-5 h-5 mr-2 ${report.verification_status?.overall === 'verified' ? 'text-green-600' : 'text-orange-600'}`} />
+            Identity Verification
           </h2>
-          <p className="text-gray-700 leading-relaxed">{report.executive_summary}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Document Status</p>
+              <p className={`font-semibold ${report.verification_status?.overall === 'verified' ? 'text-green-700' : 'text-orange-700'}`}>
+                {report.verification_status?.overall === 'verified' ? 'Verified ID' : 'Verification Flagged'}
+              </p>
+            </div>
+            {report.verification_status?.overall === 'verified' ? (
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            ) : (
+              <XCircle className="w-8 h-8 text-orange-500" />
+            )}
+          </div>
+          {report.verification_status?.fraud_checks && (
+            <div className="mt-4 text-xs text-gray-500">
+              <p>Checks passed: {report.verification_status.fraud_checks.passed}/{report.verification_status.fraud_checks.total}</p>
+            </div>
+          )}
         </motion.div>
-      )}
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card border-l-4 border-blue-500"
+        >
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+            Career Gap Analysis
+          </h2>
+          <div className="space-y-2">
+            {report.gap_analysis?.has_gaps ? (
+              <div>
+                <p className="text-sm font-medium text-orange-600">Gaps/Inconsistencies Detected</p>
+                <ul className="mt-2 text-xs text-gray-600 list-disc list-inside">
+                  {report.gap_analysis.details.map((gap, i) => (
+                    <li key={i}>{gap}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="flex items-center text-green-700">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                <span className="text-sm font-medium">Timeline verified and consistent.</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div >
+
+      {/* Executive Summary */}
+      {
+        report.executive_summary && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="card"
+          >
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Brain className="w-5 h-5 mr-2 text-primary-600" />
+              Executive Summary
+            </h2>
+            <p className="text-gray-700 leading-relaxed">{report.executive_summary}</p>
+          </motion.div>
+        )
+      }
 
       {/* Charts */}
       <motion.div
@@ -266,137 +330,142 @@ export default function ReportPage() {
       </motion.div>
 
       {/* Question Feedback */}
-      {report.question_feedback?.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="card"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <MessageSquare className="w-5 h-5 mr-2 text-primary-600" />
-            Detailed Question Feedback
-          </h3>
-          <div className="space-y-6">
-            {report.question_feedback.map((q, idx) => (
-              <div key={idx} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-medium text-sm">
-                      {q.question_number}
-                    </span>
-                    <div>
-                      <p className="font-medium text-gray-900">{q.question}</p>
+      {
+        report.question_feedback?.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="card"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2 text-primary-600" />
+              Detailed Question Feedback
+            </h3>
+            <div className="space-y-6">
+              {report.question_feedback.map((q, idx) => (
+                <div key={idx} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-medium text-sm">
+                        {q.question_number}
+                      </span>
+                      <div>
+                        <p className="font-medium text-gray-900">{q.question}</p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${q.score >= 7 ? 'bg-success-100 text-success-700' :
+                      q.score >= 5 ? 'bg-warning-100 text-warning-700' :
+                        'bg-danger-100 text-danger-700'
+                      }`}>
+                      {q.score}/10
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    q.score >= 7 ? 'bg-success-100 text-success-700' :
-                    q.score >= 5 ? 'bg-warning-100 text-warning-700' :
-                    'bg-danger-100 text-danger-700'
-                  }`}>
-                    {q.score}/10
+
+                  <div className="ml-11 space-y-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Your Response:</span> {q.response_summary}
+                      </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {q.strengths?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-success-600 mb-1">What went well</p>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            {q.strengths.slice(0, 2).map((s, i) => (
+                              <li key={i} className="flex items-start">
+                                <CheckCircle className="w-3 h-3 text-success-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {q.improvements?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-warning-600 mb-1">To improve</p>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            {q.improvements.slice(0, 2).map((i, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <TrendingUp className="w-3 h-3 text-warning-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                {i}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                <div className="ml-11 space-y-3">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Your Response:</span> {q.response_summary}
-                    </p>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {q.strengths?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-success-600 mb-1">What went well</p>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                          {q.strengths.slice(0, 2).map((s, i) => (
-                            <li key={i} className="flex items-start">
-                              <CheckCircle className="w-3 h-3 text-success-500 mr-1.5 mt-0.5 flex-shrink-0" />
-                              {s}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {q.improvements?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-warning-600 mb-1">To improve</p>
-                        <ul className="text-sm text-gray-600 space-y-1">
-                          {q.improvements.slice(0, 2).map((i, idx) => (
-                            <li key={idx} className="flex items-start">
-                              <TrendingUp className="w-3 h-3 text-warning-500 mr-1.5 mt-0.5 flex-shrink-0" />
-                              {i}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+              ))}
+            </div>
+          </motion.div>
+        )
+      }
 
       {/* Improvement Roadmap */}
-      {report.improvement_roadmap && Object.keys(report.improvement_roadmap).length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="card"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-primary-600" />
-            Improvement Roadmap
-          </h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {['immediate_actions', 'short_term', 'medium_term'].map((period, idx) => {
-              const items = report.improvement_roadmap[period] || []
-              const labels = ['30 Days', '60 Days', '90 Days']
-              const colors = ['bg-primary-50 border-primary-200', 'bg-blue-50 border-blue-200', 'bg-purple-50 border-purple-200']
+      {
+        report.improvement_roadmap && Object.keys(report.improvement_roadmap).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="card"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-primary-600" />
+              Improvement Roadmap
+            </h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              {['immediate_actions', 'short_term', 'medium_term'].map((period, idx) => {
+                const items = report.improvement_roadmap[period] || []
+                const labels = ['30 Days', '60 Days', '90 Days']
+                const colors = ['bg-primary-50 border-primary-200', 'bg-blue-50 border-blue-200', 'bg-purple-50 border-purple-200']
 
-              return items.length > 0 ? (
-                <div key={period} className={`p-4 rounded-lg border ${colors[idx]}`}>
-                  <h4 className="font-medium text-gray-900 mb-3">{labels[idx]}</h4>
-                  <ul className="space-y-2 text-sm">
-                    {items.slice(0, 4).map((item, i) => (
-                      <li key={i} className="flex items-start text-gray-700">
-                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null
-            })}
-          </div>
-        </motion.div>
-      )}
+                return items.length > 0 ? (
+                  <div key={period} className={`p-4 rounded-lg border ${colors[idx]}`}>
+                    <h4 className="font-medium text-gray-900 mb-3">{labels[idx]}</h4>
+                    <ul className="space-y-2 text-sm">
+                      {items.slice(0, 4).map((item, i) => (
+                        <li key={i} className="flex items-start text-gray-700">
+                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null
+              })}
+            </div>
+          </motion.div>
+        )
+      }
 
       {/* Interview Tips */}
-      {report.interview_tips?.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="card bg-gradient-to-r from-primary-50 to-blue-50"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pro Tips for Next Time</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {report.interview_tips.slice(0, 6).map((tip, idx) => (
-              <div key={idx} className="flex items-start">
-                <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium mr-3 flex-shrink-0">
-                  {idx + 1}
-                </span>
-                <p className="text-gray-700 text-sm">{tip}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      {
+        report.interview_tips?.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="card bg-gradient-to-r from-primary-50 to-blue-50"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pro Tips for Next Time</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {report.interview_tips.slice(0, 6).map((tip, idx) => (
+                <div key={idx} className="flex items-start">
+                  <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium mr-3 flex-shrink-0">
+                    {idx + 1}
+                  </span>
+                  <p className="text-gray-700 text-sm">{tip}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )
+      }
 
       {/* Action Buttons */}
       <motion.div
@@ -414,6 +483,6 @@ export default function ReportPage() {
           Download Full Report
         </button>
       </motion.div>
-    </div>
+    </div >
   )
 }

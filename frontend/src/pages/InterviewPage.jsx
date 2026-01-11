@@ -45,6 +45,11 @@ export default function InterviewPage() {
   const [audioEnabled, setAudioEnabled] = useState(true) // Auto-speak questions
   const [audioLoading, setAudioLoading] = useState(false)
 
+  // Proctoring State
+  const [cameraActive, setCameraActive] = useState(false)
+  const [warnings, setWarnings] = useState([])
+  const videoRef = useRef(null)
+
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const recognitionRef = useRef(null)
@@ -108,7 +113,47 @@ export default function InterviewPage() {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
+      stopCamera()
     }
+  }, [])
+
+  // Proctoring: Webcam Setup
+  useEffect(() => {
+    startCamera()
+  }, [])
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        setCameraActive(true)
+      }
+    } catch (err) {
+      console.error("Camera error:", err)
+      toast.error("Camera access required for proctoring")
+      setCameraActive(false)
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+    }
+  }
+
+  // Proctoring: Tab Switching Detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const warning = `Tab switch detected at ${new Date().toLocaleTimeString()}`
+        setWarnings(prev => [...prev, warning])
+        toast.error("Warning: Switching tabs is monitored during the interview!", { icon: '⚠️' })
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [])
 
   useEffect(() => {
@@ -372,11 +417,10 @@ export default function InterviewPage() {
               setAudioEnabled(!audioEnabled)
               if (audioEnabled) stopSpeaking()
             }}
-            className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
-              audioEnabled
-                ? 'bg-primary-50 border-primary-200 text-primary-700'
-                : 'bg-gray-50 border-gray-200 text-gray-500'
-            }`}
+            className={`flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${audioEnabled
+              ? 'bg-primary-50 border-primary-200 text-primary-700'
+              : 'bg-gray-50 border-gray-200 text-gray-500'
+              }`}
             title={audioEnabled ? 'Interviewer voice enabled' : 'Interviewer voice disabled'}
           >
             {audioEnabled ? (
@@ -395,18 +439,16 @@ export default function InterviewPage() {
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => { setMode('text'); stopRecording(); }}
-              className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                mode === 'text' ? 'bg-white shadow text-primary-600' : 'text-gray-600'
-              }`}
+              className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'text' ? 'bg-white shadow text-primary-600' : 'text-gray-600'
+                }`}
             >
               <MessageSquare className="w-4 h-4 mr-1.5" />
               Text
             </button>
             <button
               onClick={() => setMode('voice')}
-              className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                mode === 'voice' ? 'bg-white shadow text-primary-600' : 'text-gray-600'
-              }`}
+              className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'voice' ? 'bg-white shadow text-primary-600' : 'text-gray-600'
+                }`}
             >
               <Mic className="w-4 h-4 mr-1.5" />
               Voice
@@ -556,11 +598,10 @@ export default function InterviewPage() {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-                    isRecording
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                      : 'bg-primary-500 hover:bg-primary-600'
-                  }`}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRecording
+                    ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                    : 'bg-primary-500 hover:bg-primary-600'
+                    }`}
                 >
                   {isRecording ? (
                     <MicOff className="w-8 h-8 text-white" />
@@ -593,6 +634,30 @@ export default function InterviewPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Proctoring HUD */}
+      <div className="fixed bottom-4 right-4 w-48 bg-black rounded-lg overflow-hidden shadow-lg border border-gray-700 z-50">
+        <div className="relative aspect-video bg-gray-900">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          {!cameraActive && (
+            <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
+              No Camera
+            </div>
+          )}
+          <div className="absolute top-1 left-1 bg-red-600 rounded-full w-2 h-2 animate-pulse" title="Recording"></div>
+        </div>
+        {warnings.length > 0 && (
+          <div className="px-2 py-1 bg-red-900/90 text-white text-[10px] truncate">
+            {warnings.length} Warnings
+          </div>
+        )}
       </div>
     </div>
   )

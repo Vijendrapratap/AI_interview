@@ -33,7 +33,7 @@ reportlab==4.0.8
 
 # Utilities
 python-jose==3.3.0
-passlib==1.7.4
+passlib[bcrypt]==1.7.4
 
 # Development
 pytest>=7.0.0,<8.0.0
@@ -45,3 +45,7 @@ pytest-mock==3.12.0
 
 # Optional: Celery for background tasks
 # celery==5.3.4
+email-validator
+pytest
+httpx
+argon2-cffi

@@ -77,6 +77,19 @@ export const getAnalysis = async (analysisId) => {
   return api.get(`/analysis/${analysisId}`)
 }
 
+// Verification APIs
+export const verifyIdentity = async (resumeId, file) => {
+  const formData = new FormData()
+  formData.append('resume_id', resumeId)
+  formData.append('file', file)
+
+  return api.post('/verification/verify-identity', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 // Interview APIs
 export const startInterview = async (params) => {
   return api.post('/interview/start', {
@@ -173,6 +186,17 @@ export const transcribeAudio = async (audioBlob) => {
 export const getVoices = async (provider = null) => {
   const params = provider ? { provider } : {}
   return api.get('/tts/voices', { params })
+}
+
+
+// Recruiter APIs
+export const generateJD = async (role, industry, seniority, skills) => {
+  return api.post('/recruiter/generate-jd', {
+    role,
+    industry,
+    seniority,
+    skills
+  })
 }
 
 // Health check

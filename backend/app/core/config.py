@@ -17,11 +17,16 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Resume Analyzer & Interview Prep"
     APP_VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"
     DEBUG: bool = Field(default=False, env="DEBUG")
 
     # Server
     HOST: str = Field(default="0.0.0.0", env="HOST")
     PORT: int = Field(default=8000, env="PORT")
+    
+    # Security
+    SECRET_KEY: str = Field(default="09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7", env="SECRET_KEY")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8 # 8 days
 
     # Paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent

@@ -247,15 +247,14 @@ export default function AnalysisPage() {
             {analysis.skills_match.map((match, idx) => (
               <div
                 key={idx}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  match.status === 'strong_match'
-                    ? 'bg-green-50 border border-green-200'
-                    : match.status === 'match'
+                className={`flex items-center justify-between p-3 rounded-lg ${match.status === 'strong_match'
+                  ? 'bg-green-50 border border-green-200'
+                  : match.status === 'match'
                     ? 'bg-blue-50 border border-blue-200'
                     : match.status === 'weak_match'
-                    ? 'bg-yellow-50 border border-yellow-200'
-                    : 'bg-red-50 border border-red-200'
-                }`}
+                      ? 'bg-yellow-50 border border-yellow-200'
+                      : 'bg-red-50 border border-red-200'
+                  }`}
               >
                 <div>
                   <span className="font-medium text-sm">{match.skill}</span>
@@ -264,15 +263,14 @@ export default function AnalysisPage() {
                   )}
                 </div>
                 <span
-                  className={`text-xs font-medium px-2 py-1 rounded ${
-                    match.status === 'strong_match'
-                      ? 'bg-green-200 text-green-800'
-                      : match.status === 'match'
+                  className={`text-xs font-medium px-2 py-1 rounded ${match.status === 'strong_match'
+                    ? 'bg-green-200 text-green-800'
+                    : match.status === 'match'
                       ? 'bg-blue-200 text-blue-800'
                       : match.status === 'weak_match'
-                      ? 'bg-yellow-200 text-yellow-800'
-                      : 'bg-red-200 text-red-800'
-                  }`}
+                        ? 'bg-yellow-200 text-yellow-800'
+                        : 'bg-red-200 text-red-800'
+                    }`}
                 >
                   {match.status.replace('_', ' ')}
                 </span>
@@ -332,26 +330,24 @@ export default function AnalysisPage() {
 
       {/* Hiring Recommendation - Show when JD is provided */}
       {analysis.hiring_recommendation && (
-        <div className={`rounded-xl border p-5 ${
-          analysis.hiring_recommendation.decision === 'strong_yes'
-            ? 'bg-green-50 border-green-300'
-            : analysis.hiring_recommendation.decision === 'yes'
+        <div className={`rounded-xl border p-5 ${analysis.hiring_recommendation.decision === 'strong_yes'
+          ? 'bg-green-50 border-green-300'
+          : analysis.hiring_recommendation.decision === 'yes'
             ? 'bg-green-50 border-green-200'
             : analysis.hiring_recommendation.decision === 'maybe'
-            ? 'bg-yellow-50 border-yellow-200'
-            : 'bg-red-50 border-red-200'
-        }`}>
+              ? 'bg-yellow-50 border-yellow-200'
+              : 'bg-red-50 border-red-200'
+          }`}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900">Hiring Recommendation</h3>
-            <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-              analysis.hiring_recommendation.decision === 'strong_yes'
-                ? 'bg-green-200 text-green-800'
-                : analysis.hiring_recommendation.decision === 'yes'
+            <span className={`px-3 py-1 rounded-full text-sm font-bold ${analysis.hiring_recommendation.decision === 'strong_yes'
+              ? 'bg-green-200 text-green-800'
+              : analysis.hiring_recommendation.decision === 'yes'
                 ? 'bg-green-100 text-green-700'
                 : analysis.hiring_recommendation.decision === 'maybe'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-red-100 text-red-700'
-            }`}>
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
               {analysis.hiring_recommendation.decision.replace('_', ' ').toUpperCase()}
             </span>
           </div>
@@ -662,14 +658,23 @@ export default function AnalysisPage() {
 
       {/* Action Button */}
       <div className="flex justify-center pt-4">
-        <button
-          onClick={() => navigate(`/interview/${resumeId}`, { state: { jobDescription } })}
-          className="flex items-center px-8 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <MessageSquare className="w-5 h-5 mr-2" />
-          Start Mock Interview
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate(`/verification/${resumeId}`)}
+            className="flex items-center px-8 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Award className="w-5 h-5 mr-2" />
+            Verify Identity
+          </button>
+          <button
+            onClick={() => navigate(`/interview/${resumeId}`, { state: { jobDescription } })}
+            className="flex items-center px-8 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Start Mock Interview
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </button>
+        </div>
       </div>
     </div>
   )

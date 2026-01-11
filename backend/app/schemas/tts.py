@@ -9,11 +9,9 @@ from enum import Enum
 
 class TTSProvider(str, Enum):
     """Available TTS providers"""
-    ELEVENLABS = "elevenlabs"
-    OPENAI = "openai"
+
     GOOGLE = "google"
-    AZURE = "azure"
-    EDGE = "edge"
+
 
 
 class AudioFormat(str, Enum):

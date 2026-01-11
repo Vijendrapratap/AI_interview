@@ -224,6 +224,27 @@ class ResumeAnalyzer:
             logger.error(f"Getting suggestions failed: {str(e)}")
             raise
 
+    async def analyze_gaps(self, resume_text: str) -> Dict:
+        """
+        Analyze resume for career gaps and inconsistencies.
+        """
+        prompt = self.prompts.get("gap_analysis_prompt", "").format(
+            resume_text=resume_text
+        )
+        
+        system_prompt = self.prompts.get("system_prompt", "")
+        
+        try:
+            result = await self.llm.generate_json(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=0.1
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Gap analysis failed: {str(e)}")
+            return {"error": str(e), "career_gaps": [], "timeline_issues": []}
+
     def _validate_result(self, result: Dict, has_jd: bool = False) -> Dict:
         """Ensure result has all required fields with defaults"""
         # Common defaults for all analyses

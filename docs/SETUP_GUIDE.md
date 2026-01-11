@@ -107,7 +107,7 @@ The frontend will be available at: http://localhost:3000
 - Add to `.env`: `ELEVENLABS_API_KEY=...`
 
 #### Free Options (No API Key)
-- Google TTS (gTTS): Built-in, uses `gtts` library
+
 - Edge TTS: Built-in, uses `edge-tts` library
 
 ---

@@ -88,7 +88,9 @@ class ReportGenerator:
                     "short_term": [],
                     "medium_term": []
                 }),
-                "interview_tips": result.get("interview_tips", [])
+                "interview_tips": result.get("interview_tips", []),
+                "verification_status": session_data.get("verification_status", {}),
+                "gap_analysis": session_data.get("gap_analysis", {})
             }
 
         except Exception as e:
