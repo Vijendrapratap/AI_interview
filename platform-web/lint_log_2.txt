@@ -1,0 +1,59 @@
+
+> platform-web@0.1.0 lint
+> eslint
+
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(auth)/login/page.tsx
+  122:24   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  132:17   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  140:29   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  140:74   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  140:143  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  143:65   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  143:137  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(dashboard)/dashboard/candidates/[id]/page.tsx
+  5:10  warning  'notFound' is defined but never used  @typescript-eslint/no-unused-vars
+  9:5   warning  'Mic' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(dashboard)/dashboard/candidates/page.tsx
+  6:18  warning  'Plus' is defined but never used            @typescript-eslint/no-unused-vars
+  6:24  warning  'MapPin' is defined but never used          @typescript-eslint/no-unused-vars
+  6:32  warning  'DollarSign' is defined but never used      @typescript-eslint/no-unused-vars
+  6:44  warning  'MoreHorizontal' is defined but never used  @typescript-eslint/no-unused-vars
+  6:60  warning  'Briefcase' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(dashboard)/dashboard/jobs/[id]/page.tsx
+  6:21  warning  'Clock' is defined but never used           @typescript-eslint/no-unused-vars
+  6:48  warning  'MoreHorizontal' is defined but never used  @typescript-eslint/no-unused-vars
+  6:71  warning  'Briefcase' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(dashboard)/dashboard/jobs/new/page.tsx
+  5:21  warning  'Upload' is defined but never used  @typescript-eslint/no-unused-vars
+  5:29  warning  'X' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(dashboard)/dashboard/notifications/page.tsx
+  1:10  warning  'Check' is defined but never used        @typescript-eslint/no-unused-vars
+  1:17  warning  'Clock' is defined but never used        @typescript-eslint/no-unused-vars
+  1:24  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(portal)/layout.tsx
+  1:10  warning  'Brain' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/(portal)/portal/page.tsx
+   12:58  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   66:15  warning  'topic' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  225:27  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/home/pratap/work/Resume_update_and_interview_prep/platform-web/src/app/interview/[id]/page.tsx
+   33:35  error    Unexpected any. Specify a different type                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+   73:18  warning  '_' is defined but never used                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  150:11  warning  The 'handleUserResponse' function makes the dependencies of useEffect Hook (at line 179) change on every render. Move it inside the useEffect callback. Alternatively, wrap the definition of 'handleUserResponse' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  177:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                               @typescript-eslint/ban-ts-comment
+  195:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  195:87  error    Unexpected any. Specify a different type                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  202:48  error    Unexpected any. Specify a different type                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  221:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+
+✖ 34 problems (14 errors, 20 warnings)
+

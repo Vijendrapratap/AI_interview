@@ -12,7 +12,8 @@ from app.services.llm.providers import (
     ClaudeProvider,
     GeminiProvider,
     OllamaProvider,
-    GroqProvider
+    GroqProvider,
+    OpenRouterProvider
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class LLMService:
         "claude": ClaudeProvider,
         "gemini": GeminiProvider,
         "ollama": OllamaProvider,
-        "groq": GroqProvider
+        "groq": GroqProvider,
+        "openrouter": OpenRouterProvider
     }
 
     def __init__(self, provider: Optional[str] = None, task: Optional[str] = None):
@@ -96,6 +98,10 @@ class LLMService:
         elif name == "groq":
             return GroqProvider(
                 model=config.get("model", "llama-3.1-70b-versatile")
+            )
+        elif name == "openrouter":
+            return OpenRouterProvider(
+                model=config.get("model", "deepseek/deepseek-chat")
             )
         else:
             raise ValueError(f"Unknown provider: {name}")

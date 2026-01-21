@@ -1,0 +1,31 @@
+Alice Wang
+Data Scientist
+Seattle, WA | alice.wang@email.com | linkedin.com/in/alicewang
+
+SUMMARY
+Data Scientist with 4 years of experience in machine learning, statistical modeling, and data visualization. Proficient in Python, SQL, and TensorFlow. Passionate about deriving actionable insights from complex datasets.
+
+EXPERIENCE
+
+Data Scientist | E-Commerce Giant | Seattle, WA
+Jul 2022 – Present
+- Developed a recommendation engine using collaborative filtering (TensorFlow) that increased average order value by 15%.
+- Built churn prediction models (XGBoost) to identify at-risk customers, leading to a 5% reduction in churn.
+- Conducted A/B tests to optimize website pricing strategies.
+- Visualized key performance metrics using Tableau and Matplotlib for executive dashboards.
+
+Junior Data Analyst | Retail Corp | Portland, OR
+Jun 2020 – Jun 2022
+- Cleaned and preprocessed large datasets using Pandas and SQL.
+- Performed exploratory data analysis (EDA) to identify sales trends and seasonality.
+- Automated weekly reporting processes using Python scripts.
+
+SKILLS
+- Languages: Python, R, SQL
+- ML/AI: TensorFlow, Scikit-learn, XGBoost, Pandas, NumPy
+- Visualization: Tableau, Matplotlib, Seaborn
+- Tools: Jupyter, Git, AWS (S3, Redshift)
+
+EDUCATION
+Master of Science in Data Science
+University of Washington | May 2020

@@ -5,8 +5,7 @@ Interview Engine - AI-powered mock interviewer
 from typing import Dict, Optional, List
 import logging
 
-from app.services.llm import LLMService
-from app.core.config import model_config
+from app.core.config import model_config, settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,10 @@ class InterviewEngine:
     """
 
     def __init__(self):
-        self.llm = LLMService(task="interview_questions")
+        # Prefer OpenRouter if configured
+        provider = "openrouter" if settings.OPENROUTER_API_KEY else None
+        
+        self.llm = LLMService(provider=provider, task="interview_questions")
         self.prompts = model_config.get_prompt("interview")
 
         # Session state

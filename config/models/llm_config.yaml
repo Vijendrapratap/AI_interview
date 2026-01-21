@@ -2,7 +2,7 @@
 # Change the 'default' value to switch between providers
 # Add your API keys in the .env file
 
-default: "groq"  # Options: openai, claude, gemini, ollama, groq
+default: "openrouter"  # Options: openai, claude, gemini, ollama, groq, openrouter
 
 providers:
   openai:
@@ -41,6 +41,14 @@ providers:
     base_url: "https://api.groq.com/openai/v1"
     temperature: 0.7
     max_tokens: 4096
+    timeout: 60
+
+  openrouter:
+    model: "zhipu/glm-4-plus" # Or moonshotai/moonshot-v1-8k for Kimi
+    api_key_env: "OPENROUTER_API_KEY"
+    base_url: "https://openrouter.ai/api/v1"
+    temperature: 0.7
+    max_tokens: 8192
     timeout: 60
 
 # Model selection for specific tasks (override default)

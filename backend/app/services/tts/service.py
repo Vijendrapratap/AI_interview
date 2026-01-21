@@ -58,6 +58,8 @@ class TTSService:
             return await self._synthesize_google(text, provider_config)
         elif provider == "edge":
             return await self._synthesize_edge(text, voice, provider_config)
+        elif provider == "kokoro":
+            return await self._synthesize_kokoro(text, voice, provider_config, speed)
         else:
             raise ValueError(f"Unknown TTS provider: {provider}")
 
@@ -158,6 +160,17 @@ class TTSService:
                 {"id": "en-GB-SoniaNeural", "name": "Sonia (UK)", "provider": "edge", "gender": "female"}
             ]
             voices.extend(edge_voices)
+
+        # Kokoro voices
+        if not provider or provider == "kokoro":
+             kokoro_voices = [
+                {"id": "af_heart", "name": "Heart", "provider": "kokoro", "gender": "female"},
+                {"id": "af_bella", "name": "Bella", "provider": "kokoro", "gender": "female"},
+                {"id": "af_nicole", "name": "Nicole", "provider": "kokoro", "gender": "female"},
+                {"id": "am_michael", "name": "Michael", "provider": "kokoro", "gender": "male"},
+                {"id": "am_adam", "name": "Adam", "provider": "kokoro", "gender": "male"}
+             ]
+             voices.extend(kokoro_voices)
 
         return voices
 
@@ -324,6 +337,7 @@ class TTSService:
         except ImportError:
             raise ImportError("edge-tts not installed. Run: pip install edge-tts")
 
+
     async def _transcribe_whisper(
         self,
         audio_data: bytes,
@@ -356,3 +370,51 @@ class TTSService:
             response.raise_for_status()
             data = response.json()
             return data.get("text", "")
+            
+    async def _synthesize_kokoro(
+        self,
+        text: str,
+        voice: Optional[str],
+        config: Dict,
+        speed: float = 1.0
+    ) -> bytes:
+        """Synthesize using Kokoro (Local)"""
+        try:
+            from kokoro import KPipeline
+            import soundfile as sf
+            import numpy as np
+            
+            # Initialize pipeline (singleton-ish or cached ideally, but for now just init)
+            # 'a' is for American English
+            pipeline = KPipeline(lang_code='a') 
+            
+            # Default voice
+            voice = voice or config.get("voice", "af_heart")
+            
+            # Generate audio
+            # generator returns (graphemes, phonemes, audio)
+            generator = pipeline(text, voice=voice, speed=speed, split_pattern=r'\n+')
+            
+            all_audio = []
+            for _, _, audio in generator:
+                all_audio.append(audio)
+                
+            if not all_audio:
+                raise ValueError("No audio generated")
+                
+            # Concatenate all audio segments
+            full_audio = np.concatenate(all_audio)
+            
+            # Convert to bytes (WAV format)
+            fp = io.BytesIO()
+            sf.write(fp, full_audio, 24000, format='WAV')
+            fp.seek(0)
+            return fp.read()
+            
+        except ImportError:
+            raise ImportError("kokoro not installed. Run: pip install kokoro soundfile")
+        except Exception as e:
+            logger.error(f"Kokoro synthesis error: {str(e)}")
+            raise
+
+

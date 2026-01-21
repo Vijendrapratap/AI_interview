@@ -1,0 +1,33 @@
+Robert Garcia
+DevOps Engineer
+Austin, TX | robert.garcia@email.com | github.com/rgarcia
+
+SUMMARY
+DevOps Engineer with 6 years of experience in cloud infrastructure, automation, and CI/CD. Expert in AWS, Terraform, and Jenkins. Committed to improving system reliability and developer productivity.
+
+EXPERIENCE
+
+Senior DevOps Engineer | Cloud Tech | Austin, TX
+Aug 2021 – Present
+- Managed AWS infrastructure for microservices architecture using Terraform (IaC).
+- Implemented fully automated CI/CD pipelines using Jenkins and GitHub Actions, reducing deployment time by 60%.
+- Configured monitoring and alerting systems using Prometheus and Grafana.
+- Managed Kubernetes clusters (EKS) for container orchestration.
+
+DevOps Engineer | FinTech Startup | Dallas, TX
+May 2018 – Jul 2021
+- Migrated on-premise servers to AWS Cloud.
+- Automating server provisioning using Ansible.
+- Set up ELK stack for centralized logging.
+- Collaborated with development teams to troubleshoot build and deployment issues.
+
+SKILLS
+- Cloud: AWS, Azure
+- IaC: Terraform, CloudFormation
+- CI/CD: Jenkins, GitLab CI, GitHub Actions
+- Containerization: Docker, Kubernetes
+- Scripting: Bash, Python
+
+EDUCATION
+Bachelor of Science in Information Technology
+Texas A&M University | May 2018

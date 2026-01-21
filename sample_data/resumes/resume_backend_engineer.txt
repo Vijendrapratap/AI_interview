@@ -1,0 +1,33 @@
+John Doe
+Senior Backend Engineer
+San Francisco, CA | john.doe@email.com | (555) 123-4567 | github.com/johndoe
+
+SUMMARY
+Experienced Backend Engineer with 7+ years of expertise in building scalable microservices, API design, and cloud infrastructure. Proficient in Python, Go, and AWS. Proven track record of optimizing system performance and leading technical teams.
+
+EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | San Francisco, CA
+Jan 2021 – Present
+- Architected and implemented a high-throughput payment processing service handling $5M+ daily transactions using Python (FastAPI) and Kafka.
+- Reduced API latency by 40% through database optimization (PostgreSQL) and caching strategies (Redis).
+- Led the migration of legacy monolithic applications to a microservices architecture on AWS (EKS), improving deployment frequency by 200%.
+- Mentored 4 junior engineers, conducting code reviews and technical design sessions.
+
+Software Engineer | StartUp Solutions | Austin, TX
+Jun 2017 – Dec 2020
+- Developed RESTful APIs for a SaaS platform serving 50k+ users using Django and DRF.
+- Integrated third-party APIs (Stripe, Twilio) to enhance platform functionality.
+- Implemented CI/CD pipelines using Jenkins and Docker, reducing build times by 50%.
+- Collaborated with product managers to define requirements and deliver features on time.
+
+SKILLS
+- Languages: Python, Go, SQL, JavaScript
+- Frameworks: FastAPI, Django, Flask, Gin
+- Cloud & DevOps: AWS (EC2, S3, RDS, EKS), Docker, Kubernetes, Terraform, Jenkins
+- Databases: PostgreSQL, MongoDB, Redis
+- Tools: Git, Jira, Postman
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Texas at Austin | May 2017

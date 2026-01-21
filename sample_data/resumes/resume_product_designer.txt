@@ -1,0 +1,31 @@
+Sarah Smith
+Product Designer
+New York, NY | sarah.smith@email.com | portfolio.sarahsmith.com
+
+SUMMARY
+Creative Product Designer with 5 years of experience in UI/UX design, prototyping, and user research. Passionate about creating intuitive and visually stunning digital experiences. expert in Figma and Adobe Creative Suite.
+
+EXPERIENCE
+
+Product Designer | Creative Agency | New York, NY
+Mar 2022 – Present
+- Led the end-to-end design of a mobile banking app, increasing user component by 35%.
+- Conducted user research and usability testing to validate design decisions.
+- Created comprehensive design systems and style guides to ensure consistency across products.
+- Collaborated closely with developers to ensure accurate implementation of designs.
+
+UI/UX Designer | Digital Studio | Brooklyn, NY
+Jun 2018 – Feb 2022
+- Designed responsive websites and mobile interfaces for various clients in e-commerce and healthcare.
+- Produced high-fidelity wireframes and interactive prototypes using Figma and InVision.
+- Facilitated design workshops and sprints to brainstorm solutions with stakeholders.
+
+SKILLS
+- Design: UI Design, UX Research, Wireframing, Prototyping, Design Systems
+- Tools: Figma, Sketch, Adobe XD, Photoshop, Illustrator
+- Code: HTML, CSS, Basic JavaScript
+- Soft Skills: Empathy, Communication, Collaboration
+
+EDUCATION
+Bachelor of Fine Arts in Interaction Design
+Parsons School of Design | May 2018

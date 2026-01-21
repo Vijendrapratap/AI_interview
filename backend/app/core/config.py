@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: Optional[str] = Field(default=None, env="ELEVENLABS_API_KEY")
     GROQ_API_KEY: Optional[str] = Field(default=None, env="GROQ_API_KEY")
     AZURE_SPEECH_KEY: Optional[str] = Field(default=None, env="AZURE_SPEECH_KEY")
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None, env="OPENROUTER_API_KEY")
 
     # Database
     DATABASE_URL: str = Field(

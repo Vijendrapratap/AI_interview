@@ -1,0 +1,29 @@
+Job Title: Senior Backend Engineer
+Department: Engineering
+Location: Remote / San Francisco, CA
+Type: Full-time
+
+About Us:
+We are a fast-growing fintech company dedicated to revolutionizing the way people manage their finances. We are looking for a talented Senior Backend Engineer to join our core infrastructure team.
+
+Responsibilities:
+- Design, build, and maintain high-performance, reusable, and reliable Python and Go code.
+- Architect scalable microservices and API endpoints using FastAPI.
+- diverse cloud infrastructure on AWS (EKS, RDS, S3).
+- Optimize database queries and schema designs for PostgreSQL / NoSQL databases.
+- Collaborate with frontend developers and product managers to deliver seamless user experiences.
+- Mentor junior engineers and champion coding best practices.
+
+Requirements:
+- 5+ years of experience in backend development.
+- Strong proficiency in Python (FastAPI/Django) or Go.
+- Experience with cloud platforms, preferably AWS.
+- Solid understanding of containerization (Docker) and orchestration (Kubernetes).
+- Familiarity with SQL and NoSQL databases (PostgreSQL, Redis, MongoDB).
+- Experience with message queues (Kafka, RabbitMQ) is a plus.
+- Strong problem-solving skills and ability to work in a fast-paced environment.
+
+Benefits:
+- Competitive salary and equity package.
+- Comprehensive health, dental, and vision insurance.
+- Flexible PTO and remote work options.

@@ -1,0 +1,26 @@
+Job Title: Product Designer
+Department: Design
+Location: New York, NY (Hybrid)
+Type: Full-time
+
+About Run:
+We are a creative studio building next-generation digital products. We value aesthetics, usability, and innovation. We are looking for a Product Designer who can turn complex problems into simple, beautiful solutions.
+
+Responsibilities:
+- Lead design projects from concept to launch.
+- Create user flows, wireframes, prototypes, and high-fidelity mockups.
+- Conduct user research and usability testing to inform design decisions.
+- Maintain and evolve our internal design system.
+- Collaborate with engineers and product managers to ensure high-quality implementation.
+
+Requirements:
+- 3+ years of experience in product design (UI/UX).
+- Strong portfolio showcasing your design process and visual skills.
+- Proficiency in Figma, Sketch, or Adobe XD.
+- Experience with prototyping tools (ProtoPie, Principle).
+- Basic understanding of frontend technologies (HTML/CSS) is a plus.
+- Excellent communication and storytelling skills.
+
+Nice to Have:
+- Experience in motion design.
+- Illustration skills.

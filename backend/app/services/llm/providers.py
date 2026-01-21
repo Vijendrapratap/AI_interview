@@ -373,3 +373,13 @@ class GroqProvider(BaseLLMProvider):
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"]
+
+class OpenRouterProvider(OpenAIProvider):
+    """OpenRouter provider (OpenAI compatible)"""
+    
+    def __init__(self, model: str = "openai/gpt-4o", base_url: str = "https://openrouter.ai/api/v1"):
+        self.model = model
+        self.base_url = base_url
+        self.api_key = get_api_key("OPENROUTER_API_KEY")
+        if not self.api_key:
+            raise ValueError("OpenRouter API key not found. Please set OPENROUTER_API_KEY.")

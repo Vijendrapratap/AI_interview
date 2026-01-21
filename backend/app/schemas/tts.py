@@ -11,6 +11,10 @@ class TTSProvider(str, Enum):
     """Available TTS providers"""
 
     GOOGLE = "google"
+    OPENAI = "openai"
+    ELEVENLABS = "elevenlabs"
+    EDGE = "edge"
+    KOKORO = "kokoro"
 
 
 
