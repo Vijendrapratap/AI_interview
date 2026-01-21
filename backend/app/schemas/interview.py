@@ -62,6 +62,7 @@ class InterviewResponseRequest(BaseModel):
     """Submit response to a question"""
     session_id: str
     response: str = Field(..., min_length=10)
+    audio_analytics: Optional[Dict[str, float]] = None # New field for voice metrics
 
 
 class ResponseScores(BaseModel):

@@ -20,11 +20,13 @@ from app.schemas.interview import (
 from app.services.interview.engine import InterviewEngine
 from app.services.tts.service import TTSService
 from app.services.analytics.behavioral import BehavioralAnalytics
+from app.services.analytics.audio import AudioAnalyzer
 from app.api.v1.endpoints.resume import resume_storage
 from app.api.v1.endpoints.analysis import analysis_storage
 
-# Initialize behavioral analytics
+# Initialize services
 behavioral_analyzer = BehavioralAnalytics()
+audio_analyzer = AudioAnalyzer()
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -154,7 +156,8 @@ async def submit_response(request: InterviewResponseRequest):
         evaluation = await engine.evaluate_response(
             question=current_question,
             response=request.response,
-            resume_text=resume_storage[session["resume_id"]]["text_content"]
+            resume_text=resume_storage[session["resume_id"]]["text_content"],
+            audio_analytics=request.audio_analytics
         )
 
         # Behavioral analytics on the response
@@ -303,18 +306,22 @@ async def submit_audio_response(
         raise HTTPException(status_code=400, detail="Interview is not in progress")
 
     try:
-        # Save audio file temporarily
+        # Save audio file temporarily (or just pass bytes)
         audio_content = await audio.read()
 
-        # Transcribe audio
+        # 1. Analyze Audio (Parallelizable)
+        audio_metrics = audio_analyzer.analyze(audio_content)
+
+        # 2. Transcribe Audio
         tts_service = TTSService()
         transcription = await tts_service.transcribe_audio(audio_content)
 
-        # Process as text response
+         # Process as text response with added analytics
         return await submit_response(
             InterviewResponseRequest(
                 session_id=session_id,
-                response=transcription
+                response=transcription,
+                audio_analytics=audio_metrics
             )
         )
 

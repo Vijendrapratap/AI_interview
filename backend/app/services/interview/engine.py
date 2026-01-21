@@ -169,7 +169,8 @@ class InterviewEngine:
         self,
         question: Dict,
         response: str,
-        resume_text: str
+        resume_text: str,
+        audio_analytics: Optional[Dict] = None
     ) -> Dict:
         """
         Evaluate candidate's response.
@@ -178,18 +179,24 @@ class InterviewEngine:
             question: The question that was asked
             response: Candidate's response
             resume_text: Resume for context
+            audio_analytics: Voice metrics (if voice response)
 
         Returns:
             Dict with evaluation results
         """
         system_prompt = self.prompts.get("interviewer_system_prompt", "")
+        
+        # Inject voice metrics into response for LLM context
+        contextualized_response = response
+        if audio_analytics:
+            contextualized_response += f"\n\n[Voice Analysis]:\nConfidence: {audio_analytics.get('confidence_score')}/100\nPace: {audio_analytics.get('speech_ratio', 0)*100:.0f}% Speech Density\nStability: {audio_analytics.get('volume_stability', 0)*100:.0f}%"
 
         prompt = self.prompts.get("response_evaluation_prompt", "").format(
             question=question.get("question", ""),
             question_type=question.get("question_type", ""),
             topic=question.get("topic", ""),
             expected_elements=str(question.get("expected_elements", [])),
-            response=response,
+            response=contextualized_response,
             resume_summary=self._summarize_text(resume_text, 500)
         )
 
