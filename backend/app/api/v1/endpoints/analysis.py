@@ -26,7 +26,10 @@ analysis_storage = {}
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_resume(request: AnalysisRequest):
     """
-    Perform comprehensive resume analysis.
+    Perform comprehensive resume analysis with enhanced extraction.
+
+    Uses LLM for deep analysis and structured extraction for accurate
+    company names, dates, and career analytics.
 
     Optionally provide a job description for targeted analysis.
     """
@@ -39,11 +42,12 @@ async def analyze_resume(request: AnalysisRequest):
     try:
         analyzer = ResumeAnalyzer()
 
-        # Perform analysis
-        analysis_result = await analyzer.analyze(
+        # Use enhanced analysis for better extraction (includes structured experience, career analytics)
+        analysis_result = await analyzer.analyze_enhanced(
             resume_text=resume_data["text_content"],
             job_description=request.job_description,
-            analysis_type=request.analysis_type
+            analysis_type=request.analysis_type,
+            include_smart_questions=True
         )
 
         # Store analysis result

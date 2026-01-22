@@ -42,6 +42,15 @@ This platform prioritizes privacy.
 *   **Local Voice**: Voice synthesis (Kokoro) runs entirely on your machine (optional).
 *   **Private Keys**: API keys are stored securely in your local environment variables.
 
+## 🔐 Demo Credentials
+
+To try the platform, use these test accounts:
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Candidate** | `user@example.com` | `user123` |
+| **Recruiter** | `recruiter@example.com` | `recruiter123` |
+
 ## 📦 Service Flow
 
 1.  **Upload**: User uploads resume -> Backend parses text -> LLM analyzes structure.

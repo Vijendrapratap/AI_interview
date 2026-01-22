@@ -1,22 +1,42 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, FileText, CheckCircle, ArrowRight, Play, Loader2 } from "lucide-react"
+import { Upload, FileText, CheckCircle, ArrowRight, Play, Loader2, BarChart2, TrendingUp, Target, MessageSquare, RotateCcw } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAppStore } from "@/lib/store"
 
 export default function CandidatePortalPage() {
     const router = useRouter()
+
+    // Get persisted state from store
+    const resumeFileInfo = useAppStore((state) => state.resumeFileInfo)
+    const analysisResult = useAppStore((state) => state.analysisResult)
+    const jdText = useAppStore((state) => state.jdText)
+    const setResumeFileInfo = useAppStore((state) => state.setResumeFileInfo)
+    const setAnalysisResult = useAppStore((state) => state.setAnalysisResult)
+    const setJdText = useAppStore((state) => state.setJdText)
+    const clearAnalysis = useAppStore((state) => state.clearAnalysis)
+
+    // Local state for file object (can't be persisted) and UI
     const [resumeFile, setResumeFile] = useState<File | null>(null)
-    const [jdText, setJdText] = useState("")
     const [isAnalyzing, setIsAnalyzing] = useState(false)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [analysisResult, setAnalysisResult] = useState<any>(null)
     const [interviewTopic, setInterviewTopic] = useState("")
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setResumeFile(e.target.files[0])
+            const file = e.target.files[0]
+            setResumeFile(file)
+            setResumeFileInfo({ name: file.name, size: file.size })
+            // Clear previous analysis when new file is uploaded
+            setAnalysisResult(null)
         }
+    }
+
+    const handleStartOver = () => {
+        clearAnalysis()
+        setResumeFile(null)
+        setInterviewTopic("")
     }
 
     const startAnalysis = async () => {
@@ -32,26 +52,58 @@ export default function CandidatePortalPage() {
                 method: "POST",
                 body: formData
             })
+
+            if (!uploadRes.ok) {
+                throw new Error("Failed to upload resume")
+            }
+
             const uploadData = await uploadRes.json()
             const resumeId = uploadData.id
 
-            // 2. Mock Analysis (since backend might need more args or be split)
-            // Real flow: Call Analyze Endpoint. For now, we simulate a result or call the real endpoint if ready.
-            // Let's assume we proceed to just showing "Ready for Interview" and some mock scores if backend is complex.
-            // Actually, let's try to call the real analyze endpoint if we can.
-            // But to save time and ensure robustness for this demo content:
-
-            setTimeout(() => {
-                setAnalysisResult({
-                    resumeId: resumeId,
-                    score: jdText ? 78 : 85, // Mock score logic
-                    fitScore: jdText ? 65 : null,
-                    topSkills: ["Python", "React", "System Design"],
-                    missingWeb: ["GraphQL", "AWS"],
-                    suggestions: ["Add more quantifiable metrics", "Highlight leadership experience"]
+            // 2. Call real analysis endpoint
+            const analysisRes = await fetch("http://localhost:8000/api/v1/analysis/analyze", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    resume_id: resumeId,
+                    job_description: jdText || null,
+                    analysis_type: "comprehensive"
                 })
-                setIsAnalyzing(false)
-            }, 2000)
+            })
+
+            if (!analysisRes.ok) {
+                throw new Error("Failed to analyze resume")
+            }
+
+            const analysisData = await analysisRes.json()
+
+            // Extract top skills from sections or keywords
+            const topSkills = analysisData.keywords?.technical_skills ||
+                              analysisData.keywords?.found_keywords?.technical ||
+                              []
+            const missingSkills = analysisData.keywords?.missing_keywords || []
+            const suggestions = analysisData.improvements || []
+
+            const result = {
+                resumeId: resumeId,
+                analysisId: analysisData.analysis_id,
+                score: analysisData.overall_score || 0,
+                fitScore: analysisData.jd_match_score || null,
+                topSkills: Array.isArray(topSkills) ? topSkills.slice(0, 5) : [],
+                missingSkills: Array.isArray(missingSkills) ? missingSkills.slice(0, 5) : [],
+                suggestions: Array.isArray(suggestions) ? suggestions.slice(0, 3) : [],
+                atsScore: analysisData.ats_score,
+                contentScore: analysisData.content_score,
+                formatScore: analysisData.format_score,
+                sections: analysisData.sections,
+                keywords: analysisData.keywords,
+                improvements: analysisData.improvements
+            }
+
+            setAnalysisResult(result)
+            setIsAnalyzing(false)
 
         } catch (err) {
             console.error("Analysis failed", err)
@@ -62,15 +114,13 @@ export default function CandidatePortalPage() {
 
     const startInterview = () => {
         if (!analysisResult?.resumeId) return
-
-        // If no JD, we need a topic
-        // const topic = jdText ? "Job Role" : (interviewTopic || "General Technical Interview")
-
-        // In a real app, we'd save the JD context to the backend for this session.
-        // For now, we just redirect to the interview page.
-        // We'll pass the resumeId.
         router.push(`/interview/${analysisResult.resumeId}`)
     }
+
+    // Check if we have a persisted file (from store) or a new file
+    const hasFile = resumeFile || resumeFileInfo
+    const displayFileName = resumeFile?.name || resumeFileInfo?.name
+    const displayFileSize = resumeFile?.size || resumeFileInfo?.size
 
     return (
         <div className="grid lg:grid-cols-2 gap-8">
@@ -87,12 +137,13 @@ export default function CandidatePortalPage() {
                             accept=".pdf,.docx,.txt"
                             onChange={handleFileUpload}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            disabled={!!analysisResult}
                         />
-                        {resumeFile ? (
+                        {hasFile ? (
                             <div className="flex flex-col items-center text-blue-600">
                                 <CheckCircle size={32} className="mb-2" />
-                                <span className="font-medium">{resumeFile.name}</span>
-                                <span className="text-sm text-gray-500">{(resumeFile.size / 1024).toFixed(0)} KB</span>
+                                <span className="font-medium">{displayFileName}</span>
+                                <span className="text-sm text-gray-500">{displayFileSize ? (displayFileSize / 1024).toFixed(0) : 0} KB</span>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center text-gray-400">
@@ -113,18 +164,22 @@ export default function CandidatePortalPage() {
                         value={jdText}
                         onChange={(e) => setJdText(e.target.value)}
                         placeholder="Paste the Job Description here to get a 'Fit Score' and tailored interview questions..."
-                        className="w-full h-40 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm"
+                        className="w-full h-40 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm text-gray-900 bg-white"
                     />
                 </section>
 
                 <button
                     onClick={startAnalysis}
-                    disabled={!resumeFile || isAnalyzing}
+                    disabled={!resumeFile || isAnalyzing || !!analysisResult}
                     className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isAnalyzing ? (
                         <>
                             <Loader2 className="animate-spin" /> Analyzing...
+                        </>
+                    ) : analysisResult ? (
+                        <>
+                            <CheckCircle size={20} /> Analysis Complete
                         </>
                     ) : (
                         <>
@@ -132,6 +187,15 @@ export default function CandidatePortalPage() {
                         </>
                     )}
                 </button>
+
+                {analysisResult && (
+                    <button
+                        onClick={handleStartOver}
+                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                    >
+                        <RotateCcw size={18} /> Start Over with New Resume
+                    </button>
+                )}
             </div>
 
             {/* Results Section */}
@@ -188,6 +252,59 @@ export default function CandidatePortalPage() {
                                         </ul>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* View Detailed Reports */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <BarChart2 size={20} className="text-blue-600" />
+                                View Detailed Reports
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Get in-depth analysis of your resume, skills, career trajectory, and interview performance.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Link
+                                    href="/portal/reports/resume"
+                                    className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors border border-purple-100"
+                                >
+                                    <FileText size={18} className="text-purple-600" />
+                                    <div>
+                                        <div className="text-sm font-medium text-purple-900">Resume Analysis</div>
+                                        <div className="text-xs text-purple-600">Section breakdown, ATS</div>
+                                    </div>
+                                </Link>
+                                <Link
+                                    href="/portal/reports/interview"
+                                    className="flex items-center gap-2 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-100"
+                                >
+                                    <MessageSquare size={18} className="text-indigo-600" />
+                                    <div>
+                                        <div className="text-sm font-medium text-indigo-900">Interview</div>
+                                        <div className="text-xs text-indigo-600">Q&A feedback, tips</div>
+                                    </div>
+                                </Link>
+                                <Link
+                                    href="/portal/reports/career"
+                                    className="flex items-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-100"
+                                >
+                                    <TrendingUp size={18} className="text-blue-600" />
+                                    <div>
+                                        <div className="text-sm font-medium text-blue-900">Career Analytics</div>
+                                        <div className="text-xs text-blue-600">Gaps, stability, trajectory</div>
+                                    </div>
+                                </Link>
+                                <Link
+                                    href="/portal/reports/skills"
+                                    className="flex items-center gap-2 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-colors border border-green-100"
+                                >
+                                    <Target size={18} className="text-green-600" />
+                                    <div>
+                                        <div className="text-sm font-medium text-green-900">Skills Assessment</div>
+                                        <div className="text-xs text-green-600">Levels, gaps, roadmap</div>
+                                    </div>
+                                </Link>
                             </div>
                         </div>
 

@@ -72,7 +72,7 @@ export default function LoginPage() {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 bg-white"
                             placeholder="name@company.com"
                         />
                     </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all pr-10 text-gray-900 bg-white"
                                 placeholder="••••••••"
                             />
                             <button
@@ -141,8 +141,8 @@ export default function LoginPage() {
                             &quot;Recruiter.ai has transformed how we hire. We&apos;ve cut our screening time by 75% and found better candidates faster.&quot;
                         </p>
                         <footer>
-                            <p className="text-gray-600 italic">&quot;The automated screening saved us hundreds of hours. Highly recommended!&quot;</p>
-                            <div className="mt-4 font-bold text-gray-900">- Sarah&apos;s Feedback, Tech Lead</div>
+                            <p className="text-gray-200 italic">&quot;The automated screening saved us hundreds of hours. Highly recommended!&quot;</p>
+                            <div className="mt-4 font-bold text-white">- Sarah&apos;s Feedback, Tech Lead</div>
                         </footer>
                     </blockquote>
                 </div>
