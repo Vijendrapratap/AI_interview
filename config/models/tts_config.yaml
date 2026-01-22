@@ -1,7 +1,29 @@
 # TTS (Text-to-Speech) Configuration
 # Change 'default' to switch between providers
 
-default: "edge"  # Options: elevenlabs, openai, google, azure, edge
+default: "kokoro"  # Options: elevenlabs, openai, google, edge, kokoro
+
+# =============================================================================
+# RECOMMENDED OPEN-SOURCE TTS MODELS (2025-2026)
+# =============================================================================
+# Best Quality:
+#   - Kokoro (82M params, #1 on HuggingFace TTS Arena, Apache 2.0)
+#   - Dia 1.6B (Best for dialogue, supports non-verbal audio)
+#   - OpenAudio S1 (Best multilingual, 2M+ hours training)
+#
+# Best for Voice Cloning:
+#   - XTTS-v2 (6-second sample cloning, 20+ languages)
+#   - OpenVoice (Good quality cloning)
+#
+# Best for Real-time:
+#   - Kokoro (210x real-time on GPU, 3-11x on CPU)
+#   - Piper (Very fast, good for edge devices)
+#   - MeloTTS (Fast, good multilingual)
+#
+# Best Free Cloud:
+#   - Edge TTS (Microsoft neural voices, free)
+#   - Google TTS (gTTS, basic quality)
+# =============================================================================
 
 # Interview-specific TTS settings
 interview_tts:
@@ -87,15 +109,68 @@ voice_profiles:
 
 
 # STT (Speech-to-Text) Configuration
-stt:
-  default: "browser"  # Options: whisper, google, azure, browser
+# =============================================================================
+# RECOMMENDED OPEN-SOURCE STT MODELS (2025-2026)
+# =============================================================================
+# Best Accuracy:
+#   - NVIDIA Canary Qwen 2.5B (#1 on HuggingFace, 5.63% WER)
+#   - IBM Granite Speech 3.3 (8B params, 5.85% WER)
+#   - Whisper Large V3 (Gold standard, 99+ languages)
+#
+# Best Speed:
+#   - Faster-Whisper (CTranslate2 optimized, 4x faster than Whisper)
+#   - Whisper Large V3 Turbo (6x faster, minimal accuracy loss)
+#   - NVIDIA Parakeet TDT (RTFx > 2000, fastest)
+#
+# Best for Real-time:
+#   - Faster-Whisper with VAD (voice activity detection)
+#   - Deepgram Nova-2 (API, very fast)
+#
+# Best Offline/Edge:
+#   - Vosk (lightweight, CPU-friendly)
+#   - Whisper.cpp (C++ optimized)
+#   - Moonshine (tiny models for mobile/IoT)
+# =============================================================================
 
+stt:
+  default: "faster_whisper"  # Options: whisper, faster_whisper, google, browser
+
+  # Faster-Whisper: CTranslate2 optimized Whisper (RECOMMENDED)
+  # 4x faster than original Whisper with same accuracy
+  faster_whisper:
+    # Model sizes: tiny, base, small, medium, large-v2, large-v3
+    # Recommended: large-v3 for accuracy, medium for speed/accuracy balance
+    model_size: "large-v3"
+    device: "auto"  # auto, cuda, cpu
+    compute_type: "float16"  # float16, int8, int8_float16
+    language: "en"  # null for auto-detect
+    beam_size: 5
+    vad_filter: true  # Voice Activity Detection for better accuracy
+    vad_parameters:
+      min_silence_duration_ms: 500
+      speech_pad_ms: 400
+    # Download models automatically from HuggingFace
+    download_root: null  # Uses default cache
+
+  # Original OpenAI Whisper (via API)
+  whisper:
+    api_key_env: "OPENAI_API_KEY"
+    model: "whisper-1"
+
+  # Google Speech-to-Text
   google:
     api_key_env: "GOOGLE_SPEECH_KEY"
     language_code: "en-US"
 
+  # Browser-based (Web Speech API)
   browser:
     # Uses Web Speech API (free, runs in browser)
     language: "en-US"
     continuous: true
     interim_results: true
+
+  # Vosk (lightweight offline)
+  vosk:
+    model_path: null  # Path to vosk model or will download
+    language: "en-us"
+    sample_rate: 16000

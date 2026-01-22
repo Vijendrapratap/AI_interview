@@ -4,6 +4,26 @@
 
 default: "openrouter"  # Options: openai, claude, gemini, ollama, groq, openrouter
 
+# =============================================================================
+# RECOMMENDED OPEN-SOURCE MODELS (2025-2026)
+# =============================================================================
+# Best Reasoning Models (Chain-of-Thought):
+#   - deepseek-ai/deepseek-r1 (Best overall reasoning, matches o1)
+#   - deepseek-ai/deepseek-r1-distill-qwen-32b (Lighter, outperforms o1-mini)
+#   - qwen/qwen3-235b-a22b (Best for complex tasks)
+#   - deepseek-ai/deepseek-v3 (Great general purpose + reasoning)
+#
+# Best for Speed + Quality Balance:
+#   - deepseek-ai/deepseek-r1-distill-qwen-8b (Fast, beats Gemini 2.5 Flash)
+#   - qwen/qwen3-32b (Excellent quality)
+#   - meta-llama/llama-3.3-70b-instruct (Fast, reliable)
+#
+# Best Local Models (Ollama):
+#   - deepseek-r1:8b or deepseek-r1:32b
+#   - qwen2.5:32b
+#   - llama3.3:70b
+# =============================================================================
+
 providers:
   openai:
     model: "gpt-4o"
@@ -29,31 +49,93 @@ providers:
     timeout: 60
 
   ollama:
-    model: "llama3.1"
+    # Recommended: deepseek-r1:8b for reasoning, qwen2.5:32b for general
+    model: "deepseek-r1:8b"
     base_url: "http://localhost:11434"
     temperature: 0.7
     max_tokens: 4096
     timeout: 120
+    # Alternative models to try:
+    # - qwen2.5:32b (excellent general purpose)
+    # - llama3.3:70b (if you have the VRAM)
+    # - deepseek-r1:32b (best reasoning if resources allow)
+    # - phi4:14b (small but capable)
 
   groq:
-    model: "llama-3.3-70b-versatile"
+    # Groq offers fast inference for open-source models
+    # Recommended: llama-3.3-70b-versatile or deepseek-r1-distill-llama-70b
+    model: "deepseek-r1-distill-llama-70b"
     api_key_env: "GROQ_API_KEY"
     base_url: "https://api.groq.com/openai/v1"
     temperature: 0.7
     max_tokens: 4096
     timeout: 60
+    # Alternative models on Groq:
+    # - llama-3.3-70b-versatile (fast, reliable)
+    # - mixtral-8x7b-32768 (good balance)
+    # - gemma2-9b-it (lightweight)
 
   openrouter:
-    model: "zhipu/glm-4-plus" # Or moonshotai/moonshot-v1-8k for Kimi
+    # OpenRouter provides access to many models
+    # Recommended for reasoning: deepseek/deepseek-r1
+    # Recommended for general: deepseek/deepseek-chat-v3 or qwen/qwen-2.5-72b-instruct
+    model: "deepseek/deepseek-r1"
     api_key_env: "OPENROUTER_API_KEY"
     base_url: "https://openrouter.ai/api/v1"
     temperature: 0.7
     max_tokens: 8192
-    timeout: 60
+    timeout: 90
+    # Recommended alternatives on OpenRouter:
+    # BEST REASONING (thinking models):
+    # - deepseek/deepseek-r1 (RECOMMENDED - best open reasoning model)
+    # - deepseek/deepseek-r1-distill-qwen-32b (lighter, still excellent)
+    # - qwen/qwen3-235b-a22b (massive, very capable)
+    #
+    # BEST GENERAL PURPOSE:
+    # - deepseek/deepseek-chat-v3 (excellent all-around)
+    # - qwen/qwen-2.5-72b-instruct (strong general)
+    # - meta-llama/llama-3.3-70b-instruct (reliable)
+    #
+    # BEST SPEED/COST:
+    # - deepseek/deepseek-r1-distill-qwen-8b (fast reasoning)
+    # - qwen/qwen-2.5-32b-instruct (good balance)
 
-# Model selection for specific tasks (override default)
+# =============================================================================
+# TASK-SPECIFIC MODEL SELECTION
+# Override default model for specific tasks
+# Set to provider name (e.g., "groq") or specific model path
+# =============================================================================
 task_models:
-  resume_analysis: null
-  interview_questions: null
-  response_evaluation: null
-  report_generation: null
+  # Resume analysis benefits from strong reasoning
+  resume_analysis: null  # Uses default
+
+  # Interview questions need creativity + reasoning
+  # Recommended: Use a thinking model for deeper questions
+  interview_questions: null  # Uses default
+
+  # Response evaluation needs consistency
+  response_evaluation: null  # Uses default
+
+  # Report generation needs good writing
+  report_generation: null  # Uses default
+
+  # Experience extraction (for career analytics)
+  experience_extraction: null  # Uses default
+
+# =============================================================================
+# REASONING MODE CONFIGURATION
+# For models that support chain-of-thought (DeepSeek R1, Qwen-Thinking, etc.)
+# =============================================================================
+reasoning_mode:
+  enabled: true
+  # Models that support thinking mode
+  thinking_models:
+    - "deepseek/deepseek-r1"
+    - "deepseek/deepseek-r1-distill-qwen-32b"
+    - "deepseek/deepseek-r1-distill-qwen-8b"
+    - "deepseek-r1"
+    - "qwen/qwen3-235b-a22b-thinking"
+  # Whether to show thinking process to user
+  show_thinking: false
+  # Max tokens for thinking (separate from response)
+  thinking_budget: 2048

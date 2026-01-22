@@ -1,5 +1,9 @@
 """
 TTS/STT Service - Text-to-Speech and Speech-to-Text
+
+Supports multiple providers:
+- TTS: OpenAI, ElevenLabs, Google (gTTS), Edge TTS, Kokoro
+- STT: OpenAI Whisper, Faster-Whisper (recommended), Vosk
 """
 
 from typing import Optional, Dict, List
@@ -12,6 +16,11 @@ from pathlib import Path
 from app.core.config import model_config, settings, get_api_key
 
 logger = logging.getLogger(__name__)
+
+# Global model caches for performance
+_KOKORO_PIPELINE = None
+_FASTER_WHISPER_MODEL = None
+_VOSK_MODEL = None
 
 
 class TTSService:
@@ -111,10 +120,14 @@ class TTSService:
             Transcribed text
         """
         stt_config = self.config.get("stt", {})
-        provider = provider or stt_config.get("default", "whisper")
+        provider = provider or stt_config.get("default", "faster_whisper")
 
-        if provider == "whisper":
+        if provider == "faster_whisper":
+            return await self._transcribe_faster_whisper(audio_data, filename, stt_config.get("faster_whisper", {}))
+        elif provider == "whisper":
             return await self._transcribe_whisper(audio_data, filename)
+        elif provider == "vosk":
+            return await self._transcribe_vosk(audio_data, stt_config.get("vosk", {}))
         else:
             raise ValueError(f"Unknown STT provider: {provider}")
 
@@ -174,45 +187,142 @@ class TTSService:
 
         return voices
 
-    async def get_provider_status(self) -> List[Dict]:
-        """Get status of all providers."""
-        providers = []
+    async def get_provider_status(self) -> Dict:
+        """Get status of all TTS and STT providers."""
+        tts_providers = []
+        stt_providers = []
+
+        # === TTS PROVIDERS ===
 
         # Check OpenAI
         openai_key = get_api_key("OPENAI_API_KEY")
-        providers.append({
+        tts_providers.append({
             "name": "openai",
             "available": bool(openai_key),
             "api_key_configured": bool(openai_key),
-            "features": ["tts", "stt"]
+            "quality": "high",
+            "speed": "fast",
+            "cost": "paid"
         })
 
         # Check ElevenLabs
         elevenlabs_key = get_api_key("ELEVENLABS_API_KEY")
-        providers.append({
+        tts_providers.append({
             "name": "elevenlabs",
             "available": bool(elevenlabs_key),
             "api_key_configured": bool(elevenlabs_key),
-            "features": ["tts", "voice_cloning"]
+            "quality": "premium",
+            "speed": "fast",
+            "cost": "paid",
+            "features": ["voice_cloning"]
         })
 
         # Google TTS (free, always available)
-        providers.append({
+        tts_providers.append({
             "name": "google",
             "available": True,
-            "api_key_configured": True,  # Uses gTTS, no key needed
-            "features": ["tts"]
+            "api_key_configured": True,
+            "quality": "basic",
+            "speed": "fast",
+            "cost": "free"
         })
 
         # Edge TTS (free, always available)
-        providers.append({
+        tts_providers.append({
             "name": "edge",
             "available": True,
-            "api_key_configured": True,  # No key needed
-            "features": ["tts"]
+            "api_key_configured": True,
+            "quality": "high",
+            "speed": "fast",
+            "cost": "free",
+            "recommended": True
         })
 
-        return providers
+        # Kokoro (local, needs installation)
+        try:
+            import kokoro
+            kokoro_available = True
+        except ImportError:
+            kokoro_available = False
+
+        tts_providers.append({
+            "name": "kokoro",
+            "available": kokoro_available,
+            "api_key_configured": True,
+            "quality": "premium",
+            "speed": "very_fast",
+            "cost": "free",
+            "local": True,
+            "recommended": True,
+            "note": "#1 on HuggingFace TTS Arena"
+        })
+
+        # === STT PROVIDERS ===
+
+        # Faster-Whisper (local, recommended)
+        try:
+            import faster_whisper
+            faster_whisper_available = True
+        except ImportError:
+            faster_whisper_available = False
+
+        stt_providers.append({
+            "name": "faster_whisper",
+            "available": faster_whisper_available,
+            "api_key_configured": True,
+            "quality": "excellent",
+            "speed": "4x_faster_than_whisper",
+            "cost": "free",
+            "local": True,
+            "recommended": True,
+            "note": "CTranslate2 optimized Whisper"
+        })
+
+        # OpenAI Whisper API
+        stt_providers.append({
+            "name": "whisper",
+            "available": bool(openai_key),
+            "api_key_configured": bool(openai_key),
+            "quality": "excellent",
+            "speed": "fast",
+            "cost": "paid"
+        })
+
+        # Vosk (lightweight offline)
+        try:
+            import vosk
+            vosk_available = True
+        except ImportError:
+            vosk_available = False
+
+        stt_providers.append({
+            "name": "vosk",
+            "available": vosk_available,
+            "api_key_configured": True,
+            "quality": "good",
+            "speed": "fast",
+            "cost": "free",
+            "local": True,
+            "note": "Lightweight, runs on CPU"
+        })
+
+        # Browser (Web Speech API)
+        stt_providers.append({
+            "name": "browser",
+            "available": True,
+            "api_key_configured": True,
+            "quality": "variable",
+            "speed": "real_time",
+            "cost": "free",
+            "note": "Uses browser's Web Speech API"
+        })
+
+        return {
+            "tts": tts_providers,
+            "stt": stt_providers,
+            "default_tts": self.config.get("default", "edge"),
+            "default_stt": self.config.get("stt", {}).get("default", "faster_whisper")
+        }
 
     async def _synthesize_openai(
         self,
@@ -343,7 +453,7 @@ class TTSService:
         audio_data: bytes,
         filename: Optional[str]
     ) -> str:
-        """Transcribe using OpenAI Whisper"""
+        """Transcribe using OpenAI Whisper API"""
         api_key = get_api_key("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OpenAI API key not configured")
@@ -370,15 +480,179 @@ class TTSService:
             response.raise_for_status()
             data = response.json()
             return data.get("text", "")
-            
-# Global cache for Kokoro pipeline to avoid reloading (High Latency Fix)
-_KOKORO_PIPELINE = None
 
-class TTSService:
-    # ... (existing init methods) ...
+    async def _transcribe_faster_whisper(
+        self,
+        audio_data: bytes,
+        filename: Optional[str],
+        config: Dict
+    ) -> str:
+        """
+        Transcribe using Faster-Whisper (CTranslate2 optimized).
 
-    # ... (rest of the file until _synthesize_kokoro) ... 
+        Faster-Whisper is 4x faster than original Whisper with same accuracy.
+        Supports: tiny, base, small, medium, large-v2, large-v3 models.
+        """
+        try:
+            from faster_whisper import WhisperModel
+            import tempfile
+            import os
 
+            # Get configuration
+            model_size = config.get("model_size", "large-v3")
+            device = config.get("device", "auto")
+            compute_type = config.get("compute_type", "float16")
+            language = config.get("language", "en")
+            beam_size = config.get("beam_size", 5)
+            vad_filter = config.get("vad_filter", True)
+
+            # Auto-detect device
+            if device == "auto":
+                try:
+                    import torch
+                    device = "cuda" if torch.cuda.is_available() else "cpu"
+                    if device == "cpu":
+                        compute_type = "int8"  # Use int8 on CPU for speed
+                except ImportError:
+                    device = "cpu"
+                    compute_type = "int8"
+
+            # Initialize model (cached globally for performance)
+            global _FASTER_WHISPER_MODEL
+            model_key = f"{model_size}_{device}_{compute_type}"
+
+            if '_FASTER_WHISPER_MODEL' not in globals() or _FASTER_WHISPER_MODEL.get("key") != model_key:
+                logger.info(f"Loading Faster-Whisper model: {model_size} on {device}")
+                model = WhisperModel(
+                    model_size,
+                    device=device,
+                    compute_type=compute_type,
+                    download_root=config.get("download_root")
+                )
+                _FASTER_WHISPER_MODEL = {"key": model_key, "model": model}
+                logger.info("Faster-Whisper model loaded")
+
+            model = _FASTER_WHISPER_MODEL["model"]
+
+            # Save audio to temporary file
+            ext = ".mp3"
+            if filename:
+                ext = Path(filename).suffix or ".mp3"
+
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp_file:
+                tmp_file.write(audio_data)
+                tmp_path = tmp_file.name
+
+            try:
+                # Transcribe with VAD filter for better accuracy
+                vad_params = None
+                if vad_filter:
+                    vad_config = config.get("vad_parameters", {})
+                    vad_params = {
+                        "min_silence_duration_ms": vad_config.get("min_silence_duration_ms", 500),
+                        "speech_pad_ms": vad_config.get("speech_pad_ms", 400)
+                    }
+
+                segments, info = model.transcribe(
+                    tmp_path,
+                    beam_size=beam_size,
+                    language=language if language else None,
+                    vad_filter=vad_filter,
+                    vad_parameters=vad_params
+                )
+
+                # Combine all segments
+                text = " ".join(segment.text for segment in segments)
+
+                logger.info(
+                    f"Transcribed {info.duration:.1f}s audio in {info.duration_after_vad:.1f}s "
+                    f"(detected language: {info.language}, probability: {info.language_probability:.2f})"
+                )
+
+                return text.strip()
+
+            finally:
+                # Clean up temp file
+                os.unlink(tmp_path)
+
+        except ImportError:
+            logger.warning("faster-whisper not installed, falling back to OpenAI Whisper API")
+            return await self._transcribe_whisper(audio_data, filename)
+        except Exception as e:
+            logger.error(f"Faster-Whisper transcription error: {str(e)}")
+            raise
+
+    async def _transcribe_vosk(
+        self,
+        audio_data: bytes,
+        config: Dict
+    ) -> str:
+        """
+        Transcribe using Vosk (lightweight offline STT).
+
+        Vosk is ideal for resource-constrained environments and offline use.
+        """
+        try:
+            from vosk import Model, KaldiRecognizer
+            import wave
+            import json
+            import tempfile
+            import os
+
+            model_path = config.get("model_path")
+            sample_rate = config.get("sample_rate", 16000)
+
+            # Initialize model
+            global _VOSK_MODEL
+            if '_VOSK_MODEL' not in globals() or _VOSK_MODEL is None:
+                if model_path:
+                    _VOSK_MODEL = Model(model_path)
+                else:
+                    # Download default model
+                    _VOSK_MODEL = Model(lang=config.get("language", "en-us"))
+                logger.info("Vosk model loaded")
+
+            model = _VOSK_MODEL
+
+            # Convert audio to WAV format if needed
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
+                # For simplicity, assume input is already compatible
+                # In production, use ffmpeg or pydub for conversion
+                tmp_file.write(audio_data)
+                tmp_path = tmp_file.name
+
+            try:
+                wf = wave.open(tmp_path, "rb")
+                rec = KaldiRecognizer(model, wf.getframerate())
+                rec.SetWords(True)
+
+                results = []
+                while True:
+                    data = wf.readframes(4000)
+                    if len(data) == 0:
+                        break
+                    if rec.AcceptWaveform(data):
+                        result = json.loads(rec.Result())
+                        if result.get("text"):
+                            results.append(result["text"])
+
+                # Get final result
+                final = json.loads(rec.FinalResult())
+                if final.get("text"):
+                    results.append(final["text"])
+
+                wf.close()
+                return " ".join(results)
+
+            finally:
+                os.unlink(tmp_path)
+
+        except ImportError:
+            logger.warning("vosk not installed, falling back to Faster-Whisper")
+            return await self._transcribe_faster_whisper(audio_data, None, {})
+        except Exception as e:
+            logger.error(f"Vosk transcription error: {str(e)}")
+            raise
     async def _synthesize_kokoro(
         self,
         text: str,

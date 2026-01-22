@@ -1,0 +1,130 @@
+# Experience Extraction Prompts
+# Used for LLM-powered extraction of structured work experience data
+
+system_prompt: |
+  You are an expert at extracting structured work experience data from resumes.
+  Your job is to accurately parse resume text and extract every work experience entry
+  with precise dates, company names, titles, locations, and responsibilities.
+
+  Be thorough and accurate:
+  - Extract ALL jobs mentioned, even internships or part-time roles
+  - Parse dates precisely in YYYY-MM format when possible
+  - If only year is provided, use January (YYYY-01) for start and December (YYYY-12) for end
+  - Use "Present" for current roles
+  - Extract specific responsibilities and achievements
+  - Identify the industry based on company and role
+
+  Return ONLY valid JSON - no markdown, no code blocks, no explanations.
+
+extraction_prompt: |
+  Extract all work experiences from the following resume text.
+
+  RESUME TEXT:
+  {text}
+
+  ## EXTRACTION REQUIREMENTS
+
+  For EACH job/position found in the resume, extract:
+
+  1. **company**: Full company name
+  2. **title**: Job title exactly as written
+  3. **start_date**: Start date in YYYY-MM format (e.g., "2021-03")
+     - If only year given, use YYYY-01
+     - If month is written out, convert to number (Jan=01, Feb=02, etc.)
+  4. **end_date**: End date in YYYY-MM format OR "Present" if current
+     - If only year given, use YYYY-12
+  5. **location**: City, State or City, Country if mentioned
+  6. **industry**: Industry/sector (Tech, Fintech, Healthcare, E-commerce, etc.)
+  7. **responsibilities**: Array of key responsibilities and achievements
+     - Extract bullet points as-is
+     - Include metrics and numbers where present
+     - Limit to top 5 most significant
+  8. **is_current**: true if this is the current/most recent active role
+
+  ## DATE PARSING RULES
+
+  Convert these formats to YYYY-MM:
+  - "January 2021" -> "2021-01"
+  - "Jan 2021" -> "2021-01"
+  - "01/2021" -> "2021-01"
+  - "2021-01" -> "2021-01"
+  - "2021" (only year) -> "2021-01" for start, "2021-12" for end
+  - "Present", "Current", "Now" -> "Present"
+
+  ## OUTPUT FORMAT (JSON only)
+
+  {{
+    "experiences": [
+      {{
+        "company": "Tech Corp Inc.",
+        "title": "Senior Software Engineer",
+        "start_date": "2021-03",
+        "end_date": "Present",
+        "location": "San Francisco, CA",
+        "industry": "Technology",
+        "responsibilities": [
+          "Led development of microservices architecture serving 10M users",
+          "Managed team of 5 engineers across 2 time zones",
+          "Reduced API latency by 40% through caching optimization"
+        ],
+        "is_current": true
+      }},
+      {{
+        "company": "StartupXYZ",
+        "title": "Software Engineer",
+        "start_date": "2019-06",
+        "end_date": "2021-02",
+        "location": "New York, NY",
+        "industry": "Fintech",
+        "responsibilities": [
+          "Built payment processing system handling $5M daily transactions",
+          "Implemented CI/CD pipeline reducing deployment time by 60%"
+        ],
+        "is_current": false
+      }}
+    ]
+  }}
+
+  IMPORTANT:
+  - Return ALL work experiences found, ordered from most recent to oldest
+  - Do not skip any jobs, internships, or contract positions
+  - If dates are ambiguous, make reasonable assumptions
+  - If no responsibilities are listed, return empty array
+  - Ensure all dates are properly formatted
+
+# Alternative prompt for when experience section is already isolated
+section_extraction_prompt: |
+  Extract structured work experience data from this EXPERIENCE SECTION text.
+
+  EXPERIENCE SECTION:
+  {text}
+
+  Parse each job entry and return JSON with the "experiences" array.
+  Follow the same format as the main extraction prompt.
+
+  Be especially careful about:
+  - Distinguishing between different job entries
+  - Correctly associating dates with the right company
+  - Not mixing up responsibilities between jobs
+
+# Prompt for validating extracted data
+validation_prompt: |
+  Review and validate the following extracted work experience data.
+  Check for:
+  1. Date inconsistencies (overlaps, impossible dates, future dates)
+  2. Missing required fields
+  3. Logical issues (end date before start date)
+  4. Suspiciously short tenures (< 3 months)
+
+  EXTRACTED DATA:
+  {data}
+
+  ORIGINAL TEXT:
+  {text}
+
+  Return JSON:
+  {{
+    "is_valid": true/false,
+    "issues": ["list of issues found"],
+    "corrected_data": {{ ... }} // only if corrections needed
+  }}

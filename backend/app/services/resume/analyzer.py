@@ -7,6 +7,9 @@ import logging
 
 from app.services.llm import LLMService
 from app.core.config import model_config
+from app.services.resume.experience_extractor import ExperienceExtractor
+from app.services.analytics.career_analytics import CareerAnalytics
+from app.services.analytics.question_generator import ResumeQuestionGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +29,10 @@ class ResumeAnalyzer:
     def __init__(self):
         self.llm = LLMService(task="resume_analysis")
         self.prompts = model_config.get_prompt("resume_analysis")
+        # Initialize enhanced analytics components
+        self.experience_extractor = ExperienceExtractor(use_llm_fallback=True)
+        self.career_analytics = CareerAnalytics()
+        self.question_generator = ResumeQuestionGenerator()
 
     async def analyze(
         self,
@@ -88,6 +95,157 @@ class ResumeAnalyzer:
         except Exception as e:
             logger.error(f"Resume analysis failed: {str(e)}")
             raise
+
+    async def analyze_enhanced(
+        self,
+        resume_text: str,
+        job_description: Optional[str] = None,
+        analysis_type: str = "comprehensive",
+        include_smart_questions: bool = True
+    ) -> Dict:
+        """
+        Perform enhanced resume analysis with career analytics and smart questions.
+
+        Args:
+            resume_text: Full text of the resume
+            job_description: Optional JD for targeted analysis
+            analysis_type: Type of analysis (comprehensive, quick, ats_focus)
+            include_smart_questions: Whether to generate smart questions
+
+        Returns:
+            Dict with enhanced analysis results including:
+            - All standard analysis fields
+            - structured_experience: List of extracted experience entries
+            - career_analytics: Comprehensive career pattern analysis
+            - smart_questions: List of intelligent interview questions
+        """
+        # First, perform standard analysis
+        result = await self.analyze(
+            resume_text=resume_text,
+            job_description=job_description,
+            analysis_type=analysis_type
+        )
+
+        try:
+            # Extract structured experience data
+            experiences = await self.experience_extractor.extract(resume_text)
+            experience_dicts = [exp.to_dict() for exp in experiences]
+
+            # Run career analytics
+            career_insights = self.career_analytics.analyze(experience_dicts)
+
+            # Generate smart questions
+            smart_questions = []
+            if include_smart_questions:
+                questions = self.question_generator.generate_questions(
+                    insights=career_insights,
+                    experiences=experience_dicts,
+                    max_questions=10
+                )
+                smart_questions = [q.to_dict() for q in questions]
+
+            # Add enhanced analytics to result
+            result["structured_experience"] = experience_dicts
+            result["career_analytics"] = career_insights.to_dict()
+            result["smart_questions"] = smart_questions
+
+            logger.info(
+                f"Enhanced analysis complete: {len(experiences)} experiences, "
+                f"{len(career_insights.employment_gaps)} gaps, "
+                f"{len(smart_questions)} questions generated"
+            )
+
+        except Exception as e:
+            logger.error(f"Enhanced analytics failed, returning base analysis: {str(e)}")
+            # Return base analysis with empty enhanced fields
+            result["structured_experience"] = []
+            result["career_analytics"] = {}
+            result["smart_questions"] = []
+
+        return result
+
+    async def get_career_analytics(self, resume_text: str) -> Dict:
+        """
+        Get career analytics for a resume.
+
+        Args:
+            resume_text: Full text of the resume
+
+        Returns:
+            Dict with career analytics including gaps, stability, trajectory
+        """
+        try:
+            # Extract structured experience
+            experiences = await self.experience_extractor.extract(resume_text)
+            experience_dicts = [exp.to_dict() for exp in experiences]
+
+            # Run career analytics
+            insights = self.career_analytics.analyze(experience_dicts)
+
+            return {
+                "success": True,
+                "experience_count": len(experiences),
+                "analytics": insights.to_dict()
+            }
+
+        except Exception as e:
+            logger.error(f"Career analytics failed: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "analytics": {}
+            }
+
+    async def get_smart_questions(
+        self,
+        resume_text: str,
+        max_questions: int = 10
+    ) -> Dict:
+        """
+        Generate smart interview questions for a resume.
+
+        Args:
+            resume_text: Full text of the resume
+            max_questions: Maximum number of questions to generate
+
+        Returns:
+            Dict with generated questions and metadata
+        """
+        try:
+            # Extract structured experience
+            experiences = await self.experience_extractor.extract(resume_text)
+            experience_dicts = [exp.to_dict() for exp in experiences]
+
+            # Run career analytics
+            insights = self.career_analytics.analyze(experience_dicts)
+
+            # Generate questions
+            questions = self.question_generator.generate_questions(
+                insights=insights,
+                experiences=experience_dicts,
+                max_questions=max_questions
+            )
+
+            # Count by category
+            category_counts = {}
+            for q in questions:
+                cat = q.category
+                category_counts[cat] = category_counts.get(cat, 0) + 1
+
+            return {
+                "success": True,
+                "total_count": len(questions),
+                "categories": category_counts,
+                "questions": [q.to_dict() for q in questions]
+            }
+
+        except Exception as e:
+            logger.error(f"Smart question generation failed: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "questions": []
+            }
 
     async def quick_analyze(self, resume_text: str) -> Dict:
         """

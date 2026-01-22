@@ -3,6 +3,7 @@ Resume Analytics Service
 - Gap Analysis
 - Job Hopping Detection
 - Leadership Signal Detection
+- Integration with Career Analytics
 """
 
 from typing import Dict, List, Optional
@@ -10,12 +11,23 @@ from datetime import datetime, date
 import re
 import logging
 
+from app.services.analytics.career_analytics import CareerAnalytics, CareerInsights
+from app.services.analytics.question_generator import ResumeQuestionGenerator
+from app.services.analytics.industry_classifier import IndustryClassifier
+
 logger = logging.getLogger(__name__)
 
 class ResumeAnalytics:
     """
     Advanced analytics for resume data.
+    Integrates with CareerAnalytics for comprehensive analysis.
     """
+
+    def __init__(self):
+        """Initialize with enhanced analytics components."""
+        self.career_analytics = CareerAnalytics()
+        self.question_generator = ResumeQuestionGenerator()
+        self.industry_classifier = IndustryClassifier()
 
     def analyze(self, resume_data: Dict) -> Dict:
         """
@@ -163,7 +175,7 @@ class ResumeAnalytics:
         """
         if not date_str or str(date_str).lower() == "present":
             return None
-            
+
         formats = ["%Y-%m-%d", "%Y-%m", "%b %Y", "%B %Y", "%Y"]
         for fmt in formats:
             try:
@@ -171,3 +183,190 @@ class ResumeAnalytics:
             except ValueError:
                 continue
         return None
+
+    def analyze_structured(self, experiences: List[Dict]) -> Dict:
+        """
+        Perform enhanced analysis on structured experience data.
+
+        Args:
+            experiences: List of structured experience entries with:
+                - company, title, start_date, end_date, duration_months
+                - is_current, responsibilities, industry, location
+
+        Returns:
+            Dict with comprehensive career analytics
+        """
+        # Use the new CareerAnalytics for comprehensive analysis
+        insights = self.career_analytics.analyze(experiences)
+
+        # Also run legacy analysis for backwards compatibility
+        legacy_gaps = self._analyze_gaps(experiences)
+        legacy_stability = self._analyze_stability(experiences)
+
+        # Combine all text for leadership detection
+        text_content = " ".join(
+            " ".join(exp.get("responsibilities", []))
+            for exp in experiences
+        )
+        leadership = self._detect_leadership(text_content)
+
+        return {
+            # Legacy format for backwards compatibility
+            "gap_analysis": legacy_gaps,
+            "job_stability": legacy_stability,
+            "leadership_signals": leadership,
+            # Enhanced career analytics
+            "career_insights": insights.to_dict()
+        }
+
+    def generate_smart_questions(
+        self,
+        experiences: List[Dict],
+        max_questions: int = 10
+    ) -> List[Dict]:
+        """
+        Generate smart interview questions based on experience data.
+
+        Args:
+            experiences: List of structured experience entries
+            max_questions: Maximum number of questions to generate
+
+        Returns:
+            List of question dictionaries
+        """
+        # Run career analytics
+        insights = self.career_analytics.analyze(experiences)
+
+        # Generate questions
+        questions = self.question_generator.generate_questions(
+            insights=insights,
+            experiences=experiences,
+            max_questions=max_questions
+        )
+
+        return [q.to_dict() for q in questions]
+
+    def get_industry_analysis(self, experiences: List[Dict]) -> Dict:
+        """
+        Get industry distribution and transition analysis.
+
+        Args:
+            experiences: List of structured experience entries
+
+        Returns:
+            Dict with industry analysis
+        """
+        if not experiences:
+            return {
+                "industries": [],
+                "primary_industry": "Unknown",
+                "is_industry_hopper": False,
+                "transitions": []
+            }
+
+        # Get all industries
+        industries = self.industry_classifier.get_all_industries(experiences)
+
+        # Get primary industry
+        primary, percentage = self.industry_classifier.get_primary_industry(experiences)
+
+        # Detect transitions
+        transitions = self.industry_classifier.detect_transitions(experiences)
+
+        return {
+            "industries": [
+                self.industry_classifier.format_industry_name(i)
+                for i in industries
+            ],
+            "primary_industry": self.industry_classifier.format_industry_name(primary),
+            "primary_percentage": percentage,
+            "is_industry_hopper": len(industries) >= 3,
+            "transitions": [
+                {
+                    "from": self.industry_classifier.format_industry_name(t.from_industry),
+                    "to": self.industry_classifier.format_industry_name(t.to_industry),
+                    "year": t.year,
+                    "from_company": t.from_company,
+                    "to_company": t.to_company
+                }
+                for t in transitions
+            ]
+        }
+
+    def get_stability_risk(self, experiences: List[Dict]) -> Dict:
+        """
+        Calculate job stability risk score.
+
+        Args:
+            experiences: List of structured experience entries
+
+        Returns:
+            Dict with stability metrics and risk assessment
+        """
+        insights = self.career_analytics.analyze(experiences)
+
+        # Calculate risk score (0-100, higher = more risk)
+        risk_score = 0
+
+        # Tenure factors
+        if insights.average_tenure_months < 12:
+            risk_score += 30
+        elif insights.average_tenure_months < 18:
+            risk_score += 20
+        elif insights.average_tenure_months < 24:
+            risk_score += 10
+
+        # Job count factors
+        if insights.roles_under_1_year >= 3:
+            risk_score += 25
+        elif insights.roles_under_1_year >= 2:
+            risk_score += 15
+        elif insights.roles_under_1_year >= 1:
+            risk_score += 5
+
+        # Gap factors
+        significant_gaps = [
+            g for g in insights.employment_gaps
+            if g.get("severity") == "significant"
+        ]
+        risk_score += len(significant_gaps) * 10
+
+        # Industry hopping
+        if insights.is_industry_hopper:
+            risk_score += 10
+
+        # Cap at 100
+        risk_score = min(100, risk_score)
+
+        # Determine risk level
+        if risk_score >= 60:
+            risk_level = "high"
+        elif risk_score >= 30:
+            risk_level = "medium"
+        elif risk_score >= 10:
+            risk_level = "low"
+        else:
+            risk_level = "none"
+
+        return {
+            "risk_score": risk_score,
+            "risk_level": risk_level,
+            "factors": {
+                "average_tenure_months": insights.average_tenure_months,
+                "roles_under_1_year": insights.roles_under_1_year,
+                "roles_under_2_years": insights.roles_under_2_years,
+                "significant_gaps": len(significant_gaps),
+                "is_industry_hopper": insights.is_industry_hopper
+            },
+            "recommendation": self._get_stability_recommendation(risk_level)
+        }
+
+    def _get_stability_recommendation(self, risk_level: str) -> str:
+        """Get recommendation based on stability risk level."""
+        recommendations = {
+            "high": "High job-hopping risk. Probe deeply about reasons for short tenures and commitment to long-term roles.",
+            "medium": "Moderate stability concerns. Ask about career goals and what would make them stay longer.",
+            "low": "Minor stability indicators. Standard interview process recommended.",
+            "none": "Strong stability profile. Candidate shows consistent tenure patterns."
+        }
+        return recommendations.get(risk_level, "")
