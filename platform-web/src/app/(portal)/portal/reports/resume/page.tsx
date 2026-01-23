@@ -102,7 +102,9 @@ export default function ResumeAnalysisPage() {
                     },
                     section_analysis: sectionAnalysis,
                     keyword_analysis: {
-                        found_keywords: keywords.technical_skills ? { technical: keywords.technical_skills } : {},
+                        found_keywords: keywords.technical_skills
+                            ? { technical: keywords.technical_skills as string[] }
+                            : undefined,
                         missing_keywords: analysisResult.missingSkills || [],
                         keyword_density: 0
                     },
