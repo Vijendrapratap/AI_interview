@@ -69,6 +69,8 @@ class TTSService:
             return await self._synthesize_edge(text, voice, provider_config)
         elif provider == "kokoro":
             return await self._synthesize_kokoro(text, voice, provider_config, speed)
+        elif provider == "personaplex":
+            return await self._synthesize_personaplex(text, voice, provider_config, speed)
         else:
             raise ValueError(f"Unknown TTS provider: {provider}")
 
@@ -185,6 +187,13 @@ class TTSService:
              ]
              voices.extend(kokoro_voices)
 
+        # Personaplex voices
+        if not provider or provider == "personaplex":
+            personaplex_voices = [
+                {"id": "en-US-Standard", "name": "Personaplex Standard", "provider": "personaplex", "gender": "neutral"}
+            ]
+            voices.extend(personaplex_voices)
+
         return voices
 
     async def get_provider_status(self) -> Dict:
@@ -255,6 +264,18 @@ class TTSService:
             "local": True,
             "recommended": True,
             "note": "#1 on HuggingFace TTS Arena"
+        })
+
+        # Personaplex (NVIDIA)
+        personaplex_key = get_api_key("NVIDIA_API_KEY")
+        tts_providers.append({
+            "name": "personaplex",
+            "available": bool(personaplex_key),
+            "api_key_configured": bool(personaplex_key),
+            "quality": "premium",
+            "speed": "fast",
+            "cost": "paid",
+            "note": "NVIDIA Personaplex API"
         })
 
         # === STT PROVIDERS ===
@@ -706,3 +727,50 @@ class TTSService:
             raise
 
 
+
+    async def _synthesize_personaplex(
+        self,
+        text: str,
+        voice: Optional[str],
+        config: Dict,
+        speed: float = 1.0
+    ) -> bytes:
+        """Synthesize using Personaplex (NVIDIA) API"""
+        api_key = get_api_key(config.get("api_key_env", "NVIDIA_API_KEY"))
+        if not api_key:
+            raise ValueError("Personaplex API key not configured")
+
+        base_url = config.get("base_url")
+        voice = voice or config.get("voice", "en-US-Standard")
+        
+        # Placeholder implementation for NVIDIA NIM / Personaplex API
+        # The actual API contract depends on the specific NIM container
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                base_url,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "text": text,
+                    "voice_name": voice,
+                    "language_code": "en-US",
+                    "speed": speed
+                },
+                timeout=60.0
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Personaplex error: {response.text}")
+                response.raise_for_status()
+
+            # Handle different response formats (binary vs JSON with base64)
+            # Assuming functionality similar to standard TTS APIs returning binary audio
+            if response.headers.get("Content-Type", "").startswith("application/json"):
+                 data = response.json()
+                 if "audio_content" in data:
+                     import base64
+                     return base64.b64decode(data["audio_content"])
+            
+            return response.content

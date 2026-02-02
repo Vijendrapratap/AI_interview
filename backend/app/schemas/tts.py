@@ -15,6 +15,7 @@ class TTSProvider(str, Enum):
     ELEVENLABS = "elevenlabs"
     EDGE = "edge"
     KOKORO = "kokoro"
+    PERSONAPLEX = "personaplex"
 
 
 

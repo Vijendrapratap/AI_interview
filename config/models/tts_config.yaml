@@ -1,7 +1,7 @@
 # TTS (Text-to-Speech) Configuration
 # Change 'default' to switch between providers
 
-default: "kokoro"  # Options: elevenlabs, openai, google, edge, kokoro
+default: "personaplex"  # Options: elevenlabs, openai, google, edge, kokoro, personaplex
 
 # =============================================================================
 # RECOMMENDED OPEN-SOURCE TTS MODELS (2025-2026)
@@ -56,6 +56,13 @@ providers:
     language: "en"
     tld: "com"  # Accent: com (US), co.uk (UK), com.au (AU), co.in (IN)
     slow: false
+
+  personaplex:
+    # NVIDIA Personaplex Speech API
+    api_key_env: "NVIDIA_API_KEY"
+    base_url: "https://api.nvcf.nvidia.com/v2/nvcf/pexec/functions/b8110b23-2475-4375-97e3-0c4667d4f6c4"  # Example NVIDIA NIM endpoint
+    voice: "en-US-Standard"  # Placeholder voice
+    format: "mp3"
 
   edge:
     # Free Microsoft Edge TTS - High quality neural voices
