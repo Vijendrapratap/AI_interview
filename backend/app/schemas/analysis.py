@@ -213,6 +213,39 @@ class SmartQuestionsResponse(BaseModel):
     categories: Dict[str, int] = Field(default_factory=dict)  # Category counts
 
 
+
+# ============================================================================
+# Skills Assessment Models
+# ============================================================================
+
+class SkillGap(BaseModel):
+    """Information about a skill gap."""
+    skill_name: str
+    current_level: str  # "Beginner", "Intermediate", "Advanced", "Expert"
+    required_level: str
+    gap_type: str  # "missing", "improvement_needed"
+    importance: str  # "critical", "high", "medium", "nice_to_have"
+
+class MarketComparison(BaseModel):
+    """Comparison against market standards."""
+    role: str
+    percentile: int  # 0-100
+    missing_critical_skills: List[str]
+    above_market_skills: List[str]
+    salary_range_estimate: Optional[str] = None
+
+class SkillsAssessment(BaseModel):
+    """Comprehensive skills assessment."""
+    overall_proficiency: float  # 0-100
+    total_skills_identified: int
+    verified_skills_count: int
+    skill_gaps: List[SkillGap] = Field(default_factory=list)
+    market_comparison: Optional[MarketComparison] = None
+    strongest_skills: List[str] = Field(default_factory=list)
+    areas_for_improvement: List[str] = Field(default_factory=list)
+    learning_roadmap: List[str] = Field(default_factory=list)
+
+
 class EnhancedAnalysisResponse(BaseModel):
     """Enhanced analysis response with career analytics and smart questions"""
     # Base analysis fields
@@ -232,4 +265,5 @@ class EnhancedAnalysisResponse(BaseModel):
     # Enhanced fields
     structured_experience: List[ExperienceEntry] = Field(default_factory=list)
     career_analytics: Optional[CareerAnalyticsResponse] = None
+    skills_assessment: Optional[SkillsAssessment] = None
     smart_questions: List[SmartQuestion] = Field(default_factory=list)

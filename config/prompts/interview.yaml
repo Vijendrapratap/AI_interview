@@ -277,16 +277,20 @@ response_evaluation_prompt: |
   - 3-4: Weak - Concerning gaps
   - 1-2: Poor - Major red flag
 
-  ## 5-COMPETENCY SCORING (Calculate weighted overall):
-  Score each competency 0-10, then calculate weighted overall:
-  - technical_competence × 0.25
-  - communication × 0.20
-  - analytical_thinking × 0.20
-  - behavioral_cultural_fit × 0.20
-  - leadership_initiative × 0.15
+  ## SCORING DIMENSIONS (0-10 each):
+  Score each dimension on a 0-10 scale:
+  - content: How well they answered the question (relevance, depth, examples)
+  - communication: Clarity, structure, articulation
+  - analytical: Logical reasoning, problem decomposition, critical thinking
+  - technical_depth: Hands-on knowledge, personal contribution clarity
+  - star_method: STAR compliance for behavioral questions (Situation, Task, Action, Result)
+  - authenticity: Genuineness, self-awareness, honesty about limitations
+
+  Calculate overall_score as weighted average:
+  overall_score = content*0.25 + communication*0.20 + analytical*0.20 + technical_depth*0.15 + star_method*0.10 + authenticity*0.10
 
   ## OUTPUT (JSON only):
-  {{"competency_scores": {{"technical_competence": 7, "communication": 8, "analytical_thinking": 7, "behavioral_cultural_fit": 8, "leadership_initiative": 6}}, "weighted_overall": 7.25, "question_specific_scores": {{"content_relevance": 7, "star_method": 6, "authenticity": 8}}, "strengths": ["specific strength 1", "strength 2"], "improvements": ["area to improve 1", "area 2"], "competency_notes": {{"technical": "Brief assessment", "communication": "Brief assessment", "analytical": "Brief assessment", "behavioral": "Brief assessment", "leadership": "Brief assessment"}}, "verification_notes": "Any concerns about claimed experience", "feedback": "Brief, constructive 2-sentence feedback they can use", "follow_up_recommended": false, "follow_up_question": "optional follow-up if needed", "red_flags": []}}
+  {{"scores": {{"content": 7, "communication": 8, "analytical": 7, "technical_depth": 7, "star_method": 6, "authenticity": 8}}, "overall_score": 7.2, "strengths": ["specific strength 1", "strength 2"], "weaknesses": ["area to improve 1", "area 2"], "missing_elements": ["element they should have included"], "feedback": "Brief, constructive 2-sentence feedback they can use", "communication_assessment": "Brief note on how clearly they communicated", "analytical_assessment": "Brief note on their reasoning quality", "verification_notes": "Any concerns about claimed experience", "follow_up_recommended": false, "follow_up_question": "optional follow-up if needed", "red_flags": []}}
 
 follow_up_question_prompt: |
   Generate a natural follow-up question.

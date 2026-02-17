@@ -11,6 +11,7 @@ import logging
 
 from app.core.config import settings
 from app.services.resume.parser import ResumeParser, ResumeChunker
+from app.services.resume.analyzer import ResumeAnalyzer
 from app.services.analytics.resume import ResumeAnalytics
 from app.schemas.resume import ResumeUploadResponse, ResumeDetails
 
@@ -59,6 +60,28 @@ async def upload_resume(
         # Parse resume
         parser = ResumeParser()
         parsed_content = await parser.parse(file_path)
+
+        # Validate document type
+        analyzer = ResumeAnalyzer()
+        text_content = parsed_content.get("text", "")
+        
+        # Quick validation check (first 1000 chars)
+        validation = await analyzer.validate_document_type(text_content)
+        
+        if not validation.get("is_valid_resume", True) or validation.get("document_type") != "RESUME":
+            # If rejected, clean up and return error
+            if file_path.exists():
+                file_path.unlink()
+                
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Invalid Document Type",
+                    "message": "The uploaded file does not appear to be a resume.",
+                    "detected_type": validation.get("document_type", "UNKNOWN"),
+                    "reason": validation.get("reasoning", "Document structure does not match a professional resume.")
+                }
+            )
 
         # Create semantic chunks for RAG
         chunker = ResumeChunker(max_chunk_size=500, overlap=50)

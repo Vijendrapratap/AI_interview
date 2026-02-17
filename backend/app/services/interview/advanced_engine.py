@@ -951,6 +951,31 @@ Expansion: "What did you take away from that experience?"
         """Get fallback question text."""
         return self._get_fallback_question_dict(question_number)["question"]
 
+    async def generate_closing(
+        self,
+        num_questions: int,
+        overall_performance: float,
+        strengths: List[str],
+        improvements: List[str]
+    ) -> str:
+        """Generate interview closing message."""
+        prompt = self.prompts.get("interview_closing_prompt", "").format(
+            num_questions=num_questions,
+            overall_assessment=f"Score: {overall_performance}/10",
+            strengths=", ".join(strengths[:3]) if strengths else "Various areas",
+            improvements=", ".join(improvements[:3]) if improvements else "Some areas"
+        )
+
+        try:
+            closing = await self.llm.generate(
+                prompt=prompt,
+                temperature=0.7
+            )
+            return closing.strip()
+        except Exception as e:
+            logger.error(f"Closing generation failed: {e}")
+            return "Thank you for your time today. We appreciate your thoughtful responses and will be in touch soon regarding next steps."
+
     def _validate_evaluation(self, result: Dict) -> Dict:
         """Validate and normalize evaluation result."""
         scores = result.get("scores", {})

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAppStore } from "@/lib/store"
 import {
     TrendingUp,
     AlertTriangle,
@@ -20,128 +21,138 @@ import {
 } from "lucide-react"
 
 // Mock data - Replace with actual API call
-const mockCareerAnalytics = {
-    // Timeline Analysis
-    total_experience_years: 6.5,
-    employment_gaps: [
-        {
-            start: "2021-03",
-            end: "2021-06",
-            duration_months: 3,
-            between_companies: "TechCorp Inc. and StartupXYZ",
-            severity: "minor"
-        },
-        {
-            start: "2019-08",
-            end: "2019-11",
-            duration_months: 3,
-            between_companies: "WebDev Agency and TechCorp Inc.",
-            severity: "minor"
-        }
-    ],
-    has_significant_gaps: false,
-
-    // Stability Analysis
-    average_tenure_months: 24,
+// Types for the report
+interface CareerAnalytics {
+    total_experience_years: number
+    employment_gaps: Array<{
+        start: string
+        end: string
+        duration_months: number
+        between_companies: string
+        severity: string
+    }>
+    has_significant_gaps: boolean
+    average_tenure_months: number
     shortest_tenure: {
-        company: "StartupXYZ",
-        title: "Senior Developer",
-        duration_months: 10,
-        start_date: "2021-06",
-        end_date: "2022-04"
-    },
+        company: string
+        title: string
+        duration_months: number
+        start_date: string
+        end_date: string
+    }
     longest_tenure: {
-        company: "TechCorp Inc.",
-        title: "Software Engineer",
-        duration_months: 36,
-        start_date: "2018-03",
-        end_date: "2021-03"
-    },
-    job_hopping_risk: "low",
-    roles_under_1_year: 1,
-    roles_under_2_years: 2,
-
-    // Industry Analysis
-    industries_worked: ["Technology", "FinTech", "E-commerce"],
-    industry_transitions: [
-        {
-            from_industry: "Technology",
-            to_industry: "FinTech",
-            year: 2021,
-            from_company: "TechCorp Inc.",
-            to_company: "StartupXYZ"
-        }
-    ],
-    is_industry_hopper: false,
-    primary_industry: "Technology",
-    primary_industry_percentage: 75,
-
-    // Career Trajectory
-    trajectory: "ascending",
-    seniority_progression: [
-        "Junior Developer (2017-2018)",
-        "Software Engineer (2018-2021)",
-        "Senior Developer (2021-2022)",
-        "Tech Lead (2022-Present)"
-    ],
-    title_changes: [
-        {
-            from_title: "Junior Developer",
-            to_title: "Software Engineer",
-            from_company: "WebDev Agency",
-            to_company: "TechCorp Inc.",
-            year: 2018,
-            change_type: "promotion"
-        },
-        {
-            from_title: "Software Engineer",
-            to_title: "Senior Developer",
-            from_company: "TechCorp Inc.",
-            to_company: "StartupXYZ",
-            year: 2021,
-            change_type: "promotion"
-        },
-        {
-            from_title: "Senior Developer",
-            to_title: "Tech Lead",
-            from_company: "StartupXYZ",
-            to_company: "CurrentCompany",
-            year: 2022,
-            change_type: "promotion"
-        }
-    ],
-
-    // Red Flags
-    red_flags: [
-        {
-            flag_type: "short_tenure",
-            description: "One role lasted less than 1 year",
-            severity: "low",
-            details: { company: "StartupXYZ", duration: "10 months" }
-        }
-    ],
-    authenticity_concerns: [],
-    date_overlaps: [],
-
-    // Leadership Signals
-    leadership_signals: [
-        { signal: "Team Leadership", evidence: "Led team of 5 developers at CurrentCompany" },
-        { signal: "Mentoring", evidence: "Mentored 3 junior developers" },
-        { signal: "Project Ownership", evidence: "Led migration of legacy system" },
-        { signal: "Technical Decision Making", evidence: "Chose tech stack for new product" }
-    ],
-
-    // Career Timeline for visualization
-    career_timeline: [
-        { company: "WebDev Agency", title: "Junior Developer", start: "2017-05", end: "2018-02", duration: "9 months" },
-        { company: "TechCorp Inc.", title: "Software Engineer", start: "2018-03", end: "2021-02", duration: "3 years" },
-        { company: "StartupXYZ", title: "Senior Developer", start: "2021-06", end: "2022-04", duration: "10 months" },
-        { company: "CurrentCompany", title: "Tech Lead", start: "2022-05", end: "Present", duration: "2+ years" }
-    ]
+        company: string
+        title: string
+        duration_months: number
+        start_date: string
+        end_date: string
+    }
+    job_hopping_risk: string
+    roles_under_1_year: number
+    roles_under_2_years: number
+    industries_worked: string[]
+    industry_transitions: Array<{
+        from_industry: string
+        to_industry: string
+        year: number
+        from_company: string
+        to_company: string
+    }>
+    is_industry_hopper: boolean
+    primary_industry: string
+    primary_industry_percentage: number
+    trajectory: string
+    seniority_progression: string[]
+    title_changes: Array<{
+        from_title: string
+        to_title: string
+        from_company: string
+        to_company: string
+        year: number
+        change_type: string
+    }>
+    red_flags: Array<{
+        flag_type: string
+        description: string
+        severity: string
+        details?: Record<string, string | number>
+    }>
+    leadership_signals: Array<{
+        signal: string
+        evidence: string
+    }>
+    career_timeline: Array<{
+        company: string
+        title: string
+        start: string
+        end: string
+        duration: string
+    }>
 }
 
 export default function CareerAnalyticsPage() {
-    const [report] = useState(mockCareerAnalytics)
+    const analysisResult = useAppStore((state) => state.analysisResult)
+    const [report, setReport] = useState<CareerAnalytics | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchAnalysis = async () => {
+            if (!analysisResult?.analysisId) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                const res = await fetch(`http://localhost:8000/api/v1/analysis/${analysisResult.analysisId}`)
+                if (!res.ok) throw new Error("Failed to fetch analysis")
+
+                const data = await res.json()
+                if (data.career_analytics) {
+                    setReport(data.career_analytics)
+                }
+            } catch (err) {
+                console.error(err)
+                setError("Failed to load career data")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchAnalysis()
+    }, [analysisResult])
+
+    // Show loading skeleton or empty structure if loading, or if no report but we want to show structure
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        )
+    }
+
+    if (!report) {
+        return (
+            <div className="text-center py-20">
+                <div className="bg-gray-50 rounded-2xl p-12 max-w-2xl mx-auto border border-gray-200">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <TrendingUp size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">No Career Data Yet</h2>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                        Upload your resume to generate a detailed career trajectory analysis.
+                    </p>
+                    <a
+                        href="/portal"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                    >
+                        Analyze Resume
+                    </a>
+                </div>
+            </div>
+        )
+    }
+
     const [showAllTimeline, setShowAllTimeline] = useState(false)
 
     const getRiskColor = (risk: string) => {
@@ -246,18 +257,16 @@ export default function CareerAnalyticsPage() {
                         {report.career_timeline.map((item, index) => (
                             <div key={index} className="relative flex gap-4 pl-4">
                                 {/* Timeline Dot */}
-                                <div className={`w-5 h-5 rounded-full border-2 bg-white z-10 shrink-0 ${
-                                    item.end === "Present" ? "border-green-500" : "border-blue-500"
-                                }`}>
+                                <div className={`w-5 h-5 rounded-full border-2 bg-white z-10 shrink-0 ${item.end === "Present" ? "border-green-500" : "border-blue-500"
+                                    }`}>
                                     {item.end === "Present" && (
                                         <div className="w-2.5 h-2.5 bg-green-500 rounded-full m-0.5" />
                                     )}
                                 </div>
 
                                 {/* Content */}
-                                <div className={`flex-1 bg-white border rounded-xl p-4 ${
-                                    item.end === "Present" ? "border-green-200" : "border-gray-200"
-                                }`}>
+                                <div className={`flex-1 bg-white border rounded-xl p-4 ${item.end === "Present" ? "border-green-200" : "border-gray-200"
+                                    }`}>
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <div className="font-bold text-gray-900">{item.title}</div>
@@ -397,11 +406,10 @@ export default function CareerAnalyticsPage() {
                         {report.industries_worked.map((industry, i) => (
                             <span
                                 key={i}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                                    industry === report.primary_industry
-                                        ? "bg-blue-100 text-blue-700 ring-2 ring-blue-300"
-                                        : "bg-gray-100 text-gray-700"
-                                }`}
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium ${industry === report.primary_industry
+                                    ? "bg-blue-100 text-blue-700 ring-2 ring-blue-300"
+                                    : "bg-gray-100 text-gray-700"
+                                    }`}
                             >
                                 {industry}
                                 {industry === report.primary_industry && ` (${report.primary_industry_percentage}%)`}
@@ -512,18 +520,16 @@ export default function CareerAnalyticsPage() {
                     </h2>
                     <div className="space-y-3">
                         {report.red_flags.map((flag, i) => (
-                            <div key={i} className={`border rounded-xl p-4 ${
-                                flag.severity === "high" ? "border-red-200 bg-red-50" :
+                            <div key={i} className={`border rounded-xl p-4 ${flag.severity === "high" ? "border-red-200 bg-red-50" :
                                 flag.severity === "medium" ? "border-orange-200 bg-orange-50" :
-                                "border-yellow-200 bg-yellow-50"
-                            }`}>
+                                    "border-yellow-200 bg-yellow-50"
+                                }`}>
                                 <div className="flex items-start justify-between">
                                     <div>
-                                        <div className={`font-medium ${
-                                            flag.severity === "high" ? "text-red-800" :
+                                        <div className={`font-medium ${flag.severity === "high" ? "text-red-800" :
                                             flag.severity === "medium" ? "text-orange-800" :
-                                            "text-yellow-800"
-                                        }`}>
+                                                "text-yellow-800"
+                                            }`}>
                                             {flag.description}
                                         </div>
                                         {flag.details && (
@@ -536,11 +542,10 @@ export default function CareerAnalyticsPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-xs font-bold capitalize ${
-                                        flag.severity === "high" ? "bg-red-200 text-red-800" :
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold capitalize ${flag.severity === "high" ? "bg-red-200 text-red-800" :
                                         flag.severity === "medium" ? "bg-orange-200 text-orange-800" :
-                                        "bg-yellow-200 text-yellow-800"
-                                    }`}>
+                                            "bg-yellow-200 text-yellow-800"
+                                        }`}>
                                         {flag.severity}
                                     </span>
                                 </div>

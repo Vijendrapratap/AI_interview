@@ -3,12 +3,14 @@ Resume Analyzer - AI-powered resume analysis
 """
 
 from typing import Dict, Optional, List
+import asyncio
 import logging
 
 from app.services.llm import LLMService
 from app.core.config import model_config
 from app.services.resume.experience_extractor import ExperienceExtractor
 from app.services.analytics.career_analytics import CareerAnalytics
+from app.services.analytics.skills_analytics import SkillsAnalytics
 from app.services.analytics.question_generator import ResumeQuestionGenerator
 
 logger = logging.getLogger(__name__)
@@ -32,7 +34,46 @@ class ResumeAnalyzer:
         # Initialize enhanced analytics components
         self.experience_extractor = ExperienceExtractor(use_llm_fallback=True)
         self.career_analytics = CareerAnalytics()
+        self.skills_analytics = SkillsAnalytics()
         self.question_generator = ResumeQuestionGenerator()
+
+    async def validate_document_type(self, text: str) -> Dict:
+        """
+        Validate if the document is a resume using LLM classification.
+        
+        Args:
+            text: extracted text from document
+            
+        Returns:
+            Dict containing document_type, is_valid_resume, and reasoning
+        """
+        prompt_template = self.prompts.get("document_validation_prompt")
+        if not prompt_template:
+            # If prompt not found, fall back to basic validation or load from file
+            # For now, we'll try to load it dynamically if self.prompts is stale
+            self.prompts = model_config.get_prompt("document_validation")
+            prompt_template = self.prompts.get("document_validation_prompt")
+            
+        if not prompt_template:
+            logger.warning("Document validation prompt not found. Skipping validation.")
+            return {"is_valid_resume": True, "document_type": "RESUME", "confidence": 1.0}
+
+        # Use first 1500 chars for classification (enough to identify type)
+        text_preview = text[:1500]
+        
+        prompt = prompt_template.format(text=text_preview)
+        
+        try:
+            result = await self.llm.generate_json(
+                prompt=prompt,
+                temperature=0.1
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Document validation failed: {str(e)}")
+            # Fail open if validation errors out, or strict? 
+            # Let's fail open but log it, so we don't block valid users on API errors
+            return {"is_valid_resume": True, "document_type": "RESUME", "reasoning": "Validation failed"}
 
     async def analyze(
         self,
@@ -106,6 +147,8 @@ class ResumeAnalyzer:
         """
         Perform enhanced resume analysis with career analytics and smart questions.
 
+        Runs LLM analysis and experience extraction in PARALLEL for speed.
+
         Args:
             resume_text: Full text of the resume
             job_description: Optional JD for targeted analysis
@@ -119,22 +162,46 @@ class ResumeAnalyzer:
             - career_analytics: Comprehensive career pattern analysis
             - smart_questions: List of intelligent interview questions
         """
-        # First, perform standard analysis
-        result = await self.analyze(
+        # Run base analysis and experience extraction IN PARALLEL
+        # This cuts total time roughly in half since both make LLM calls
+        analysis_task = self.analyze(
             resume_text=resume_text,
             job_description=job_description,
             analysis_type=analysis_type
         )
+        experience_task = self.experience_extractor.extract(resume_text)
+
+        # Await both concurrently
+        result, experiences = await asyncio.gather(
+            analysis_task,
+            experience_task,
+            return_exceptions=True
+        )
+
+        # Handle potential exceptions from gather
+        if isinstance(result, Exception):
+            logger.error(f"Base analysis failed: {result}")
+            raise result
+
+        if isinstance(experiences, Exception):
+            logger.warning(f"Experience extraction failed: {experiences}")
+            experiences = []
 
         try:
-            # Extract structured experience data
-            experiences = await self.experience_extractor.extract(resume_text)
             experience_dicts = [exp.to_dict() for exp in experiences]
 
-            # Run career analytics
+            # Run career analytics (fast, no LLM call)
             career_insights = self.career_analytics.analyze(experience_dicts)
 
-            # Generate smart questions
+            # Run skills analytics (fast, no LLM call)
+            # Use keywords from base analysis if available
+            keywords = result.get("keywords", {})
+            skills_assessment = self.skills_analytics.analyze(
+                resume_skills=keywords,
+                job_description_analysis=result.get("jd_analysis") # Hypothetical field, or we might need to separate JD analysis 
+            )
+
+            # Generate smart questions (fast, no LLM call)
             smart_questions = []
             if include_smart_questions:
                 questions = self.question_generator.generate_questions(
@@ -147,6 +214,7 @@ class ResumeAnalyzer:
             # Add enhanced analytics to result
             result["structured_experience"] = experience_dicts
             result["career_analytics"] = career_insights.to_dict()
+            result["skills_assessment"] = skills_assessment.to_dict()
             result["smart_questions"] = smart_questions
 
             logger.info(
@@ -160,6 +228,7 @@ class ResumeAnalyzer:
             # Return base analysis with empty enhanced fields
             result["structured_experience"] = []
             result["career_analytics"] = {}
+            result["skills_assessment"] = {}
             result["smart_questions"] = []
 
         return result

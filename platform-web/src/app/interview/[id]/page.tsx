@@ -1,17 +1,25 @@
 "use client"
 
-import { useState, useEffect, useRef, use } from "react"
+import { useState, useEffect, useRef, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mic, PhoneOff, Settings, Loader2, CheckCircle } from "lucide-react"
+import { Mic, PhoneOff, Settings, Loader2, CheckCircle, Send } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-// Mock Questions for the demo
-const MOCK_QUESTIONS = [
-    "Hello! I am your AI interviewer today. Let's start. Tell me about a challenging project you worked on recently?",
-    "That sounds interesting. How did you handle disagreements with technical stakeholders during that project?",
-    "Can you explain a complex technical concept to a non-technical person?",
-    "Finally, what is your approach to testing and quality assurance?"
-]
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
+interface QuestionData {
+    question: string
+    question_number: number
+    total_questions: number
+    question_type: string
+    topic: string
+}
+
+interface TranscriptEntry {
+    role: 'ai' | 'user'
+    text: string
+    type?: 'intro' | 'question' | 'response' | 'closing' | 'feedback'
+}
 
 export default function InterviewPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter()
@@ -21,16 +29,21 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     const [step, setStep] = useState<'setup' | 'interview' | 'completed'>('setup')
     const [permissionsGranted, setPermissionsGranted] = useState(false)
     const [status, setStatus] = useState<'ai_speaking' | 'listening' | 'processing' | 'idle'>('idle')
+    const [interviewMode, setInterviewMode] = useState<'voice' | 'text'>('voice')
 
     // Interview State
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-    const [transcript, setTranscript] = useState<{ role: 'ai' | 'user', text: string }[]>([])
-    const [interimTranscript, setInterimTranscript] = useState("")
+    const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null)
+    const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
     const [sessionId, setSessionId] = useState<string | null>(null)
+    const [introMessage, setIntroMessage] = useState("")
+    const [textInput, setTextInput] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [elapsedTime, setElapsedTime] = useState(0)
 
     // Refs
     const videoRef = useRef<HTMLVideoElement>(null)
-    const synthRef = useRef<SpeechSynthesis | null>(null)
+    const transcriptEndRef = useRef<HTMLDivElement>(null)
+    const streamRef = useRef<MediaStream | null>(null)
 
     // Audio/Recorder Refs
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -38,7 +51,28 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     const silenceTimerRef = useRef<NodeJS.Timeout | null>(null)
     const audioContextRef = useRef<AudioContext | null>(null)
     const analyserRef = useRef<AnalyserNode | null>(null)
-    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
+    const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Auto-scroll transcript
+    useEffect(() => {
+        transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [transcript])
+
+    // Timer
+    useEffect(() => {
+        if (step === 'interview') {
+            timerRef.current = setInterval(() => setElapsedTime(t => t + 1), 1000)
+        }
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current)
+        }
+    }, [step])
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+        const s = (seconds % 60).toString().padStart(2, '0')
+        return `${m}:${s}`
+    }
 
     // Camera Handlers
     const startCamera = async () => {
@@ -47,18 +81,18 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
             if (videoRef.current) {
                 videoRef.current.srcObject = stream
             }
+            streamRef.current = stream
             setPermissionsGranted(true)
 
             // Initialize Audio Analysis for Silence Detection
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
             const analyser = audioCtx.createAnalyser()
-            analyser.fftSize = 256 // Small size for volume check
+            analyser.fftSize = 256
             const source = audioCtx.createMediaStreamSource(stream)
             source.connect(analyser)
 
             audioContextRef.current = audioCtx
             analyserRef.current = analyser
-            sourceRef.current = source
 
         } catch (err) {
             console.error("Error accessing media devices:", err)
@@ -67,45 +101,184 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     }
 
     const stopCamera = () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-            tracks.forEach(track => track.stop())
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
         }
         audioContextRef.current?.close()
     }
 
     // Start Session (Backend)
-    const initSession = async () => {
+    const initSession = useCallback(async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/v1/interview/start", {
+            const res = await fetch(`${API_BASE}/api/v1/interview/start`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     resume_id: id,
-                    interview_type: "technical",
-                    num_questions: 5, // Match MOCK for now
-                    mode: "voice"
+                    interview_type: "comprehensive",
+                    num_questions: 7,
+                    mode: interviewMode
                 })
             })
-            if (res.ok) {
-                const data = await res.json()
-                setSessionId(data.session_id)
-                console.log("Session Started:", data.session_id)
 
-                // MOCK override: Only speak first question if not mocking full flow
-                // But current logic uses MOCK_QUESTIONS array. 
-                // We'll stick to local question flow but use real session for reporting.
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.detail || "Failed to start interview")
             }
+
+            const data = await res.json()
+            setSessionId(data.session_id)
+
+            // Set intro message and first question from backend
+            const intro = data.intro_message || "Hello! Let's begin the interview."
+            setIntroMessage(intro)
+
+            const firstQ: QuestionData = {
+                question: data.first_question.question,
+                question_number: data.first_question.question_number,
+                total_questions: data.first_question.total_questions,
+                question_type: data.first_question.question_type,
+                topic: data.first_question.topic
+            }
+            setCurrentQuestion(firstQ)
+
+            // Add intro + first question to transcript and speak
+            setTranscript([{ role: 'ai', text: intro, type: 'intro' }])
+
+            // Speak intro then question
+            const fullText = `${intro} ... ${firstQ.question}`
+            await speakAI(fullText, firstQ)
+
         } catch (e) {
             console.error("Session Init Failed", e)
+            setTranscript([{ role: 'ai', text: "Sorry, there was an error starting the interview. Please try again.", type: 'intro' }])
+        }
+    }, [id, interviewMode])
+
+    // Submit response to backend
+    const submitResponse = async (responseText: string) => {
+        if (!sessionId || isSubmitting) return
+
+        setIsSubmitting(true)
+        setStatus('processing')
+
+        // Add user response to transcript
+        setTranscript(prev => [...prev, { role: 'user', text: responseText, type: 'response' }])
+
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/interview/respond`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    response: responseText
+                })
+            })
+
+            if (!res.ok) {
+                throw new Error("Failed to submit response")
+            }
+
+            const data = await res.json()
+
+            // Show brief feedback in transcript
+            if (data.evaluation_summary) {
+                setTranscript(prev => [...prev, { role: 'ai', text: data.evaluation_summary, type: 'feedback' }])
+            }
+
+            if (data.is_complete) {
+                // Interview complete
+                const closingMsg = data.closing_message || "Thank you for completing the interview!"
+                setTranscript(prev => [...prev, { role: 'ai', text: closingMsg, type: 'closing' }])
+                await speakAI(closingMsg, null)
+                setTimeout(() => setStep('completed'), 3000)
+                return
+            }
+
+            if (data.next_question) {
+                const nextQ: QuestionData = {
+                    question: data.next_question.question,
+                    question_number: data.next_question.question_number,
+                    total_questions: data.next_question.total_questions,
+                    question_type: data.next_question.question_type,
+                    topic: data.next_question.topic
+                }
+                setCurrentQuestion(nextQ)
+                // Speak next question
+                await speakAI(nextQ.question, nextQ)
+            }
+
+        } catch (e) {
+            console.error("Submit Error", e)
+            setTranscript(prev => [...prev, { role: 'ai', text: "Sorry, there was an error processing your response. Let me try the next question." }])
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
-    const startListening = () => {
-        if (!videoRef.current?.srcObject) return
+    // Submit audio response
+    const submitAudioResponse = async (audioBlob: Blob) => {
+        if (!sessionId || isSubmitting) return
 
-        const stream = videoRef.current.srcObject as MediaStream
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+        setIsSubmitting(true)
+        setStatus('processing')
+
+        const formData = new FormData()
+        formData.append('audio', audioBlob, 'response.webm')
+
+        try {
+            const res = await fetch(`${API_BASE}/api/v1/interview/respond/audio?session_id=${sessionId}`, {
+                method: "POST",
+                body: formData
+            })
+
+            if (!res.ok) throw new Error("Audio upload failed")
+
+            const data = await res.json()
+
+            // Show transcription in transcript
+            const transcriptText = data.transcript || "(Voice response processed)"
+            setTranscript(prev => [...prev, { role: 'user', text: transcriptText, type: 'response' }])
+
+            // Show feedback
+            if (data.evaluation_summary) {
+                setTranscript(prev => [...prev, { role: 'ai', text: data.evaluation_summary, type: 'feedback' }])
+            }
+
+            if (data.is_complete) {
+                const closingMsg = data.closing_message || "Thank you for completing the interview!"
+                setTranscript(prev => [...prev, { role: 'ai', text: closingMsg, type: 'closing' }])
+                await speakAI(closingMsg, null)
+                setTimeout(() => setStep('completed'), 3000)
+                return
+            }
+
+            if (data.next_question) {
+                const nextQ: QuestionData = {
+                    question: data.next_question.question,
+                    question_number: data.next_question.question_number,
+                    total_questions: data.next_question.total_questions,
+                    question_type: data.next_question.question_type,
+                    topic: data.next_question.topic
+                }
+                setCurrentQuestion(nextQ)
+                await speakAI(nextQ.question, nextQ)
+            }
+
+        } catch (e) {
+            console.error("Audio Upload Error", e)
+            setTranscript(prev => [...prev, { role: 'ai', text: "Sorry, I couldn't process your audio. Please try again or switch to text mode." }])
+            setStatus('idle')
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const startListening = useCallback(() => {
+        if (!streamRef.current) return
+
+        const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' })
 
         mediaRecorderRef.current = mediaRecorder
         audioChunksRef.current = []
@@ -118,19 +291,18 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
 
         mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-            await handleAudioUpload(audioBlob)
+            await submitAudioResponse(audioBlob)
         }
 
         mediaRecorder.start()
         setStatus('listening')
-        setInterimTranscript("")
 
         // Start Silence Detection Loop
         detectSilence()
-    }
+    }, [sessionId])
 
     const detectSilence = () => {
-        if (!analyserRef.current || status !== 'listening') return
+        if (!analyserRef.current) return
 
         const bufferLength = analyserRef.current.frequencyBinCount
         const dataArray = new Uint8Array(bufferLength)
@@ -140,19 +312,17 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
 
             analyserRef.current!.getByteFrequencyData(dataArray)
 
-            // Calculate average volume
             let sum = 0
             for (let i = 0; i < bufferLength; i++) {
                 sum += dataArray[i]
             }
             const average = sum / bufferLength
 
-            // Threshold for silence (adjustable)
             if (average < 10) {
                 if (!silenceTimerRef.current) {
                     silenceTimerRef.current = setTimeout(() => {
                         stopListening()
-                    }, 2000) // 2s of silence stops recording
+                    }, 2500) // 2.5s of silence stops recording
                 }
             } else {
                 if (silenceTimerRef.current) {
@@ -168,80 +338,28 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     const stopListening = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.stop()
-            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
-        }
-    }
-
-    const handleAudioUpload = async (audioBlob: Blob) => {
-        setStatus('processing')
-
-        // Prepare Form Data
-        const formData = new FormData()
-        formData.append('audio', audioBlob, 'response.webm')
-        // Use sessionId or fallback if strict backend validation disabled
-
-        try {
-            // Mock fallback if session not ready
-            const targetSessionId = sessionId || "mock-session"
-
-            const res = await fetch(`http://localhost:8000/api/v1/interview/respond/audio?session_id=${targetSessionId}`, {
-                method: "POST",
-                body: formData
-            })
-
-            if (res.ok) {
-                const data = await res.json()
-                // Backend returns: { evaluation_summary, next_question, ... }
-                // AND implicitly the transcription in `response` (if we updated schema to return it, OR we just trust backend flow)
-                // Wait, `InterviewResponseResult` doesn't strictly have "transcription" field plainly.
-                // But `submit_audio_response` calls `submit_response`.
-                // `submit_response` returns `InterviewResponseResult`.
-                // I need the TRANSCRIPT to show on UI. 
-                // The `InterviewResponseResult` schema DOES NOT have "transcript".
-                // I might need to hack the return or update Backend Schema one more time to return `transcript`.
-                // OR: I can assume the backend returns the "evaluation_summary" and I just display "Audio Response Submitted".
-
-                // Let's assume for this turn I will just display " Audio Response " in transcript if text missing.
-                // BUT `submit_audio_response` logic: `response=transcription`.
-                // `submit_response` stores it in `session["responses"]`.
-                // It does NOT return it in `InterviewResponseResult`.
-
-                // QUICK FIX: Show placeholder or fetch generic text.
-                setTranscript(prev => [...prev, { role: 'user', text: "(Audio Response Processed)" }])
-
-                // Proceed to next question
-                if (currentQuestionIndex < MOCK_QUESTIONS.length - 1) {
-                    const nextIdx = currentQuestionIndex + 1
-                    setCurrentQuestionIndex(nextIdx)
-                    speakAI(MOCK_QUESTIONS[nextIdx])
-                } else {
-                    speakAI("Thank you. Interview Complete.")
-                    setTimeout(() => setStep('completed'), 4000)
-                }
-
-            } else {
-                console.error("Audio Upload Failed", await res.text())
-                // Fallback for demo flow
-                handleUserResponse("Audio upload failed, moving on.")
+            if (silenceTimerRef.current) {
+                clearTimeout(silenceTimerRef.current)
+                silenceTimerRef.current = null
             }
-        } catch (e) {
-            console.error("Upload Error", e)
-            handleUserResponse("Error uploading audio.")
         }
     }
 
-    const speakAI = async (text: string) => {
+    const speakAI = async (text: string, question: QuestionData | null) => {
         setStatus('ai_speaking')
-        setTranscript(prev => [...prev, { role: 'ai', text }])
+
+        // Add question to transcript if it's a new question (not intro/closing)
+        if (question) {
+            setTranscript(prev => [...prev, { role: 'ai', text: question.question, type: 'question' }])
+        }
 
         try {
-            const response = await fetch("http://localhost:8000/api/v1/tts/synthesize", {
+            // Use backend TTS with default provider (no hardcoded provider)
+            const response = await fetch(`${API_BASE}/api/v1/tts/synthesize`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     text,
-                    provider: "kokoro",
-                    voice: "af_heart",
                     speed: 1.0
                 })
             })
@@ -253,54 +371,62 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
             const audio = new Audio(audioUrl)
 
             audio.onended = () => {
-                setStatus('listening')
-                startListening()
+                URL.revokeObjectURL(audioUrl)
+                if (interviewMode === 'voice') {
+                    setStatus('listening')
+                    startListening()
+                } else {
+                    setStatus('idle')
+                }
             }
             audio.play()
 
         } catch (err) {
-            console.error("TTS Error", err)
-            // Fallback
+            console.error("TTS Error, using browser fallback", err)
+            // Browser fallback
             const u = new SpeechSynthesisUtterance(text)
-            u.onend = () => startListening()
+            u.rate = 0.95
+            u.onend = () => {
+                if (interviewMode === 'voice') {
+                    startListening()
+                } else {
+                    setStatus('idle')
+                }
+            }
             window.speechSynthesis.speak(u)
         }
     }
 
-    // Legacy Handler for text fallback
-    const handleUserResponse = async (userText: string) => {
-        setStatus('processing')
-        setTranscript(prev => [...prev, { role: 'user', text: userText }])
-        await new Promise(r => setTimeout(r, 1000))
+    // Text mode submission
+    const handleTextSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!textInput.trim() || isSubmitting) return
 
-        if (currentQuestionIndex < MOCK_QUESTIONS.length - 1) {
-            const nextIdx = currentQuestionIndex + 1
-            setCurrentQuestionIndex(nextIdx)
-            speakAI(MOCK_QUESTIONS[nextIdx])
-        } else {
-            setStep('completed')
-        }
+        const response = textInput.trim()
+        setTextInput("")
+        await submitResponse(response)
     }
 
-
-    const endCall = () => {
+    const endCall = async () => {
         stopCamera()
         stopListening()
-        synthRef.current?.cancel()
+        window.speechSynthesis?.cancel()
+
+        // End session on backend
+        if (sessionId) {
+            try {
+                await fetch(`${API_BASE}/api/v1/interview/end/${sessionId}`, { method: "POST" })
+            } catch (e) {
+                console.error("Error ending session", e)
+            }
+        }
+
         setStep('completed')
     }
 
     // --- EFFECTS ---
 
-    // 1. Init Session on Interview Start
-    useEffect(() => {
-        if (step === 'interview' && !sessionId) {
-            initSession()
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [step])
-
-    // 2. Camera Stream Management
+    // Camera Stream Management
     useEffect(() => {
         if (step === 'setup' || step === 'interview') {
             startCamera()
@@ -308,13 +434,12 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
         return () => stopCamera()
     }, [step])
 
-    // 3. Start Flow
+    // Init Session and Start Flow when interview begins
     useEffect(() => {
-        if (step === 'interview' && transcript.length === 0) {
-            speakAI(MOCK_QUESTIONS[0])
+        if (step === 'interview' && !sessionId) {
+            initSession()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [step])
+    }, [step, sessionId, initSession])
 
     // Render setup...
     if (step === 'setup') {
@@ -325,7 +450,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                         <Settings size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">System Check</h1>
-                    <p className="text-gray-500 mb-8">We need to check your camera and microphone.</p>
+                    <p className="text-gray-500 mb-6">We need to check your camera and microphone.</p>
 
                     <div className="w-full h-48 bg-black rounded-xl mb-6 overflow-hidden relative border border-gray-200">
                         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
@@ -340,6 +465,30 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                                 {permissionsGranted ? "Mic On" : "Check Mic"}
                             </span>
                         </div>
+                    </div>
+
+                    {/* Mode Selection */}
+                    <div className="flex gap-3 mb-6">
+                        <button
+                            onClick={() => setInterviewMode('voice')}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                                interviewMode === 'voice'
+                                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                            }`}
+                        >
+                            <Mic size={14} className="inline mr-1" /> Voice Mode
+                        </button>
+                        <button
+                            onClick={() => setInterviewMode('text')}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                                interviewMode === 'text'
+                                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                            }`}
+                        >
+                            <Send size={14} className="inline mr-1" /> Text Mode
+                        </button>
                     </div>
 
                     <button
@@ -370,14 +519,24 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                     </div>
                     <h1 className="text-4xl font-bold text-gray-900 mb-4">Interview Completed</h1>
                     <p className="text-xl text-gray-600 mb-8 max-w-lg mx-auto">
-                        Your voice responses have been captured and analyzed.
+                        Your responses have been captured and analyzed. View your detailed report below.
                     </p>
-                    <button
-                        onClick={() => router.push('/dashboard/candidates')}
-                        className="bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors"
-                    >
-                        Return to Dashboard
-                    </button>
+                    <div className="flex gap-4 justify-center">
+                        {sessionId && (
+                            <button
+                                onClick={() => router.push(`/portal/reports/interview?session=${sessionId}`)}
+                                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                            >
+                                View Report
+                            </button>
+                        )}
+                        <button
+                            onClick={() => router.push('/dashboard/candidates')}
+                            className="bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors"
+                        >
+                            Return to Dashboard
+                        </button>
+                    </div>
                 </motion.div>
             </div>
         )
@@ -389,9 +548,16 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
             <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0f1115]">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="font-mono text-sm tracking-wider text-gray-400">REC 00:04:23</span>
+                    <span className="font-mono text-sm tracking-wider text-gray-400">REC {formatTime(elapsedTime)}</span>
                 </div>
-                <div className="font-semibold text-gray-300">Live AI Interview (Voice Analysis Active)</div>
+                <div className="font-semibold text-gray-300">
+                    Live AI Interview
+                    {currentQuestion && (
+                        <span className="text-gray-500 ml-2 text-sm">
+                            Q{currentQuestion.question_number}/{currentQuestion.total_questions}
+                        </span>
+                    )}
+                </div>
                 <button
                     onClick={endCall}
                     className="bg-red-500/10 text-red-500 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-500/20 flex items-center gap-2"
@@ -407,7 +573,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                 <div className="flex-1 bg-[#1a1d24] rounded-2xl relative flex flex-col items-center justify-center overflow-hidden border border-white/5">
                     {/* AI Avatar / Visualizer */}
                     <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center mb-12">
-                        {/* Pulsing rings for AI voice */}
+                        {/* Pulsing rings */}
                         <AnimatePresence>
                             {status === 'ai_speaking' ? (
                                 <>
@@ -451,40 +617,52 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
                             {status === 'processing' && (
                                 <div className="flex items-center gap-2 text-purple-400">
-                                    <Loader2 className="animate-spin w-4 h-4" /> Analyzing Voice...
+                                    <Loader2 className="animate-spin w-4 h-4" /> Analyzing Response...
                                 </div>
                             )}
                             {status === 'listening' && (
                                 <div className="flex items-center gap-2 text-green-400">
-                                    <Mic className="animate-pulse w-4 h-4" /> Listening (Auto-stop)...
+                                    <Mic className="animate-pulse w-4 h-4" /> Listening (Auto-stop on silence)...
                                 </div>
                             )}
                             {status === 'ai_speaking' && (
                                 <div className="text-blue-400 text-sm">AI is speaking...</div>
                             )}
+                            {status === 'idle' && interviewMode === 'text' && (
+                                <div className="text-gray-400 text-sm">Type your response below</div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Current Question */}
-                    <div className="absolute bottom-8 left-0 right-0 px-8 text-center">
-                        <motion.div
-                            key={currentQuestionIndex}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="max-w-3xl mx-auto bg-black/40 backdrop-blur-md rounded-2xl p-6 border border-white/10"
-                        >
-                            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold mb-2">Question {currentQuestionIndex + 1} of {MOCK_QUESTIONS.length}</h3>
-                            <p className="text-xl md:text-2xl font-medium leading-relaxed">
-                                {MOCK_QUESTIONS[currentQuestionIndex]}
-                            </p>
-                        </motion.div>
-                    </div>
+                    {/* Current Question Display */}
+                    {currentQuestion && (
+                        <div className="absolute bottom-8 left-0 right-0 px-8 text-center">
+                            <motion.div
+                                key={currentQuestion.question_number + currentQuestion.question}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="max-w-3xl mx-auto bg-black/40 backdrop-blur-md rounded-2xl p-6 border border-white/10"
+                            >
+                                <div className="flex items-center justify-center gap-3 mb-2">
+                                    <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold">
+                                        Question {currentQuestion.question_number} of {currentQuestion.total_questions}
+                                    </h3>
+                                    <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">
+                                        {currentQuestion.question_type}
+                                    </span>
+                                </div>
+                                <p className="text-xl md:text-2xl font-medium leading-relaxed">
+                                    {currentQuestion.question}
+                                </p>
+                            </motion.div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Sidebar / Transcript */}
+                {/* Sidebar / Transcript + Text Input */}
                 <div className="w-full md:w-96 flex flex-col gap-6">
                     {/* Camera Preview */}
-                    <div className="h-48 bg-[#1a1d24] rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div className="h-48 bg-[#1a1d24] rounded-2xl border border-white/5 relative overflow-hidden">
                         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
                         <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-xs text-white">
                             You
@@ -496,15 +674,54 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                         <div className="p-4 border-b border-white/5">
                             <h3 className="font-semibold text-sm text-gray-300">Live Transcript</h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm leading-relaxed scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                             {transcript.map((entry, i) => (
-                                <div key={i} className={`flex gap-3 ${entry.role === 'ai' ? 'text-blue-200' : 'text-gray-300'}`}>
-                                    <span className="opacity-50 uppercase text-xs mt-1 shrink-0">{entry.role}</span>
+                                <div key={i} className={`flex gap-3 ${
+                                    entry.role === 'ai' ? 'text-blue-200' : 'text-gray-300'
+                                } ${entry.type === 'feedback' ? 'opacity-60 text-xs italic' : ''}`}>
+                                    <span className="opacity-50 uppercase text-xs mt-1 shrink-0">
+                                        {entry.role === 'ai' ? 'AI' : 'You'}
+                                    </span>
                                     <p>{entry.text}</p>
                                 </div>
                             ))}
-
+                            <div ref={transcriptEndRef} />
                         </div>
+
+                        {/* Text Input (text mode) */}
+                        {interviewMode === 'text' && status !== 'ai_speaking' && status !== 'processing' && (
+                            <form onSubmit={handleTextSubmit} className="p-3 border-t border-white/5">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={textInput}
+                                        onChange={(e) => setTextInput(e.target.value)}
+                                        placeholder="Type your response..."
+                                        disabled={isSubmitting}
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!textInput.trim() || isSubmitting}
+                                        className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Send size={16} />
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* Voice mode manual controls */}
+                        {interviewMode === 'voice' && status === 'listening' && (
+                            <div className="p-3 border-t border-white/5 text-center">
+                                <button
+                                    onClick={stopListening}
+                                    className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm hover:bg-red-500/30 transition-colors"
+                                >
+                                    Stop Recording
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

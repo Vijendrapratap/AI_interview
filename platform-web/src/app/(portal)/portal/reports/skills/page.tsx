@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAppStore } from "@/lib/store"
 import {
     Target,
     CheckCircle,
@@ -18,260 +19,112 @@ import {
 } from "lucide-react"
 
 // Mock data - Replace with actual API call
-const mockSkillsAssessment = {
+// Types
+interface SkillsAssessment {
     summary: {
-        total_skills: 24,
-        verified_skills: 18,
-        skill_gaps: 6,
-        overall_proficiency: 72
-    },
-    skill_categories: [
-        {
-            category: "Programming Languages",
-            skills: [
-                {
-                    name: "Python",
-                    claimed_level: "Expert",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Strong performance in coding challenges, good understanding of advanced concepts",
-                    gap_analysis: "Claimed expert but demonstrated advanced level",
-                    development_tips: ["Practice more with concurrency patterns", "Contribute to open source Python projects"]
-                },
-                {
-                    name: "JavaScript",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Solid understanding of ES6+, async/await, closures",
-                    gap_analysis: null,
-                    development_tips: []
-                },
-                {
-                    name: "TypeScript",
-                    claimed_level: "Intermediate",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Good grasp of type system and generics",
-                    gap_analysis: null,
-                    development_tips: ["Explore advanced types and mapped types"]
-                },
-                {
-                    name: "Go",
-                    claimed_level: "Beginner",
-                    demonstrated_level: null,
-                    verified: false,
-                    evidence: "Listed on resume but not evaluated in interview",
-                    gap_analysis: "Skill not verified",
-                    development_tips: ["Build a project in Go to demonstrate proficiency"]
-                }
-            ]
-        },
-        {
-            category: "Frontend Frameworks",
-            skills: [
-                {
-                    name: "React",
-                    claimed_level: "Expert",
-                    demonstrated_level: "Expert",
-                    verified: true,
-                    evidence: "Deep knowledge of hooks, context, performance optimization, and patterns",
-                    gap_analysis: null,
-                    development_tips: []
-                },
-                {
-                    name: "Next.js",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Good understanding of basics but gaps in advanced features",
-                    gap_analysis: "SSR/SSG concepts need strengthening",
-                    development_tips: ["Build a full-stack Next.js app", "Study ISR and middleware"]
-                }
-            ]
-        },
-        {
-            category: "Backend & APIs",
-            skills: [
-                {
-                    name: "Node.js",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Strong understanding of event loop, streams, and async patterns",
-                    gap_analysis: null,
-                    development_tips: []
-                },
-                {
-                    name: "REST API Design",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Well-versed in REST principles and best practices",
-                    gap_analysis: null,
-                    development_tips: []
-                },
-                {
-                    name: "GraphQL",
-                    claimed_level: null,
-                    demonstrated_level: null,
-                    verified: false,
-                    evidence: "Not listed on resume, identified as a gap",
-                    gap_analysis: "Missing from skillset - important for modern APIs",
-                    development_tips: ["Take Apollo GraphQL tutorial", "Add GraphQL to an existing project"]
-                }
-            ]
-        },
-        {
-            category: "Cloud & DevOps",
-            skills: [
-                {
-                    name: "AWS",
-                    claimed_level: "Intermediate",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Familiar with core services, but limited on advanced services",
-                    gap_analysis: "Knowledge limited to basic services",
-                    development_tips: ["Get AWS Solutions Architect certification", "Practice with EKS and Step Functions"]
-                },
-                {
-                    name: "Docker",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Strong containerization knowledge, multi-stage builds",
-                    gap_analysis: null,
-                    development_tips: []
-                },
-                {
-                    name: "Kubernetes",
-                    claimed_level: "Beginner",
-                    demonstrated_level: null,
-                    verified: false,
-                    evidence: "Listed but not demonstrated",
-                    gap_analysis: "Important skill for cloud-native development",
-                    development_tips: ["Complete Kubernetes basics certification", "Deploy a sample app to K8s"]
-                }
-            ]
-        },
-        {
-            category: "System Design",
-            skills: [
-                {
-                    name: "Microservices Architecture",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Good understanding of principles but limited distributed systems experience",
-                    gap_analysis: "Gap in distributed patterns like saga, event sourcing",
-                    development_tips: ["Read 'Building Microservices' by Sam Newman", "Practice distributed system design problems"]
-                },
-                {
-                    name: "Database Design",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Strong SQL knowledge, good understanding of normalization and indexing",
-                    gap_analysis: null,
-                    development_tips: []
-                }
-            ]
-        },
-        {
-            category: "Soft Skills",
-            skills: [
-                {
-                    name: "Communication",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Clear communication but tends to over-explain",
-                    gap_analysis: "Needs to be more concise",
-                    development_tips: ["Practice elevator pitches", "Use the 'bottom line up front' approach"]
-                },
-                {
-                    name: "Leadership",
-                    claimed_level: "Intermediate",
-                    demonstrated_level: "Intermediate",
-                    verified: true,
-                    evidence: "Has led small teams, mentored juniors",
-                    gap_analysis: null,
-                    development_tips: ["Seek more leadership opportunities", "Take a leadership course"]
-                },
-                {
-                    name: "Problem Solving",
-                    claimed_level: "Advanced",
-                    demonstrated_level: "Advanced",
-                    verified: true,
-                    evidence: "Structured approach to problems, good analytical thinking",
-                    gap_analysis: null,
-                    development_tips: []
-                }
-            ]
-        }
-    ],
-    development_roadmap: {
-        high_priority: [
-            {
-                skill: "GraphQL",
-                reason: "Missing from skillset, highly requested in job market",
-                resources: [
-                    { name: "Apollo GraphQL Tutorial", url: "https://www.apollographql.com/tutorials" },
-                    { name: "GraphQL Official Docs", url: "https://graphql.org/learn" }
-                ],
-                estimated_time: "2-3 weeks"
-            },
-            {
-                skill: "Kubernetes",
-                reason: "Essential for cloud-native development roles",
-                resources: [
-                    { name: "Kubernetes Basics", url: "https://kubernetes.io/docs/tutorials" },
-                    { name: "CKAD Certification", url: "https://www.cncf.io/certification/ckad" }
-                ],
-                estimated_time: "4-6 weeks"
-            }
-        ],
-        medium_priority: [
-            {
-                skill: "AWS Advanced Services",
-                reason: "Expand cloud expertise for senior roles",
-                resources: [
-                    { name: "AWS Solutions Architect Course", url: "https://aws.amazon.com/certification" },
-                    { name: "A Cloud Guru", url: "https://acloudguru.com" }
-                ],
-                estimated_time: "6-8 weeks"
-            },
-            {
-                skill: "Distributed Systems",
-                reason: "Important for system design interviews",
-                resources: [
-                    { name: "Designing Data-Intensive Applications", url: "#" },
-                    { name: "System Design Primer", url: "https://github.com/donnemartin/system-design-primer" }
-                ],
-                estimated_time: "Ongoing"
-            }
-        ],
-        low_priority: [
-            {
-                skill: "Go",
-                reason: "Listed but not evaluated - verify proficiency",
-                resources: [
-                    { name: "Go by Example", url: "https://gobyexample.com" },
-                    { name: "Tour of Go", url: "https://go.dev/tour" }
-                ],
-                estimated_time: "3-4 weeks"
-            }
-        ]
-    },
+        total_skills: number
+        verified_skills: number
+        skill_gaps: number
+        overall_proficiency: number
+    }
     market_comparison: {
-        above_market: ["React", "Python", "Node.js", "Docker"],
-        at_market: ["JavaScript", "TypeScript", "REST API", "Database Design"],
-        below_market: ["GraphQL", "Kubernetes", "AWS Advanced"]
+        above_market: string[]
+        at_market: string[]
+        below_market: string[]
+    }
+    skill_categories: Array<{
+        category: string
+        skills: Array<{
+            name: string
+            claimed_level: string | null
+            demonstrated_level: string | null
+            verified: boolean
+            evidence: string
+            gap_analysis: string | null
+            development_tips: string[]
+        }>
+    }>
+    development_roadmap: {
+        high_priority: Array<{
+            skill: string
+            reason: string
+            resources: Array<{ name: string; url: string }>
+            estimated_time: string
+        }>
+        medium_priority: Array<{
+            skill: string
+            reason: string
+            resources: Array<{ name: string; url: string }>
+            estimated_time: string
+        }>
+        low_priority: Array<{
+            skill: string
+            reason: string
+            resources: Array<{ name: string; url: string }>
+            estimated_time: string
+        }>
     }
 }
 
 export default function SkillsAssessmentPage() {
-    const [report] = useState(mockSkillsAssessment)
+    const analysisResult = useAppStore((state) => state.analysisResult)
+    const [report, setReport] = useState<SkillsAssessment | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchAnalysis = async () => {
+            if (!analysisResult?.analysisId) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                const res = await fetch(`http://localhost:8000/api/v1/analysis/${analysisResult.analysisId}`)
+                if (!res.ok) throw new Error("Failed to fetch analysis")
+
+                const data = await res.json()
+                if (data.skills_assessment) {
+                    setReport(data.skills_assessment)
+                }
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchAnalysis()
+    }, [analysisResult])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        )
+    }
+
+    if (!report) {
+        return (
+            <div className="text-center py-20">
+                <div className="bg-gray-50 rounded-2xl p-12 max-w-2xl mx-auto border border-gray-200">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Target size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">No Skills Data Yet</h2>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                        Upload your resume to generate a comprehensive skills assessment and roadmap.
+                    </p>
+                    <a
+                        href="/portal"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                    >
+                        Analyze Resume
+                    </a>
+                </div>
+            </div>
+        )
+    }
     const [expandedCategories, setExpandedCategories] = useState<string[]>(["Programming Languages", "Frontend Frameworks"])
 
     const toggleCategory = (category: string) => {

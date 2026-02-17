@@ -5,6 +5,7 @@ Interview Engine - AI-powered mock interviewer
 from typing import Dict, Optional, List
 import logging
 
+from app.services.llm import LLMService
 from app.core.config import model_config, settings
 
 logger = logging.getLogger(__name__)

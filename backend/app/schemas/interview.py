@@ -82,6 +82,8 @@ class InterviewResponseResult(BaseModel):
     scores: Dict[str, float]
     is_complete: bool
     next_question: Optional[InterviewQuestionResponse] = None
+    transcript: Optional[str] = None
+    closing_message: Optional[str] = None
 
 
 class InterviewEndResponse(BaseModel):
@@ -115,4 +117,20 @@ class QuestionEvaluation(BaseModel):
     strengths: List[str]
     weaknesses: List[str]
     ideal_response_elements: List[str]
-    feedback: str
+
+class InterviewReportResponse(BaseModel):
+    """Detailed interview performance report"""
+    session_id: str
+    overall_score: float
+    recommendation: str
+    executive_summary: str
+    performance_metrics: Dict[str, float]
+    strengths: List[str]
+    areas_for_improvement: List[str]
+    skill_assessment: Dict[str, Dict[str, str]]
+    behavioral_competencies: Dict[str, float]
+    communication_analysis: Dict[str, str]
+    question_feedback: List[Dict]
+    improvement_roadmap: Dict[str, List[str]]
+    interview_tips: List[str]
+

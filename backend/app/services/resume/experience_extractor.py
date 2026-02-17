@@ -442,9 +442,17 @@ class ExperienceExtractor:
             )
 
             entries = []
-            experiences = result.get("experiences", [])
+
+            # Handle both dict and list responses from LLM
+            if isinstance(result, list):
+                # LLM returned a bare list of experiences
+                experiences = result
+            else:
+                experiences = result.get("experiences", [])
 
             for exp in experiences:
+                if not isinstance(exp, dict):
+                    continue
                 start_date = self._parse_date_str(exp.get("start_date"))
                 end_date = self._parse_date_str(exp.get("end_date"))
                 is_current = exp.get("is_current", False) or exp.get("end_date", "").lower() in ["present", "current", "now"]

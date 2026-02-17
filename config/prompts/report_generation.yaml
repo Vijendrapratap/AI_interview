@@ -82,77 +82,507 @@ interview_report_prompt: |
   ### 10. INTERVIEW TIPS FOR NEXT TIME
   Specific, actionable tips based on observed patterns
 
-  Return as structured JSON for UI rendering.
+  ## OUTPUT FORMAT (JSON ONLY):
+  {{
+    "executive_summary": {{
+      "assessment": "...",
+      "recommendation": "Hirer/No Hire",
+      "highlights": ["..."]
+    }},
+    "performance_metrics": {{
+      "technical_knowledge": 85,
+      "communication_skills": 90,
+      "problem_solving": 80,
+      "cultural_fit": 85,
+      "leadership_potential": 75,
+      "overall_score": 83
+    }},
+    "strengths": ["...", "..."],
+    "areas_for_improvement": ["...", "..."],
+    "skill_assessment": [
+      {{"skill": "Python", "level": "Advanced", "evidence": "...", "gap": "..."}}
+    ],
+    "behavioral_competencies": {{
+      "teamwork": "...",
+      "initiative": "..."
+    }},
+    "communication_analysis": {{
+      "clarity": "...",
+      "structure": "..."
+    }},
+    "question_feedback": [
+      {{"question": "...", "score": 8, "feedback": "...", "improvement": "..."}}
+    ],
+    "improvement_roadmap": {{
+      "immediate": ["..."],
+      "short_term": ["..."],
+      "medium_term": ["..."]
+    }},
+    "tips": ["..."]
+  }}
 
 resume_report_prompt: |
-  Generate a comprehensive resume analysis report:
+  Generate a DUAL-PERSPECTIVE resume analysis report with TWO distinct sections:
+  - PART A: Written FOR THE CANDIDATE (simple, actionable advice)
+  - PART B: Written FOR THE RECRUITER (precise scoring, data-driven evaluation)
 
   ## RESUME DATA:
   {resume_text}
 
-  ## ANALYSIS RESULTS:
+  ## PRE-COMPUTED ANALYSIS RESULTS:
   {analysis_results}
+
+  ## DEEP ANALYTICS:
+  {analytics_deep_dive}
 
   ## JOB DESCRIPTION (if provided):
   {job_description}
 
-  ## GENERATE REPORT WITH:
+  ## STRICT RULES:
+  - This is a RESUME ANALYSIS only. No interview has taken place.
+  - Do NOT generate interview scores, behavioral assessments, or mock-interview feedback.
+  - Do NOT hallucinate data. If a data point is not in the resume, mark it as missing.
+  - Base ALL scores on EVIDENCE found (or not found) in the resume text.
 
-  ### 1. OVERALL ASSESSMENT
-  - Overall Score: X/100
-  - ATS Compatibility: X/100
-  - Content Quality: X/100
-  - Format & Design: X/100
-  - JD Match: X/100 (if applicable)
+  ============================================================
+  PART A — CANDIDATE ADVISORY REPORT
+  (Think as the candidate. Write in plain language they can act on immediately.)
+  ============================================================
 
-  ### 2. VISUAL SCORE BREAKDOWN
-  Data for radar chart:
-  - Experience Relevance
-  - Skills Match
-  - Education Fit
-  - Achievement Impact
-  - Keywords Optimization
-  - Format Quality
+  ### A1. CAREER GAP ANALYSIS
+  Scan the full work history timeline. For EACH gap > 3 months:
+  - Gap period (e.g., "Jun 2021 – Nov 2021")
+  - Duration in months
+  - Severity: Minor (3-6 mo) / Moderate (6-12 mo) / Major (12+ mo)
+  - Likely recruiter concern (what a hiring manager would wonder)
+  - Suggested way to address it on the resume (freelance, upskilling, personal project, etc.)
+  - If NO gaps exist, state "No significant career gaps detected" and note this is a strength.
 
-  ### 3. SECTION-BY-SECTION ANALYSIS
-  For each resume section:
-  - Current state assessment
-  - Score (0-100)
-  - Specific issues found
-  - Recommended improvements
-  - Before/After examples
+  ### A2. TECHNICAL SKILLS AUDIT
+  For each technical skill found in the resume:
+  - Skill name
+  - Proficiency signal: Beginner / Intermediate / Advanced / Expert
+    (inferred from years used, depth of project descriptions, and context)
+  - Where it appears on the resume (section + line reference)
+  - JD alignment: Required / Preferred / Extra / Not in JD
+  - Freshness flag: Current (used in last role) / Aging (2-4 yrs ago) / Stale (5+ yrs ago)
+  Group by category: Languages, Frameworks, Databases, Cloud/DevOps, Tools.
+  Flag any JD-required skills that are COMPLETELY ABSENT from the resume.
 
-  ### 4. KEYWORD ANALYSIS
-  - Present keywords (categorized)
-  - Missing critical keywords
-  - Keyword density analysis
-  - Recommended additions
+  ### A3. SOFT SKILLS ASSESSMENT
+  Only include soft skills with EVIDENCE in the resume text:
+  - Skill name (e.g., Leadership, Communication, Collaboration)
+  - Evidence snippet (the actual bullet point or phrase that demonstrates it)
+  - Strength level: Strong / Moderate / Weak
+  - Tip to strengthen it on the resume (e.g., add metrics, be more specific)
+  If no evidence exists for a commonly expected soft skill, flag it as "Not demonstrated — consider adding."
 
-  ### 5. ATS OPTIMIZATION GUIDE
-  - Current ATS score
-  - Parsing issues found
-  - Format recommendations
-  - Header standardization needs
+  ### A4. KEYWORD BREAKDOWN
+  Compare resume text against the JD (if provided) or general industry expectations:
+  - Present Keywords: list every JD keyword found in the resume, grouped by category
+    (Technical, Domain, Soft Skills, Certifications, Tools)
+  - Missing Keywords: JD keywords NOT found anywhere in the resume
+  - Keyword Density: Low / Medium / High (based on total count vs resume length)
+  - Quick Fixes: For each missing keyword, suggest WHERE on the resume to add it
+    (e.g., "Add 'CI/CD' to your DevOps bullet under Company X")
 
-  ### 6. COMPETITIVE ANALYSIS
-  How this resume compares to typical candidates for this role
+  ### A5. MISSING FROM RESUME BUT CRUCIAL IN JD
+  List every requirement, responsibility, or qualification from the JD that has
+  NO corresponding evidence on the resume. For each:
+  - JD requirement (exact or paraphrased)
+  - Why it matters (how recruiters weight it)
+  - Can the candidate likely address it? (Yes — rephrase existing experience / No — upskill needed)
+  - Suggested resume addition (concrete sentence they could add)
 
-  ### 7. PRIORITY ACTION ITEMS
-  Ranked list of changes to make:
-  1. Critical (must fix)
-  2. Important (should fix)
-  3. Nice to have (optional)
+  ### A6. QUICK-WIN ACTION ITEMS
+  Prioritised list of the easiest, highest-impact resume improvements:
+  - Priority: Critical / Important / Nice-to-Have
+  - Action: Specific instruction (not vague advice)
+  - Expected Impact: How this will change recruiter perception or ATS score
+  - Effort: Low (5 min) / Medium (30 min) / High (1+ hr)
 
-  ### 8. REWRITTEN EXAMPLES
-  5-10 examples of improved bullet points
+  ### A7. REWRITTEN BULLET EXAMPLES
+  Provide 5-8 before/after rewrites of actual resume bullets:
+  - Original text (verbatim from resume)
+  - Improved text (quantified, action-verb-led, keyword-rich)
+  - Why it's better (brief explanation)
 
-  ### 9. TAILORING SUGGESTIONS
-  If JD provided:
-  - Specific modifications for this job
-  - Missing requirements to address
-  - Experience to highlight
+  ============================================================
+  PART B — RECRUITER EVALUATION REPORT
+  (Think as the recruiter. Be precise, data-driven, and self-explanatory.
+   Every score must have a transparent rationale so the recruiter
+   can justify their decision to a hiring manager.)
+  ============================================================
 
-  Return as structured JSON.
+  ### B1. CANDIDATE SCORECARD (Composite Score)
+  Calculate a weighted overall score using this exact formula:
+    Overall = (Technical_Skills × 0.25) + (Experience_Relevance × 0.20) +
+              (JD_Match × 0.15) + (Achievement_Impact × 0.10) +
+              (Education_Fit × 0.10) + (ATS_Compatibility × 0.05) +
+              (Communication_Quality × 0.05) + (Career_Stability × 0.05) +
+              (Leadership_Potential × 0.03) + (Cultural_Fit_Signals × 0.02)
+  Show the formula with actual numbers so the recruiter can verify.
+
+  ### B2. FACTOR-BY-FACTOR BREAKDOWN (10 Dimensions)
+  For EACH of the 10 factors below, provide:
+  - Score: 0-100
+  - Weight: (as listed above)
+  - Weighted contribution: score × weight
+  - Evidence: 2-3 specific resume excerpts supporting the score
+  - Penalties: Any deductions and why (e.g., "-10 for no quantified results")
+  - Comparison note: How this compares to a typical strong candidate for this role
+
+  The 10 factors:
+  1. Technical Skills (25%) — Breadth, depth, recency of technical skills vs JD requirements
+  2. Experience Relevance (20%) — How closely past roles match the target position
+  3. JD Match (15%) — Overall alignment with job description requirements
+  4. Achievement Impact (10%) — Quality and quantification of accomplishments
+  5. Education Fit (10%) — Degrees, certifications, continuous learning relevant to role
+  6. ATS Compatibility (5%) — Resume formatting, parsability, keyword presence
+  7. Communication Quality (5%) — Clarity of writing, structure, professionalism
+  8. Career Stability (5%) — Tenure patterns, progression logic, gap severity
+  9. Leadership Potential (3%) — Team management, mentoring, initiative signals
+  10. Cultural Fit Signals (2%) — Collaboration, values alignment, diversity indicators
+
+  ### B3. SKILLS MATCH MATRIX
+  For EACH skill listed as required or preferred in the JD:
+  - Skill name
+  - JD priority: Required / Preferred / Nice-to-Have
+  - Candidate status: Strong Match / Partial Match / Weak Match / Missing
+  - Evidence from resume (quote or reference)
+  - Recruiter risk note (e.g., "Core skill missing — high risk if not addressed in interview")
+
+  ### B4. EXPERIENCE VALIDATION
+  - Total calculated experience (in years + months, from actual dates)
+  - JD-required experience level vs candidate's actual level
+  - Career progression assessment: Linear growth / Lateral moves / Regression / Mixed
+  - Tenure analysis:
+    - Average tenure per role
+    - Longest tenure
+    - Shortest tenure
+    - Job-hopping flag (Yes/No + severity)
+  - Industry relevance: Direct match / Adjacent / Unrelated
+  - Most recent role relevance to target position (0-100)
+
+  ### B5. EDUCATION & CERTIFICATIONS CHECK
+  - JD-required education vs candidate's education
+  - Match status: Exceeds / Meets / Below / Missing
+  - Relevant certifications held (with expiry if detectable)
+  - Missing certifications that JD requires or prefers
+  - Continuous learning signals (courses, bootcamps, recent certifications)
+
+  ### B6. RED FLAG SUMMARY
+  - Total red flag count
+  - Overall severity: None / Low / Medium / High / Critical
+  - Each flag:
+    - Type (Career Gap / Skill Inflation / Job Hopping / Inconsistency / Credential Gap / Other)
+    - Description
+    - Severity: Low / Medium / High
+    - Recruiter action: Verify in interview / Ask for documentation / Proceed with caution / Disqualifying
+
+  ### B7. COMPARATIVE POSITIONING
+  Rate the candidate relative to a typical applicant pool for this role:
+  - Percentile estimate: Top 10% / Top 25% / Top 50% / Bottom 50%
+  - Key differentiators (what makes them stand out positively)
+  - Key disadvantages (what puts them below other candidates)
+  - Best-fit seniority: Entry / Mid / Senior / Staff / Principal / Director
+
+  ### B8. HIRING RECOMMENDATION
+  - Decision: Strong Yes / Yes / Lean Yes / Neutral / Lean No / No / Strong No
+  - Confidence: High / Medium / Low
+  - Top 3 reasons FOR hiring
+  - Top 3 reasons AGAINST hiring
+  - Risk factors (things that could go wrong if hired)
+  - Suggested interview focus areas (what to probe to validate concerns)
+  - Final verdict: 2-3 sentences a recruiter can paste into their ATS notes
+
+  ============================================================
+  ## OUTPUT FORMAT (JSON ONLY):
+  ============================================================
+  {{
+    "overall_score": 0,
+    "score_breakdown": {{
+      "ats_score": 0,
+      "content_score": 0,
+      "format_score": 0,
+      "jd_match_score": 0
+    }},
+    "radar_chart_data": {{
+      "technical_skills": 0,
+      "experience_relevance": 0,
+      "jd_match": 0,
+      "achievement_impact": 0,
+      "education_fit": 0,
+      "ats_compatibility": 0,
+      "communication_quality": 0,
+      "career_stability": 0,
+      "leadership_potential": 0,
+      "cultural_fit_signals": 0
+    }},
+    "candidate_view": {{
+      "career_gaps": [
+        {{
+          "period": "Jun 2021 – Nov 2021",
+          "duration_months": 5,
+          "severity": "Minor",
+          "recruiter_concern": "...",
+          "suggested_fix": "..."
+        }}
+      ],
+      "career_gap_summary": "No significant gaps / X gaps detected totalling Y months",
+      "technical_skills_audit": [
+        {{
+          "skill": "Python",
+          "category": "Languages",
+          "proficiency": "Advanced",
+          "resume_location": "Skills section + Company X bullets",
+          "jd_alignment": "Required",
+          "freshness": "Current"
+        }}
+      ],
+      "missing_technical_skills": [
+        {{
+          "skill": "Kubernetes",
+          "jd_priority": "Required",
+          "suggestion": "Add if you have any container orchestration experience"
+        }}
+      ],
+      "soft_skills": [
+        {{
+          "skill": "Leadership",
+          "evidence": "Led a team of 5 engineers...",
+          "strength": "Strong",
+          "improvement_tip": "Add team size metrics"
+        }}
+      ],
+      "soft_skills_not_demonstrated": ["Conflict Resolution", "Public Speaking"],
+      "keyword_breakdown": {{
+        "present": {{
+          "technical": ["Python", "AWS"],
+          "domain": ["Machine Learning"],
+          "soft_skills": ["Team Lead"],
+          "certifications": ["AWS Certified"],
+          "tools": ["Jira", "Git"]
+        }},
+        "missing": ["Kubernetes", "Terraform", "Agile"],
+        "density": "Medium",
+        "quick_fixes": [
+          {{
+            "keyword": "CI/CD",
+            "where_to_add": "DevOps bullet under Company X",
+            "suggested_phrasing": "Implemented CI/CD pipelines using..."
+          }}
+        ]
+      }},
+      "missing_but_crucial": [
+        {{
+          "jd_requirement": "Experience with microservices architecture",
+          "why_it_matters": "Core to the role — 3 of 5 responsibilities mention it",
+          "can_address": true,
+          "suggested_addition": "Designed and deployed microservices using..."
+        }}
+      ],
+      "quick_win_actions": [
+        {{
+          "priority": "Critical",
+          "action": "Add quantified metrics to top 3 bullet points",
+          "expected_impact": "Increases recruiter engagement by ~40%",
+          "effort": "Medium"
+        }}
+      ],
+      "rewrite_examples": [
+        {{
+          "original": "Worked on backend development",
+          "improved": "Architected and deployed 12 RESTful APIs serving 50K daily requests, reducing response latency by 35%",
+          "why_better": "Adds specificity, quantification, and impact"
+        }}
+      ]
+    }},
+    "recruiter_view": {{
+      "scorecard": {{
+        "overall_score": 0,
+        "formula": "(72×0.25)+(68×0.20)+(60×0.15)+(55×0.10)+(80×0.10)+(70×0.05)+(75×0.05)+(65×0.05)+(50×0.03)+(60×0.02) = 66.6",
+        "factors": [
+          {{
+            "name": "Technical Skills",
+            "weight": 0.25,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["...", "..."],
+            "penalties": ["-10: No quantified technical impact"],
+            "comparison_note": "Above average for mid-level, below for senior"
+          }},
+          {{
+            "name": "Experience Relevance",
+            "weight": 0.20,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "JD Match",
+            "weight": 0.15,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Achievement Impact",
+            "weight": 0.10,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Education Fit",
+            "weight": 0.10,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "ATS Compatibility",
+            "weight": 0.05,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Communication Quality",
+            "weight": 0.05,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Career Stability",
+            "weight": 0.05,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Leadership Potential",
+            "weight": 0.03,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }},
+          {{
+            "name": "Cultural Fit Signals",
+            "weight": 0.02,
+            "score": 0,
+            "weighted_score": 0.0,
+            "evidence": ["..."],
+            "penalties": [],
+            "comparison_note": "..."
+          }}
+        ]
+      }},
+      "skills_match_matrix": [
+        {{
+          "skill": "Python",
+          "jd_priority": "Required",
+          "candidate_status": "Strong Match",
+          "evidence": "5 years of Python development across 3 roles",
+          "risk_note": "No risk"
+        }}
+      ],
+      "experience_validation": {{
+        "total_experience": "6 years 4 months",
+        "jd_required_level": "Senior (5+ years)",
+        "level_match": "Meets",
+        "career_progression": "Linear growth",
+        "tenure_analysis": {{
+          "average_months": 24,
+          "longest_months": 36,
+          "shortest_months": 12,
+          "job_hopping_flag": false,
+          "job_hopping_severity": "None"
+        }},
+        "industry_relevance": "Direct match",
+        "recent_role_relevance_score": 78
+      }},
+      "education_check": {{
+        "jd_required": "Bachelor's in Computer Science or equivalent",
+        "candidate_has": "B.Tech in Computer Science",
+        "match_status": "Meets",
+        "relevant_certifications": ["AWS Certified Solutions Architect"],
+        "missing_certifications": ["Google Cloud Professional"],
+        "continuous_learning_signals": ["Completed ML Specialization on Coursera"]
+      }},
+      "red_flags": {{
+        "total_count": 0,
+        "overall_severity": "Low",
+        "flags": [
+          {{
+            "type": "Career Gap",
+            "description": "5-month gap between Company A and Company B",
+            "severity": "Low",
+            "recruiter_action": "Verify in interview"
+          }}
+        ]
+      }},
+      "comparative_positioning": {{
+        "percentile": "Top 25%",
+        "differentiators": ["Strong cloud experience", "Quantified achievements"],
+        "disadvantages": ["No leadership experience", "Missing Kubernetes"],
+        "best_fit_seniority": "Mid-Senior"
+      }},
+      "hiring_recommendation": {{
+        "decision": "Lean Yes",
+        "confidence": "Medium",
+        "reasons_for": ["Strong technical skills", "Relevant domain experience", "Clear growth trajectory"],
+        "reasons_against": ["Missing key certification", "No team leadership evidence", "Short tenure at last role"],
+        "risk_factors": ["May need ramp-up time on Kubernetes and microservices"],
+        "interview_focus_areas": ["Validate microservices experience", "Probe leadership readiness", "Discuss career gap"],
+        "final_verdict": "Candidate shows solid technical skills and relevant experience. Recommend proceeding to technical interview with focus on system design and team collaboration."
+      }}
+    }},
+    "section_analysis": [
+      {{
+        "section": "Experience",
+        "score": 0,
+        "issues": ["..."],
+        "improvements": ["..."],
+        "example_before_after": {{"before": "...", "after": "..."}}
+      }}
+    ],
+    "keyword_analysis": {{
+      "present": ["..."],
+      "missing": ["..."],
+      "density": "..."
+    }},
+    "ats_optimization": {{
+      "score": 0,
+      "parsing_issues": ["..."],
+      "recommendations": ["..."]
+    }},
+    "priority_actions": [
+      {{"priority": "Critical", "action": "..."}},
+      {{"priority": "Important", "action": "..."}}
+    ],
+    "rewrite_examples": [
+      {{"original": "...", "improved": "...", "reason": "..."}}
+    ],
+    "competitive_analysis": "..."
+  }}
 
 combined_report_prompt: |
   Generate a unified candidate assessment report combining resume analysis and interview performance:

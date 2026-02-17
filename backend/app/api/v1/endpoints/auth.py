@@ -29,6 +29,13 @@ fake_users_db = {
         "role": "recruiter",
         "hashed_password": security.get_password_hash("hr123456"),
     },
+    "candidate@demo.com": {
+        "id": 3,
+        "email": "candidate@demo.com",
+        "full_name": "Demo Candidate",
+        "role": "candidate",
+        "hashed_password": security.get_password_hash("candidate123"),
+    },
 }
 
 

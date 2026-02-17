@@ -1,0 +1,21 @@
+document_validation_prompt: |
+  You are a strict document classifier for a recruitment platform.
+  Analyze the provided text excerpt and determine if it is a RESUME (CV), a COVER LETTER, or OTHER.
+
+  TEXT EXTRACT (First 1000 chars):
+  """
+  {text}
+  """
+
+  CLASSIFICATION RULES:
+  1. RESUME: Must contain sections like Experience, Education, Skills, Contact Info. structured as a professional profile.
+  2. COVER_LETTER: Addressed to a hiring manager, paragraphs of text, "Sincerely", "Dear", etc.
+  3. OTHER: Job descriptions, homework, essays, random text, code, emails, etc.
+
+  ## OUTPUT FORMAT (JSON ONLY):
+  {{
+    "document_type": "RESUME" | "COVER_LETTER" | "OTHER",
+    "is_valid_resume": boolean,
+    "confidence": float,
+    "reasoning": "Brief explanation of why this classification was made."
+  }}

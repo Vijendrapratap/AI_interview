@@ -13,6 +13,8 @@ system_prompt: |
   - Use "Present" for current roles
   - Extract specific responsibilities and achievements
   - Identify the industry based on company and role
+  - **DO NOT HALLUCINATE OR INVENT INFORMATION.**
+  - **DO NOT USE EXAMPLE DATA.**
 
   Return ONLY valid JSON - no markdown, no code blocks, no explanations.
 
@@ -56,31 +58,17 @@ extraction_prompt: |
   {{
     "experiences": [
       {{
-        "company": "Tech Corp Inc.",
-        "title": "Senior Software Engineer",
-        "start_date": "2021-03",
-        "end_date": "Present",
-        "location": "San Francisco, CA",
-        "industry": "Technology",
+        "company": "<company_name>",
+        "title": "<job_title>",
+        "start_date": "<YYYY-MM>",
+        "end_date": "<YYYY-MM or Present>",
+        "location": "<City, State>",
+        "industry": "<Industry>",
         "responsibilities": [
-          "Led development of microservices architecture serving 10M users",
-          "Managed team of 5 engineers across 2 time zones",
-          "Reduced API latency by 40% through caching optimization"
+          "<responsibility_1>",
+          "<responsibility_2>"
         ],
-        "is_current": true
-      }},
-      {{
-        "company": "StartupXYZ",
-        "title": "Software Engineer",
-        "start_date": "2019-06",
-        "end_date": "2021-02",
-        "location": "New York, NY",
-        "industry": "Fintech",
-        "responsibilities": [
-          "Built payment processing system handling $5M daily transactions",
-          "Implemented CI/CD pipeline reducing deployment time by 60%"
-        ],
-        "is_current": false
+        "is_current": <true/false>
       }}
     ]
   }}
@@ -125,6 +113,6 @@ validation_prompt: |
   Return JSON:
   {{
     "is_valid": true/false,
-    "issues": ["list of issues found"],
-    "corrected_data": {{ ... }} // only if corrections needed
+    "issues": ["<issue_1>", "<issue_2>"],
+    "corrected_data": {{ "experiences": [...] }}
   }}

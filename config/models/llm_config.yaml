@@ -42,7 +42,7 @@ providers:
     timeout: 60
 
   gemini:
-    model: "gemini-2.0-flash"
+    model: "gemini-2.5-flash-preview-05-20"
     api_key_env: "GOOGLE_API_KEY"
     temperature: 0.7
     max_tokens: 8192
@@ -110,11 +110,11 @@ task_models:
   resume_analysis: null  # Uses default
 
   # Interview questions need creativity + reasoning
-  # Recommended: Use a thinking model for deeper questions
-  interview_questions: null  # Uses default
+  # Using Gemini Flash for better conversational quality in voice interviews
+  interview_questions: "gemini"
 
   # Response evaluation needs consistency
-  response_evaluation: null  # Uses default
+  response_evaluation: "gemini"  # Same model for consistent scoring
 
   # Report generation needs good writing
   report_generation: null  # Uses default

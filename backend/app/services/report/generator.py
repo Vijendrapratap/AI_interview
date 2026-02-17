@@ -66,6 +66,11 @@ class ReportGenerator:
                 temperature=0.5
             )
 
+            # Safety check
+            if not isinstance(result, dict):
+                logger.warning(f"Interview report LLM returned non-dict response: {type(result)}")
+                result = {}
+
             # Calculate scores if not in result
             evaluations = session_data.get("evaluations", [])
             aggregate_scores = self._calculate_aggregates(evaluations)
@@ -126,7 +131,7 @@ class ReportGenerator:
         prompt = self.prompts.get("resume_report_prompt", "").format(
             resume_text=resume_text,
             analysis_results=str(analysis_result), 
-            analytics_deep_dive=str(analytics), # Pass detailed analytics
+            analytics_deep_dive=str(analytics),
             job_description=""
         )
 
@@ -136,19 +141,93 @@ class ReportGenerator:
                 temperature=0.5
             )
 
+            # Safety check: Ensure result is a dict
+            if not isinstance(result, dict):
+                logger.warning(f"Resume report LLM returned non-dict response: {type(result)}")
+                result = {}
+
+            # --- Extract dual-perspective views (new structure) ---
+            candidate_view = result.get("candidate_view", {})
+            recruiter_view = result.get("recruiter_view", {})
+
+            # --- Backward-compatible top-level scores ---
+            # Prefer recruiter scorecard overall, then top-level, then analysis fallback
+            recruiter_overall = (
+                recruiter_view.get("scorecard", {}).get("overall_score", 0)
+                or result.get("overall_score", 0)
+                or analysis_result.get("overall_score", 0)
+            )
+
+            score_breakdown = result.get("score_breakdown", {})
+            ats_score = score_breakdown.get("ats_score", analysis_result.get("quality_score", 0))
+            format_score = score_breakdown.get("format_score", analysis_result.get("quality_score", 0))
+            
+            content_score = score_breakdown.get("content_score", 0)
+            if content_score == 0:
+                exp_score = analysis_result.get("experience_score", 0)
+                skill_score = analysis_result.get("skills_score", 0)
+                content_score = int((exp_score + skill_score) / 2) if (exp_score + skill_score) > 0 else 0
+
+            # --- Keyword analysis: prefer candidate_view breakdown, then top-level ---
+            keyword_analysis = result.get("keyword_analysis", {})
+            if not keyword_analysis or not keyword_analysis.get("present"):
+                # Try to build from candidate_view keyword_breakdown
+                cv_keywords = candidate_view.get("keyword_breakdown", {})
+                if cv_keywords and cv_keywords.get("present"):
+                    present_flat = []
+                    present_data = cv_keywords.get("present", {})
+                    if isinstance(present_data, dict):
+                        for category_items in present_data.values():
+                            if isinstance(category_items, list):
+                                present_flat.extend(category_items)
+                    elif isinstance(present_data, list):
+                        present_flat = present_data
+                    keyword_analysis = {
+                        "present": list(set(present_flat)),
+                        "missing": cv_keywords.get("missing", []),
+                        "density": cv_keywords.get("density", "Low")
+                    }
+                else:
+                    # Last resort: build from analysis_result technical_skills
+                    tech_skills = analysis_result.get("technical_skills", {})
+                    present_skills = []
+                    if isinstance(tech_skills, dict):
+                        for category in tech_skills.values():
+                            if isinstance(category, list):
+                                present_skills.extend(category)
+                    
+                    missing_skills = []
+                    gap_analysis = analysis_result.get("gap_analysis", {})
+                    if isinstance(gap_analysis, dict):
+                        missing_skills = gap_analysis.get("missing_required", [])
+
+                    keyword_analysis = {
+                        "present": list(set(present_skills)),
+                        "missing": missing_skills,
+                        "density": "High" if len(present_skills) > 15 else "Medium" if len(present_skills) > 8 else "Low"
+                    }
+
             return {
-                "overall_score": result.get("overall_score", analysis_result.get("overall_score", 0)),
-                "score_breakdown": result.get("score_breakdown", {
-                    "ats_score": analysis_result.get("ats_score", 0),
-                    "content_score": analysis_result.get("content_score", 0),
-                    "format_score": analysis_result.get("format_score", 0)
-                }),
+                # Top-level scores (backward compatible)
+                "overall_score": recruiter_overall,
+                "score_breakdown": {
+                    "ats_score": ats_score,
+                    "content_score": content_score,
+                    "format_score": format_score,
+                    "jd_match_score": score_breakdown.get("jd_match_score", 0)
+                },
+                "radar_chart_data": result.get("radar_chart_data", {}),
+                # Dual-perspective views (new)
+                "candidate_view": candidate_view,
+                "recruiter_view": recruiter_view,
+                # Legacy fields (backward compatible)
                 "section_analysis": result.get("section_analysis", []),
-                "keyword_analysis": result.get("keyword_analysis", analysis_result.get("keywords", {})),
+                "keyword_analysis": keyword_analysis,
                 "ats_optimization": result.get("ats_optimization", {}),
                 "priority_actions": result.get("priority_actions", []),
                 "rewrite_examples": result.get("rewrite_examples", analysis_result.get("rewrite_examples", [])),
-                "deep_analysis": analytics # Passthrough raw analytics for frontend
+                "competitive_analysis": result.get("competitive_analysis", ""),
+                "deep_analysis": analytics
             }
 
         except Exception as e:
@@ -158,13 +237,19 @@ class ReportGenerator:
                 "score_breakdown": {
                     "ats_score": analysis_result.get("ats_score", 0),
                     "content_score": analysis_result.get("content_score", 0),
-                    "format_score": analysis_result.get("format_score", 0)
+                    "format_score": analysis_result.get("format_score", 0),
+                    "jd_match_score": 0
                 },
+                "radar_chart_data": {},
+                "candidate_view": {},
+                "recruiter_view": {},
                 "section_analysis": [],
                 "keyword_analysis": analysis_result.get("keywords", {}),
                 "ats_optimization": {},
                 "priority_actions": analysis_result.get("improvements", []),
-                "rewrite_examples": analysis_result.get("rewrite_examples", [])
+                "rewrite_examples": analysis_result.get("rewrite_examples", []),
+                "competitive_analysis": "",
+                "deep_analysis": {}
             }
 
     async def generate_combined_report(
@@ -192,6 +277,11 @@ class ReportGenerator:
                 prompt=prompt,
                 temperature=0.5
             )
+
+            # Safety check
+            if not isinstance(result, dict):
+                logger.warning(f"Combined report LLM returned non-dict response: {type(result)}")
+                result = {}
 
             return {
                 "overall_assessment": result.get("overall_assessment", ""),
@@ -345,12 +435,13 @@ Feedback: {e.get('feedback', '')}
         return feedback
 
     def _calculate_aggregates(self, evaluations: List[Dict]) -> Dict:
-        """Calculate aggregate scores"""
+        """Calculate aggregate scores from evaluation data"""
         if not evaluations:
             return {"overall": 0}
 
-        score_keys = ["content_relevance", "communication", "technical_accuracy",
-                      "confidence", "depth"]
+        # Match the actual score keys produced by evaluation engine
+        score_keys = ["content", "communication", "analytical", "technical_depth",
+                      "star_method", "authenticity"]
 
         aggregates = {}
         for key in score_keys:
@@ -359,6 +450,7 @@ Feedback: {e.get('feedback', '')}
                 if e.get("scores") and key in e["scores"]:
                     scores.append(float(e["scores"][key]))
             if scores:
+                # Scores are 0-10 from engine, scale to 0-100 for display
                 aggregates[key] = round(sum(scores) / len(scores) * 10, 1)
 
         if aggregates:

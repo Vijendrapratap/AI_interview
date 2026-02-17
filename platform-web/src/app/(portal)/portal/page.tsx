@@ -54,7 +54,9 @@ export default function CandidatePortalPage() {
             })
 
             if (!uploadRes.ok) {
-                throw new Error("Failed to upload resume")
+                const errorData = await uploadRes.json().catch(() => ({}))
+                const errorMessage = errorData.detail?.message || errorData.detail || "Failed to upload resume"
+                throw new Error(errorMessage)
             }
 
             const uploadData = await uploadRes.json()
@@ -81,8 +83,8 @@ export default function CandidatePortalPage() {
 
             // Extract top skills from sections or keywords
             const topSkills = analysisData.keywords?.technical_skills ||
-                              analysisData.keywords?.found_keywords?.technical ||
-                              []
+                analysisData.keywords?.found_keywords?.technical ||
+                []
             const missingSkills = analysisData.keywords?.missing_keywords || []
             const suggestions = analysisData.improvements || []
 
@@ -108,7 +110,7 @@ export default function CandidatePortalPage() {
         } catch (err) {
             console.error("Analysis failed", err)
             setIsAnalyzing(false)
-            alert("Failed to process resume. Please try again.")
+            alert(err instanceof Error ? err.message : "Failed to process resume. Please try again.")
         }
     }
 

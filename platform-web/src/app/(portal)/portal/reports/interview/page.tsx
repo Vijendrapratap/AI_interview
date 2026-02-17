@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAppStore } from "@/lib/store"
 import {
     MessageSquare,
     CheckCircle,
@@ -18,150 +19,62 @@ import {
     Brain
 } from "lucide-react"
 
-// Mock data - Replace with actual API call
-const mockInterviewReport = {
-    session_id: "int_789",
-    overall_score: 75,
-    recommendation: "Hire",
-    executive_summary: "The candidate demonstrated strong technical knowledge in Python and system design. Communication was clear and structured. Areas for improvement include providing more specific examples from past experience and being more concise in explanations. Overall, the candidate shows good potential and would be a solid addition to the team.",
-    performance_metrics: {
-        technical_knowledge: 82,
-        communication_skills: 70,
-        problem_solving: 78,
-        cultural_fit: 72,
-        leadership_potential: 68,
-        overall_score: 75
-    },
-    strengths: [
-        "Strong understanding of Python and its ecosystem",
-        "Clear explanation of system design concepts",
-        "Good problem-solving approach with structured thinking",
-        "Positive attitude and enthusiasm for learning",
-        "Relevant experience with similar tech stack"
-    ],
-    areas_for_improvement: [
-        "Provide more specific metrics and outcomes from past projects",
-        "Be more concise - some answers were longer than necessary",
-        "Show more examples of leadership and mentoring",
-        "Deeper knowledge of cloud architecture patterns",
-        "Practice behavioral questions with STAR method"
-    ],
-    skill_assessment: {
-        "Python": {
-            skill_name: "Python",
-            demonstrated_level: "Advanced",
-            evidence: "Explained decorators, generators, and async patterns fluently",
-            gap_to_requirement: null
-        },
-        "System Design": {
-            skill_name: "System Design",
-            demonstrated_level: "Intermediate",
-            evidence: "Good understanding of microservices, but limited on distributed systems",
-            gap_to_requirement: "Needs more practice with distributed caching and consensus algorithms"
-        },
-        "React": {
-            skill_name: "React",
-            demonstrated_level: "Advanced",
-            evidence: "Deep knowledge of hooks, state management, and performance optimization",
-            gap_to_requirement: null
-        },
-        "AWS": {
-            skill_name: "AWS",
-            demonstrated_level: "Intermediate",
-            evidence: "Familiar with core services (EC2, S3, Lambda) but limited experience with advanced services",
-            gap_to_requirement: "Should explore EKS, Step Functions, and advanced networking"
-        }
-    },
-    behavioral_competencies: {
-        collaboration: 75,
-        adaptability: 80,
-        initiative: 70,
-        attention_to_detail: 72,
-        time_management: 68
-    },
-    communication_analysis: {
-        clarity: "Good - Ideas were expressed clearly with minimal confusion",
-        structure: "Strong - Used frameworks like STAR for behavioral answers",
-        confidence: "Moderate - Some hesitation on complex technical questions",
-        conciseness: "Needs improvement - Tendency to over-explain",
-        active_listening: "Strong - Asked clarifying questions appropriately"
-    },
-    question_feedback: [
-        {
-            question_number: 1,
-            question: "Tell me about yourself and your experience",
-            response_summary: "Provided a comprehensive overview of 5 years experience, focusing on recent projects with Python and React.",
-            score: 80,
-            strengths: ["Good chronological structure", "Highlighted relevant experience"],
-            improvements: ["Could be more concise", "Add more quantifiable achievements"],
-            ideal_response: null
-        },
-        {
-            question_number: 2,
-            question: "Describe a challenging technical problem you solved",
-            response_summary: "Discussed optimizing a slow database query that was affecting production performance.",
-            score: 85,
-            strengths: ["Clear problem statement", "Good technical depth", "Mentioned measurable outcome (90% improvement)"],
-            improvements: ["Could explain the debugging process more clearly"],
-            ideal_response: null
-        },
-        {
-            question_number: 3,
-            question: "How would you design a URL shortening service?",
-            response_summary: "Started with requirements gathering, discussed high-level architecture, mentioned caching and database choices.",
-            score: 72,
-            strengths: ["Good systematic approach", "Considered scalability"],
-            improvements: ["Missed discussing collision handling", "Could elaborate more on database schema", "Didn't mention monitoring/observability"],
-            ideal_response: "A strong answer would cover: Requirements (read-heavy, 100:1 ratio), URL encoding (Base62), collision handling, database choice (NoSQL for simplicity), caching strategy, load balancing, and rate limiting."
-        },
-        {
-            question_number: 4,
-            question: "Tell me about a time you disagreed with a team member",
-            response_summary: "Described a situation about choosing between microservices and monolith architecture.",
-            score: 70,
-            strengths: ["Used STAR method", "Showed resolution approach"],
-            improvements: ["Could emphasize collaboration more", "Show more empathy for other perspective", "Mention lessons learned"],
-            ideal_response: null
-        },
-        {
-            question_number: 5,
-            question: "What are your career goals for the next 3-5 years?",
-            response_summary: "Wants to grow into a tech lead role while deepening system design expertise.",
-            score: 75,
-            strengths: ["Clear vision", "Aligned with role progression"],
-            improvements: ["Could be more specific about skill development plan", "Connect goals to company's mission"],
-            ideal_response: null
-        }
-    ],
-    improvement_roadmap: {
-        immediate_actions: [
-            "Practice system design questions focusing on distributed systems",
-            "Prepare 5-7 STAR stories for common behavioral questions",
-            "Work on being more concise - practice 2-minute answers"
-        ],
-        short_term: [
-            "Take an AWS Solutions Architect certification course",
-            "Build a side project involving distributed caching",
-            "Read 'Designing Data-Intensive Applications'"
-        ],
-        medium_term: [
-            "Seek mentoring/leadership opportunities at current job",
-            "Contribute to open source projects in distributed systems",
-            "Practice mock interviews monthly"
-        ]
-    },
-    interview_tips: [
-        "Before system design questions, always clarify requirements and constraints first",
-        "Use the STAR method consistently for all behavioral questions",
-        "Keep initial answers to 2-3 minutes, then offer to elaborate",
-        "Ask thoughtful questions about the team and product at the end",
-        "Practice explaining complex concepts simply - the 'explain like I'm 5' technique"
-    ]
-}
+// Mock data removed to prevent user confusion
 
 export default function InterviewPerformancePage() {
-    const [report] = useState(mockInterviewReport)
+    const analysisResult = useAppStore((state) => state.analysisResult)
+    const [report, setReport] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
     const [expandedQuestions, setExpandedQuestions] = useState<number[]>([1, 2])
+
+    useEffect(() => {
+        const fetchReport = async () => {
+            if (!analysisResult?.resumeId) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                // 1. Get all sessions to find the latest one for this resume
+                const sessionsRes = await fetch("http://localhost:8000/api/v1/interview/sessions")
+                if (!sessionsRes.ok) throw new Error("Failed to fetch sessions")
+
+                const sessionsData = await sessionsRes.json()
+                const mySessions = sessionsData.sessions
+                    .filter((s: any) => s.resume_id === analysisResult.resumeId)
+                    .sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+
+                if (mySessions.length === 0) {
+                    setLoading(false)
+                    return
+                }
+
+                const latestSession = mySessions[0]
+
+                // 2. Fetch detailed report
+                const reportRes = await fetch(`http://localhost:8000/api/v1/interview/report/${latestSession.id}`)
+                if (!reportRes.ok) throw new Error("Failed to fetch report")
+
+                const reportData = await reportRes.json()
+                setReport(reportData)
+
+            } catch (err) {
+                console.error(err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchReport()
+    }, [analysisResult])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        )
+    }
 
     const toggleQuestion = (qNum: number) => {
         setExpandedQuestions(prev =>
@@ -199,6 +112,28 @@ export default function InterviewPerformancePage() {
             "Beginner": "bg-gray-100 text-gray-700"
         }
         return colors[level] || colors["Beginner"]
+    }
+
+    if (!report) {
+        return (
+            <div className="text-center py-20">
+                <div className="bg-gray-50 rounded-2xl p-12 max-w-2xl mx-auto border border-gray-200">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <MessageSquare size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">No Interview Data Yet</h2>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                        Complete an AI mock interview to generate a detailed performance report with scores and feedback.
+                    </p>
+                    <a
+                        href="/portal"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                    >
+                        Start Practice Interview
+                    </a>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -272,10 +207,10 @@ export default function InterviewPerformancePage() {
                             <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
                                 {metric.replace(/_/g, " ")}
                             </div>
-                            <div className={`text-3xl font-bold ${getScoreColor(value)}`}>{value}</div>
+                            <div className={`text-3xl font-bold ${getScoreColor(value as number)}`}>{value as number}</div>
                             <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full transition-all ${value >= 80 ? "bg-green-500" : value >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
+                                    className={`h-full rounded-full transition-all ${(value as number) >= 80 ? "bg-green-500" : (value as number) >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
                                     style={{ width: `${value}%` }}
                                 />
                             </div>
@@ -293,7 +228,7 @@ export default function InterviewPerformancePage() {
                         Key Strengths
                     </h3>
                     <ul className="space-y-2">
-                        {report.strengths.map((strength, i) => (
+                        {report.strengths.map((strength: string, i: number) => (
                             <li key={i} className="flex items-start gap-2 text-sm text-green-800">
                                 <CheckCircle size={14} className="mt-0.5 shrink-0" />
                                 {strength}
@@ -309,7 +244,7 @@ export default function InterviewPerformancePage() {
                         Areas for Improvement
                     </h3>
                     <ul className="space-y-2">
-                        {report.areas_for_improvement.map((area, i) => (
+                        {report.areas_for_improvement.map((area: string, i: number) => (
                             <li key={i} className="flex items-start gap-2 text-sm text-orange-800">
                                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                                 {area}
@@ -326,7 +261,7 @@ export default function InterviewPerformancePage() {
                     Skill Assessment
                 </h2>
                 <div className="grid md:grid-cols-2 gap-4">
-                    {Object.values(report.skill_assessment).map((skill) => (
+                    {Object.values(report.skill_assessment).map((skill: any) => (
                         <div key={skill.skill_name} className="bg-white border border-gray-200 rounded-xl p-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="font-bold text-gray-900">{skill.skill_name}</span>
@@ -361,11 +296,11 @@ export default function InterviewPerformancePage() {
                                 </div>
                                 <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full ${score >= 80 ? "bg-green-500" : score >= 60 ? "bg-blue-500" : "bg-yellow-500"}`}
+                                        className={`h-full rounded-full ${(score as number) >= 80 ? "bg-green-500" : (score as number) >= 60 ? "bg-blue-500" : "bg-yellow-500"}`}
                                         style={{ width: `${score}%` }}
                                     />
                                 </div>
-                                <div className={`w-12 text-right font-bold ${getScoreColor(score)}`}>{score}</div>
+                                <div className={`w-12 text-right font-bold ${getScoreColor(score as number)}`}>{score as number}</div>
                             </div>
                         ))}
                     </div>
@@ -384,7 +319,7 @@ export default function InterviewPerformancePage() {
                             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 capitalize">
                                 {aspect.replace(/_/g, " ")}
                             </div>
-                            <p className="text-sm text-gray-700">{feedback}</p>
+                            <p className="text-sm text-gray-700">{feedback as string}</p>
                         </div>
                     ))}
                 </div>
@@ -397,7 +332,7 @@ export default function InterviewPerformancePage() {
                     Question-by-Question Feedback
                 </h2>
                 <div className="space-y-3">
-                    {report.question_feedback.map((qf) => (
+                    {report.question_feedback.map((qf: any) => (
                         <div key={qf.question_number} className="border border-gray-200 rounded-xl overflow-hidden">
                             <button
                                 onClick={() => toggleQuestion(qf.question_number)}
@@ -432,7 +367,7 @@ export default function InterviewPerformancePage() {
                                         <div>
                                             <div className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">What You Did Well</div>
                                             <ul className="space-y-1">
-                                                {qf.strengths.map((s, i) => (
+                                                {qf.strengths.map((s: string, i: number) => (
                                                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
                                                         <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                                                         {s}
@@ -445,7 +380,7 @@ export default function InterviewPerformancePage() {
                                         <div>
                                             <div className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">How to Improve</div>
                                             <ul className="space-y-1">
-                                                {qf.improvements.map((imp, i) => (
+                                                {qf.improvements.map((imp: string, i: number) => (
                                                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
                                                         <Lightbulb size={14} className="text-orange-500 mt-0.5 shrink-0" />
                                                         {imp}
@@ -483,7 +418,7 @@ export default function InterviewPerformancePage() {
                             Days - Immediate
                         </div>
                         <ul className="space-y-2">
-                            {report.improvement_roadmap.immediate_actions.map((action, i) => (
+                            {report.improvement_roadmap.immediate_actions.map((action: string, i: number) => (
                                 <li key={i} className="text-sm text-green-800 flex items-start gap-2">
                                     <span className="text-green-400">•</span>
                                     {action}
@@ -499,7 +434,7 @@ export default function InterviewPerformancePage() {
                             Days - Short Term
                         </div>
                         <ul className="space-y-2">
-                            {report.improvement_roadmap.short_term.map((action, i) => (
+                            {report.improvement_roadmap.short_term.map((action: string, i: number) => (
                                 <li key={i} className="text-sm text-blue-800 flex items-start gap-2">
                                     <span className="text-blue-400">•</span>
                                     {action}
@@ -515,7 +450,7 @@ export default function InterviewPerformancePage() {
                             Days - Medium Term
                         </div>
                         <ul className="space-y-2">
-                            {report.improvement_roadmap.medium_term.map((action, i) => (
+                            {report.improvement_roadmap.medium_term.map((action: string, i: number) => (
                                 <li key={i} className="text-sm text-purple-800 flex items-start gap-2">
                                     <span className="text-purple-400">•</span>
                                     {action}
@@ -534,7 +469,7 @@ export default function InterviewPerformancePage() {
                 </h2>
                 <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-100 rounded-xl p-5">
                     <ul className="space-y-3">
-                        {report.interview_tips.map((tip, i) => (
+                        {report.interview_tips.map((tip: string, i: number) => (
                             <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
                                 <span className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center text-xs font-bold text-yellow-700 shrink-0">
                                     {i + 1}
