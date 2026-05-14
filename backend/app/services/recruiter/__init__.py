@@ -1,0 +1,1 @@
+"""Recruiter ATS service package."""

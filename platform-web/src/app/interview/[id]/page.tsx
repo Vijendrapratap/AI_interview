@@ -1,5 +1,7 @@
 "use client"
 
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import { useState, useEffect, useRef, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, PhoneOff, Settings, Loader2, CheckCircle, Send } from "lucide-react"
@@ -35,7 +37,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null)
     const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
     const [sessionId, setSessionId] = useState<string | null>(null)
-    const [introMessage, setIntroMessage] = useState("")
+    const [, setIntroMessage] = useState("")
     const [textInput, setTextInput] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [elapsedTime, setElapsedTime] = useState(0)
@@ -85,7 +87,8 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
             setPermissionsGranted(true)
 
             // Initialize Audio Analysis for Silence Detection
-            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+            const AudioContextClass = window.AudioContext || (window as Window & typeof globalThis & { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+            const audioCtx = new AudioContextClass()
             const analyser = audioCtx.createAnalyser()
             analyser.fftSize = 256
             const source = audioCtx.createMediaStreamSource(stream)

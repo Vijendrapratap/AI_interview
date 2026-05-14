@@ -15,8 +15,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Python root-level virtualenv/build folders
+/lib/
+/lib64/
 parts/
 sdist/
 var/

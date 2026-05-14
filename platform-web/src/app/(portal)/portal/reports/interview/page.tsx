@@ -1,5 +1,7 @@
 "use client"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from "react"
 import { useAppStore } from "@/lib/store"
 import {
@@ -16,7 +18,10 @@ import {
     Download,
     Star,
     Mic,
-    Brain
+    Brain,
+    Activity,
+    Wind,
+    ArrowUpCircle
 } from "lucide-react"
 
 // Mock data removed to prevent user confusion
@@ -281,6 +286,72 @@ export default function InterviewPerformancePage() {
                 </div>
             </div>
 
+            {/* NEW: Behavioral & Voice Analytics Dashboard */}
+            {report.behavioral_analytics && report.behavioral_analytics.summary && (
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Activity size={20} className="text-blue-600" />
+                        Behavioral & Voice Analytics
+                    </h2>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {/* Pacing */}
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="text-sm font-bold text-indigo-800 flex items-center gap-2">
+                                    <Clock size={16} />
+                                    Speaking Pace
+                                </div>
+                                <div className="text-2xl font-black text-indigo-700">
+                                    {report.behavioral_analytics.summary.average_speaking_rate_wpm || 0}
+                                    <span className="text-sm font-normal text-indigo-600 ml-1">WPM</span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-indigo-600 mt-2">
+                                {report.behavioral_analytics.summary.average_speaking_rate_wpm > 160 ? "A bit fast. Try to slow down for clarity." :
+                                    report.behavioral_analytics.summary.average_speaking_rate_wpm < 120 ? "A bit slow. Try to speak more conversationally." :
+                                        "Great conversational pace."}
+                            </div>
+                        </div>
+
+                        {/* Fillers */}
+                        <div className="bg-pink-50 border border-pink-100 rounded-xl p-5">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="text-sm font-bold text-pink-800 flex items-center gap-2">
+                                    <Wind size={16} />
+                                    Filler Words
+                                </div>
+                                <div className="text-2xl font-black text-pink-700">
+                                    {report.behavioral_analytics.summary.total_fillers || 0}
+                                    <span className="text-sm font-normal text-pink-600 ml-1">total</span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-pink-600 mt-2">
+                                Common: {report.behavioral_analytics.summary.common_fillers?.join(", ") || "None"}
+                            </div>
+                        </div>
+
+                        {/* Confidence */}
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="text-sm font-bold text-emerald-800 flex items-center gap-2">
+                                    <ArrowUpCircle size={16} />
+                                    Vocal Confidence
+                                </div>
+                                <div className="text-2xl font-black text-emerald-700">
+                                    {(report.behavioral_analytics.summary.average_confidence_score || 0).toFixed(1)}
+                                    <span className="text-sm font-normal text-emerald-600 ml-1">/10</span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-emerald-600 mt-2">
+                                {report.behavioral_analytics.summary.confidence_trend === "increasing" ? "You gained confidence as the interview went on!" :
+                                    report.behavioral_analytics.summary.confidence_trend === "decreasing" ? "Confidence dropped slightly over time." :
+                                        "Stable confidence throughout."}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Behavioral Competencies */}
             <div>
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -345,6 +416,27 @@ export default function InterviewPerformancePage() {
                                     <div className="text-left">
                                         <div className="text-xs text-gray-500">Question {qf.question_number}</div>
                                         <div className="font-medium text-gray-900 text-sm">{qf.question}</div>
+
+                                        {/* New Behavioral Badges */}
+                                        {qf.behavioral_insights && (
+                                            <div className="flex items-center gap-2 mt-2">
+                                                {qf.behavioral_insights.filler_words_count > 3 && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-pink-100 text-pink-700">
+                                                        <Wind size={10} /> {qf.behavioral_insights.filler_words_count} fillers
+                                                    </span>
+                                                )}
+                                                {qf.behavioral_insights.speaking_rate_wpm > 165 && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                                                        <Clock size={10} /> Fast paced
+                                                    </span>
+                                                )}
+                                                {qf.behavioral_insights.confidence_score >= 8.5 && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                                                        <ArrowUpCircle size={10} /> High Confidence
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 {expandedQuestions.includes(qf.question_number) ? (
@@ -404,59 +496,71 @@ export default function InterviewPerformancePage() {
                 </div>
             </div>
 
-            {/* Improvement Roadmap */}
+            {/* Outcome & Action Plan */}
             <div>
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Clock size={20} className="text-blue-600" />
-                    Improvement Roadmap
+                    <Target size={20} className="text-blue-600" />
+                    Outcome & Action Plan
                 </h2>
-                <div className="grid md:grid-cols-3 gap-4">
-                    {/* 30 Days */}
-                    <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-                        <div className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
-                            <div className="w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-xs">30</div>
-                            Days - Immediate
+                <div className="grid md:grid-cols-3 gap-6">
+                    {/* 30 Days - Immediate */}
+                    <div className="bg-white border-2 border-green-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="bg-green-50 px-5 py-3 border-b border-green-100 flex items-center justify-between">
+                            <span className="font-bold text-green-800 text-sm tracking-wide">PHASE 1 (30 DAYS)</span>
+                            <div className="bg-green-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Immediate Drill</div>
                         </div>
-                        <ul className="space-y-2">
-                            {report.improvement_roadmap.immediate_actions.map((action: string, i: number) => (
-                                <li key={i} className="text-sm text-green-800 flex items-start gap-2">
-                                    <span className="text-green-400">•</span>
-                                    {action}
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="p-5">
+                            <ul className="space-y-4">
+                                {report.improvement_roadmap.immediate_actions.map((action: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-3 group">
+                                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0 mt-0.5 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                                            <span className="text-xs font-bold">{i + 1}</span>
+                                        </div>
+                                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
-                    {/* 60 Days */}
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                        <div className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
-                            <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-xs">60</div>
-                            Days - Short Term
+                    {/* 60 Days - Short Term */}
+                    <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="bg-blue-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
+                            <span className="font-bold text-blue-800 text-sm tracking-wide">PHASE 2 (60 DAYS)</span>
+                            <div className="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Skill Build</div>
                         </div>
-                        <ul className="space-y-2">
-                            {report.improvement_roadmap.short_term.map((action: string, i: number) => (
-                                <li key={i} className="text-sm text-blue-800 flex items-start gap-2">
-                                    <span className="text-blue-400">•</span>
-                                    {action}
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="p-5">
+                            <ul className="space-y-4">
+                                {report.improvement_roadmap.short_term.map((action: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-3 group">
+                                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                            <span className="text-xs font-bold">{i + 1}</span>
+                                        </div>
+                                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
-                    {/* 90 Days */}
-                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-                        <div className="text-sm font-bold text-purple-700 mb-3 flex items-center gap-2">
-                            <div className="w-6 h-6 bg-purple-200 rounded-full flex items-center justify-center text-xs">90</div>
-                            Days - Medium Term
+                    {/* 90 Days - Medium Term */}
+                    <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="bg-purple-50 px-5 py-3 border-b border-purple-100 flex items-center justify-between">
+                            <span className="font-bold text-purple-800 text-sm tracking-wide">PHASE 3 (90 DAYS)</span>
+                            <div className="bg-purple-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Mastery</div>
                         </div>
-                        <ul className="space-y-2">
-                            {report.improvement_roadmap.medium_term.map((action: string, i: number) => (
-                                <li key={i} className="text-sm text-purple-800 flex items-start gap-2">
-                                    <span className="text-purple-400">•</span>
-                                    {action}
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="p-5">
+                            <ul className="space-y-4">
+                                {report.improvement_roadmap.medium_term.map((action: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-3 group">
+                                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0 mt-0.5 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                            <span className="text-xs font-bold">{i + 1}</span>
+                                        </div>
+                                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

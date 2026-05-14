@@ -15,8 +15,6 @@ import {
     Building2,
     Flag,
     Shield,
-    ChevronDown,
-    ChevronUp,
     Download
 } from "lucide-react"
 
@@ -94,7 +92,7 @@ export default function CareerAnalyticsPage() {
     const analysisResult = useAppStore((state) => state.analysisResult)
     const [report, setReport] = useState<CareerAnalytics | null>(null)
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [, setError] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchAnalysis = async () => {
@@ -152,8 +150,6 @@ export default function CareerAnalyticsPage() {
             </div>
         )
     }
-
-    const [showAllTimeline, setShowAllTimeline] = useState(false)
 
     const getRiskColor = (risk: string) => {
         const colors: Record<string, string> = {

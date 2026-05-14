@@ -73,9 +73,9 @@ interview_report_prompt: |
   - What could be improved
   - Ideal response example
 
-  ### 9. IMPROVEMENT ROADMAP
-  Personalized 30-60-90 day plan:
-  - Immediate actions (30 days)
+  ### 9. OUTCOME & ACTION PLAN (Replaces Improvement Roadmap)
+  Instead of generic advice, provide actionable exercises:
+  - Immediate actions (30 days): Provide specific drills (e.g., "Record yourself answering 3 STAR questions focusing on pausing instead of fillers.")
   - Short-term development (60 days)
   - Medium-term growth (90 days)
 
@@ -84,11 +84,8 @@ interview_report_prompt: |
 
   ## OUTPUT FORMAT (JSON ONLY):
   {{
-    "executive_summary": {{
-      "assessment": "...",
-      "recommendation": "Hirer/No Hire",
-      "highlights": ["..."]
-    }},
+    "executive_summary": "...",
+    "recommendation": "Strong Hire/Hire/Maybe/No Hire",
     "performance_metrics": {{
       "technical_knowledge": 85,
       "communication_skills": 90,
@@ -99,26 +96,23 @@ interview_report_prompt: |
     }},
     "strengths": ["...", "..."],
     "areas_for_improvement": ["...", "..."],
-    "skill_assessment": [
-      {{"skill": "Python", "level": "Advanced", "evidence": "...", "gap": "..."}}
-    ],
+    "skill_assessment": {{
+       "Python": {{"skill_name": "Python", "demonstrated_level": "Advanced", "evidence": "...", "gap_to_requirement": "..."}}
+    }},
     "behavioral_competencies": {{
-      "teamwork": "...",
-      "initiative": "..."
+      "teamwork": 85,
+      "initiative": 75
     }},
     "communication_analysis": {{
       "clarity": "...",
       "structure": "..."
     }},
-    "question_feedback": [
-      {{"question": "...", "score": 8, "feedback": "...", "improvement": "..."}}
-    ],
     "improvement_roadmap": {{
-      "immediate": ["..."],
+      "immediate_actions": ["..."],
       "short_term": ["..."],
       "medium_term": ["..."]
     }},
-    "tips": ["..."]
+    "interview_tips": ["...", "..."]
   }}
 
 resume_report_prompt: |

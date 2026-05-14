@@ -13,7 +13,11 @@ import {
   MessageSquare,
   Loader2,
   Home,
-  RefreshCw
+  RefreshCw,
+  Activity,
+  Wind,
+  Clock,
+  ArrowUpCircle
 } from 'lucide-react'
 import {
   RadarChart,
@@ -270,10 +274,84 @@ export default function ReportPage() {
               <Brain className="w-5 h-5 mr-2 text-primary-600" />
               Executive Summary
             </h2>
-            <p className="text-gray-700 leading-relaxed">{report.executive_summary}</p>
+            <p className="text-gray-700 leading-relaxed">
+              {typeof report.executive_summary === 'object'
+                ? report.executive_summary.assessment
+                : report.executive_summary}
+            </p>
           </motion.div>
         )
       }
+
+      {/* NEW: Behavioral & Voice Analytics Dashboard */}
+      {report.behavioral_analytics && report.behavioral_analytics.summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <Activity className="w-5 h-5 mr-2 text-blue-600" />
+            Behavioral & Voice Analytics
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Pacing */}
+            <div className="card border-t-4 border-indigo-500 bg-indigo-50/30">
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-sm font-bold text-indigo-800 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Speaking Pace
+                </div>
+                <div className="text-3xl font-black text-indigo-700">
+                  {report.behavioral_analytics.summary.average_speaking_rate_wpm || 0}
+                  <span className="text-sm font-normal text-indigo-600 ml-1">WPM</span>
+                </div>
+              </div>
+              <div className="text-sm text-indigo-700 mt-4">
+                {report.behavioral_analytics.summary.average_speaking_rate_wpm > 160 ? "A bit fast. Try to slow down for clarity." :
+                  report.behavioral_analytics.summary.average_speaking_rate_wpm < 120 ? "A bit slow. Try to speak more conversationally." :
+                    "Great conversational pace."}
+              </div>
+            </div>
+
+            {/* Fillers */}
+            <div className="card border-t-4 border-pink-500 bg-pink-50/30">
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-sm font-bold text-pink-800 flex items-center gap-2">
+                  <Wind className="w-4 h-4" />
+                  Filler Words
+                </div>
+                <div className="text-3xl font-black text-pink-700">
+                  {report.behavioral_analytics.summary.total_fillers || 0}
+                  <span className="text-sm font-normal text-pink-600 ml-1">total</span>
+                </div>
+              </div>
+              <div className="text-sm text-pink-700 mt-4">
+                Common: {report.behavioral_analytics.summary.common_fillers?.join(", ") || "None"}
+              </div>
+            </div>
+
+            {/* Confidence */}
+            <div className="card border-t-4 border-emerald-500 bg-emerald-50/30">
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-sm font-bold text-emerald-800 flex items-center gap-2">
+                  <ArrowUpCircle className="w-4 h-4" />
+                  Vocal Confidence
+                </div>
+                <div className="text-3xl font-black text-emerald-700">
+                  {(report.behavioral_analytics.summary.average_confidence_score || 0).toFixed(1)}
+                  <span className="text-sm font-normal text-emerald-600 ml-1">/10</span>
+                </div>
+              </div>
+              <div className="text-sm text-emerald-700 mt-4">
+                {report.behavioral_analytics.summary.confidence_trend === "increasing" ? "You gained confidence as the interview went on!" :
+                  report.behavioral_analytics.summary.confidence_trend === "decreasing" ? "Confidence dropped slightly over time." :
+                    "Stable confidence throughout."}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Charts */}
       <motion.div
@@ -398,6 +476,27 @@ export default function ReportPage() {
                         <p className="text-sm text-gray-600 mb-2 font-medium">Response Summary:</p>
                         <p className="text-sm text-gray-600 mb-3">{q.response_summary}</p>
 
+                        {/* New Behavioral Badges */}
+                        {q.behavioral_insights && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            {q.behavioral_insights.filler_words_count > 3 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-pink-100 text-pink-700">
+                                <Wind size={10} /> {q.behavioral_insights.filler_words_count} fillers
+                              </span>
+                            )}
+                            {q.behavioral_insights.speaking_rate_wpm > 165 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                                <Clock size={10} /> Fast paced
+                              </span>
+                            )}
+                            {q.behavioral_insights.confidence_score >= 8.5 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                                <ArrowUpCircle size={10} /> High Confidence
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {(q.strengths?.length > 0 || q.improvements?.length > 0) && (
                           <div className="flex gap-4">
                             {q.strengths?.length > 0 && (
@@ -433,39 +532,79 @@ export default function ReportPage() {
         )
       }
 
-      {/* Improvement Roadmap */}
+      {/* Outcome & Action Plan */}
       {
         report.improvement_roadmap && Object.keys(report.improvement_roadmap).length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="card"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-primary-600" />
-              Improvement Roadmap
+            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <Target className="w-6 h-6 mr-2 text-blue-600" />
+              Outcome & Action Plan
             </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {['immediate_actions', 'short_term', 'medium_term'].map((period, idx) => {
-                const items = report.improvement_roadmap[period] || []
-                const labels = ['30 Days', '60 Days', '90 Days']
-                const colors = ['bg-primary-50 border-primary-200', 'bg-blue-50 border-blue-200', 'bg-purple-50 border-purple-200']
 
-                return items.length > 0 ? (
-                  <div key={period} className={`p-4 rounded-lg border ${colors[idx]}`}>
-                    <h4 className="font-medium text-gray-900 mb-3">{labels[idx]}</h4>
-                    <ul className="space-y-2 text-sm">
-                      {items.slice(0, 4).map((item, i) => (
-                        <li key={i} className="flex items-start text-gray-700">
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null
-              })}
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* 30 Days - Immediate */}
+              <div className="bg-white border-2 border-green-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-green-50 px-5 py-3 border-b border-green-100 flex items-center justify-between">
+                  <span className="font-bold text-green-800 text-sm tracking-wide">PHASE 1 (30 DAYS)</span>
+                  <div className="bg-green-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Immediate Drill</div>
+                </div>
+                <div className="p-5">
+                  <ul className="space-y-4">
+                    {(report.improvement_roadmap.immediate_actions || []).map((action, i) => (
+                      <li key={i} className="flex items-start gap-3 group">
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0 mt-0.5 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                          <span className="text-xs font-bold">{i + 1}</span>
+                        </div>
+                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* 60 Days - Short Term */}
+              <div className="bg-white border-2 border-blue-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-blue-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
+                  <span className="font-bold text-blue-800 text-sm tracking-wide">PHASE 2 (60 DAYS)</span>
+                  <div className="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Skill Build</div>
+                </div>
+                <div className="p-5">
+                  <ul className="space-y-4">
+                    {(report.improvement_roadmap.short_term || []).map((action, i) => (
+                      <li key={i} className="flex items-start gap-3 group">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          <span className="text-xs font-bold">{i + 1}</span>
+                        </div>
+                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* 90 Days - Medium Term */}
+              <div className="bg-white border-2 border-purple-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-purple-50 px-5 py-3 border-b border-purple-100 flex items-center justify-between">
+                  <span className="font-bold text-purple-800 text-sm tracking-wide">PHASE 3 (90 DAYS)</span>
+                  <div className="bg-purple-600 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider">Mastery</div>
+                </div>
+                <div className="p-5">
+                  <ul className="space-y-4">
+                    {(report.improvement_roadmap.medium_term || []).map((action, i) => (
+                      <li key={i} className="flex items-start gap-3 group">
+                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0 mt-0.5 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                          <span className="text-xs font-bold">{i + 1}</span>
+                        </div>
+                        <span className="text-sm text-gray-700 leading-relaxed font-medium">{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           </motion.div>
         )

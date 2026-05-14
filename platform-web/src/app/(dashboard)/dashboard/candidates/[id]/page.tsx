@@ -6,7 +6,7 @@ import Link from "next/link"
 import { use } from "react"
 import {
     ArrowLeft, CheckCircle, AlertTriangle, FileText,
-    Shield, Mail, Send, Zap
+    Shield, Mail, Send, Zap, Briefcase
 } from "lucide-react"
 
 export default function CandidateDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -243,7 +243,7 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
                             <div>
                                 <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Leadership Signals</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {(candidate.analytics?.leadership_signals?.length || 0) > 0 ? candidate.analytics?.leadership_signals.map((signal: string) => (
+                                    {(candidate.analytics?.leadership_signals?.length || 0) > 0 ? (candidate.analytics?.leadership_signals ?? []).map((signal: string) => (
                                         <span key={signal} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm font-medium border border-purple-100">
                                             {signal}
                                         </span>
@@ -276,15 +276,6 @@ export default function CandidateDetailPage({ params }: { params: Promise<{ id: 
 
             </div>
         </div >
-    )
-}
-
-function Briefcase({ size }: { size: number }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
     )
 }
 

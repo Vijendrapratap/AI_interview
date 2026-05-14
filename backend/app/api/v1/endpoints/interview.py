@@ -24,6 +24,7 @@ from app.services.analytics.behavioral import BehavioralAnalytics
 from app.services.analytics.audio import AudioAnalyzer
 from app.api.v1.endpoints.resume import resume_storage
 from app.api.v1.endpoints.analysis import analysis_storage
+from app.services.report.generator import ReportGenerator
 
 # Initialize services
 behavioral_analyzer = BehavioralAnalytics()
@@ -581,11 +582,11 @@ def calculate_aggregate_scores(evaluations: list) -> dict:
     return aggregates
 
 
-@router.get("/report/{session_id}", response_model=InterviewReportResponse)
+@router.get("/report/{session_id}")
 async def get_interview_report(session_id: str):
     """
     Generate detailed interview performance report.
-    Aggregates data from all questions, evaluations, and behavioral analytics.
+    Delegates generation to ReportGenerator.
     """
     session = interview_sessions.get(session_id)
     if not session:
@@ -594,126 +595,36 @@ async def get_interview_report(session_id: str):
     if session["status"] != "completed" and len(session["responses"]) < 1:
         raise HTTPException(status_code=400, detail="Interview not active or no data to report")
 
-    # 1. Calculate Overall Scores
-    evaluations = session["evaluations"]
-    agg_scores = calculate_aggregate_scores(evaluations)
-    overall_score = agg_scores.get("overall", 0)
+    # Get resume and JD
+    resume_data = resume_storage.get(session["resume_id"], {})
+    resume_text = resume_data.get("text_content", "")
+    job_description = session.get("job_description", "")
 
-    # 2. Determine Recommendation
-    if overall_score >= 85:
-        recommendation = "Strong Hire"
-    elif overall_score >= 70:
-        recommendation = "Hire"
-    elif overall_score >= 50:
-        recommendation = "Maybe"
-    else:
-        recommendation = "No Hire"
+    try:
+        report_generator = ReportGenerator()
+        report = await report_generator.generate_interview_report(
+            session_data=session,
+            resume_text=resume_text,
+            job_description=job_description
+        )
+        return report
+    except Exception as e:
+        logger.error(f"Error generating report: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
 
-    # 3. Aggregate Strengths & Weaknesses
-    all_strengths = []
-    all_weaknesses = []
-    for ev in evaluations:
-        all_strengths.extend(ev.get("strengths", []))
-        all_weaknesses.extend(ev.get("weaknesses", []))
-    
-    unique_strengths = list(set(all_strengths))[:5]
-    unique_weaknesses = list(set(all_weaknesses))[:5]
 
-    # 4. Generate Question Feedback
-    question_feedback = []
-    questions = session["questions"]
-    responses = session["responses"]
-    
-    for i, ev in enumerate(evaluations):
-        if i >= len(questions) or i >= len(responses):
-            break
-            
-        q = questions[i]
-        q_num = i + 1
-        # If it's a follow-up, it might share number with parent? 
-        # For simplicity, just sequential numbering or handling follow-ups as distinct
-        
-        feedback_item = {
-            "question_number": q_num,
-            "question": q.get("question", ""),
-            "score": int(ev.get("scores", {}).get("overall", 0) * 10), # Scale to 100
-            "response_summary": responses[i][:150] + "..." if len(responses[i]) > 150 else responses[i],
-            "strengths": ev.get("strengths", [])[:2],
-            "improvements": ev.get("weaknesses", [])[:2],
-            "ideal_response": ev.get("ideal_response_elements", [])[0] if ev.get("ideal_response_elements") else "Focus on STAR method."
-        }
-        question_feedback.append(feedback_item)
-
-    # 5. Mock/Template Data for Complex Analytics (since we don't have deep storage for these yet)
-    # in a real system, these would be aggregated from specific evaluation fields
-    
-    performance_metrics = {
-        "technical_knowledge": agg_scores.get("technical_depth", 0) * 10,
-        "communication_skills": agg_scores.get("communication", 0) * 10,
-        "problem_solving": agg_scores.get("analytical", 0) * 10,
-        "cultural_fit": agg_scores.get("authenticity", 0) * 10
+@router.post("/debug/inject_resume")
+async def debug_inject_resume():
+    """Debug endpoint to inject a fake resume for bypass testing"""
+    import uuid
+    from datetime import datetime
+    rid = str(uuid.uuid4())
+    resume_storage[rid] = {
+        "id": rid,
+        "filename": "debug_resume.pdf",
+        "upload_date": datetime.utcnow().isoformat(),
+        "text_content": "A highly skilled software engineer with 10 years experience in Python, AWS and React.",
+        "status": "processed"
     }
-    
-    # Fill missing with valid defaults if calculation failed (e.g. short interview)
-    for k in performance_metrics:
-        if performance_metrics[k] == 0:
-            performance_metrics[k] = 70.0
-
-    skill_assessment = {} # We'd need to track skills per question. 
-    # Mocking for now based on interview type
-    if session.get("interview_type") == "technical":
-        skill_assessment = {
-            "Core Concept": {
-                "skill_name": "Core Concepts",
-                "demonstrated_level": "Intermediate",
-                "evidence": "Good understanding of basics shown in Q1",
-                "gap_to_requirement": None
-            }
-        }
-
-    behavioral_competencies = {
-        "leadership": 75.0,
-        "teamwork": 80.0,
-        "adaptability": 70.0
-    }
-    
-    communication_analysis = {
-        "clarity": "Clear and concise",
-        "pacing": "Good speaking rate",
-        "confidence": "Generally confident"
-    }
-    
-    improvement_roadmap = {
-        "immediate_actions": [f"Practice {w}" for w in unique_weaknesses[:2]],
-        "short_term": ["Deepen technical knowledge in specific areas"],
-        "medium_term": ["Work on system design patterns"]
-    }
-
-    interview_tips = [
-        "Use the STAR method more consistently",
-        "Pause to think before answering complex questions",
-        "Ask clarifying questions when requirements are vague"
-    ]
-
-    executive_summary = (
-        f"The candidate demonstrated {recommendation.lower()} potential with an overall score of {overall_score}. "
-        f"Key strengths include {', '.join(unique_strengths[:2])}. "
-        f"Areas for development are {', '.join(unique_weaknesses[:2])}."
-    )
-
-    return InterviewReportResponse(
-        session_id=session_id,
-        overall_score=overall_score,
-        recommendation=recommendation,
-        executive_summary=executive_summary,
-        performance_metrics=performance_metrics,
-        strengths=unique_strengths,
-        areas_for_improvement=unique_weaknesses,
-        skill_assessment=skill_assessment,
-        behavioral_competencies=behavioral_competencies,
-        communication_analysis=communication_analysis,
-        question_feedback=question_feedback,
-        improvement_roadmap=improvement_roadmap,
-        interview_tips=interview_tips
-    )
+    return {"resume_id": rid}
 

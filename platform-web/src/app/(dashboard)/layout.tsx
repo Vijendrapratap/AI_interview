@@ -10,7 +10,13 @@ import {
     Search,
     Bell,
     TrendingUp,
-    LogOut
+    LogOut,
+    Kanban,
+    CalendarClock,
+    MessageSquare,
+    Mail,
+    Bot,
+    Radar
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -21,9 +27,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="h-16 flex items-center gap-2 px-6 border-b border-gray-100 cursor-pointer">
                     <Link href="/dashboard" className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                            AI
+                            R
                         </div>
-                        <span className="text-lg font-bold text-gray-900">Recruiter.ai</span>
+                        <span className="text-lg font-bold text-gray-900">ReCruItAI</span>
                     </Link>
                 </div>
 
@@ -31,7 +37,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="space-y-1">
                         <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />}>Dashboard</NavItem>
                         <NavItem href="/dashboard/jobs" icon={<Briefcase size={20} />}>Jobs</NavItem>
+                        <NavItem href="/dashboard/pipeline" icon={<Kanban size={20} />}>Pipeline</NavItem>
                         <NavItem href="/dashboard/candidates" icon={<Users size={20} />}>Candidates</NavItem>
+                        <NavItem href="/dashboard/interviews" icon={<CalendarClock size={20} />}>Interviews</NavItem>
+                        <NavItem href="/dashboard/collaboration" icon={<MessageSquare size={20} />}>Collaboration</NavItem>
+                        <NavItem href="/dashboard/communications" icon={<Mail size={20} />}>Comms</NavItem>
+                        <NavItem href="/dashboard/sourcing" icon={<Radar size={20} />}>Sourcing</NavItem>
+                        <NavItem href="/dashboard/automations" icon={<Bot size={20} />}>Automations</NavItem>
                         <NavItem href="/dashboard/analytics" icon={<TrendingUp size={20} />}>Analytics</NavItem>
                         <NavItem href="/dashboard/settings" icon={<Settings size={20} />}>Settings</NavItem>
                     </div>

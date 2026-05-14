@@ -7,10 +7,8 @@ import {
     CheckCircle,
     AlertTriangle,
     TrendingUp,
-    Award,
     BookOpen,
     Lightbulb,
-    Star,
     ChevronDown,
     ChevronUp,
     ExternalLink,
@@ -70,6 +68,7 @@ export default function SkillsAssessmentPage() {
     const analysisResult = useAppStore((state) => state.analysisResult)
     const [report, setReport] = useState<SkillsAssessment | null>(null)
     const [loading, setLoading] = useState(true)
+    const [expandedCategories, setExpandedCategories] = useState<string[]>(["Programming Languages", "Frontend Frameworks"])
 
     useEffect(() => {
         const fetchAnalysis = async () => {
@@ -125,8 +124,6 @@ export default function SkillsAssessmentPage() {
             </div>
         )
     }
-    const [expandedCategories, setExpandedCategories] = useState<string[]>(["Programming Languages", "Frontend Frameworks"])
-
     const toggleCategory = (category: string) => {
         setExpandedCategories(prev =>
             prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]

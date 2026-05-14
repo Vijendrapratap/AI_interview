@@ -94,7 +94,8 @@ class ReportGenerator:
                 "question_feedback": self._format_question_feedback(
                     session_data.get("questions", []),
                     session_data.get("responses", []),
-                    session_data.get("evaluations", [])
+                    session_data.get("evaluations", []),
+                    behavioral_summary
                 ),
                 "improvement_roadmap": result.get("improvement_roadmap", {
                     "immediate_actions": [],
@@ -419,18 +420,35 @@ Feedback: {e.get('feedback', '')}
         self,
         questions: List[Dict],
         responses: List[str],
-        evaluations: List[Dict]
+        evaluations: List[Dict],
+        behavioral_summary: Dict = None
     ) -> List[Dict]:
         """Format question-by-question feedback"""
         feedback = []
+        
+        # Safe extraction of per-response behavioral data
+        details = []
+        if behavioral_summary and "details" in behavioral_summary:
+            details = behavioral_summary["details"]
+            
         for i, (q, r, e) in enumerate(zip(questions, responses, evaluations)):
+            # Find matching behavioral detail by index
+            q_behavioral = {}
+            if i < len(details):
+                q_behavioral = details[i]
+                
             feedback.append({
                 "question_number": i + 1,
                 "question": q.get("question", ""),
                 "response_summary": r[:200] + "..." if len(r) > 200 else r,
                 "score": e.get("overall_score", 5),
                 "strengths": e.get("strengths", []),
-                "improvements": e.get("weaknesses", [])
+                "improvements": e.get("weaknesses", []),
+                "behavioral_insights": {
+                    "confidence_score": q_behavioral.get("confidence_score", 0),
+                    "filler_words_count": len(q_behavioral.get("filler_words", [])),
+                    "speaking_rate_wpm": q_behavioral.get("speaking_rate_wpm", 0)
+                }
             })
         return feedback
 
@@ -498,7 +516,8 @@ Feedback: {e.get('feedback', '')}
             "question_feedback": self._format_question_feedback(
                 session_data.get("questions", []),
                 session_data.get("responses", []),
-                evaluations
+                evaluations,
+                None
             ),
             "improvement_roadmap": {},
             "interview_tips": []
