@@ -479,3 +479,89 @@ export const mockSourcingChannels = [
     { source: "Inbound Application", volume: 151, quality: 72, cost: "$450", recommendation: "Add knockout questions to reduce review load" },
     { source: "Agency", volume: 31, quality: 61, cost: "$8,200", recommendation: "Use only for hard-to-fill requisitions" }
 ];
+
+export const mockJobBoards = [
+    { name: "LinkedIn", status: "Ready", reach: "1.2M", cost: "$1,200", recommendation: "Use for senior and passive talent" },
+    { name: "Naukri", status: "Connected", reach: "850K", cost: "$650", recommendation: "Prioritize India engineering and operations roles" },
+    { name: "Indeed", status: "Ready", reach: "740K", cost: "$450", recommendation: "Use knockout questions for high-volume roles" },
+    { name: "Company careers page", status: "Live", reach: "Organic", cost: "$0", recommendation: "Keep employer-brand copy updated" }
+];
+
+export const mockOfferWorkflows = [
+    { id: "offer_1", candidate: "Robert Garcia", role: "DevOps Engineer", stage: "Offer approval", owner: "David Recruiter", compensation: "$148k + equity", blockers: "Finance approval due today", risk: "Medium" },
+    { id: "offer_2", candidate: "Arjun Singh", role: "Senior Backend Engineer", stage: "Hiring manager review", owner: "Nina Patel", compensation: "$172k + equity", blockers: "Need final scorecard sign-off", risk: "Low" },
+    { id: "offer_3", candidate: "Alice Wang", role: "Lead Data Scientist", stage: "Background check", owner: "Priya Shah", compensation: "$188k + equity", blockers: "Education verification pending", risk: "Medium" },
+    { id: "offer_4", candidate: "Jennifer Lopez", role: "HR Manager", stage: "Onboarding handoff", owner: "Sophia Lewis", compensation: "$112k", blockers: "Start-date confirmation", risk: "Low" }
+];
+
+export const mockEnterpriseControls = [
+    { area: "RBAC", status: "Configured", detail: "Admin, recruiter, hiring manager, interviewer, candidate" },
+    { area: "Audit logs", status: "Ready", detail: "Track stage movement, score overrides, invites, rejection reasons" },
+    { area: "Data retention", status: "Needs policy", detail: "Default candidate retention: 365 days with consent review" },
+    { area: "Integrations", status: "Planned", detail: "Google/Microsoft calendar, email, job boards, HRIS, webhooks" }
+];
+
+export const recruiterFlowSteps = [
+    {
+        id: "post",
+        step: "1",
+        title: "Post once",
+        subtitle: "Create one job and publish it everywhere",
+        status: "Ready",
+        metric: "4 channels",
+        action: "Review job copy and publish",
+        detail: "LinkedIn, Naukri, Indeed, and the careers page share the same structured job brief so recruiters do not rewrite posts per platform."
+    },
+    {
+        id: "collect",
+        step: "2",
+        title: "Collect resumes",
+        subtitle: "All applicants land in one inbox",
+        status: "Live",
+        metric: "308 applicants",
+        action: "Deduplicate and attach to requisitions",
+        detail: "Applications from job boards, referrals, agencies, and manual uploads become candidate records against the right job."
+    },
+    {
+        id: "screen",
+        step: "3",
+        title: "AI reviews and scores",
+        subtitle: "Parser + match score + explanation",
+        status: "Active",
+        metric: "75% threshold",
+        action: "Approve the shortlist",
+        detail: "Recruiters see skills found, skills missing, red flags, and a plain-English reason before any candidate moves forward."
+    },
+    {
+        id: "test",
+        step: "4",
+        title: "Send test automatically",
+        subtitle: "Only above-threshold candidates get the test draft",
+        status: "Needs approval",
+        metric: "6 ready",
+        action: "Send AI interview/test email",
+        detail: "The system drafts role-specific assessment emails for acceptable candidates, but the recruiter stays in control before sending."
+    },
+    {
+        id: "decide",
+        step: "5",
+        title: "Decide faster",
+        subtitle: "Scorecard, feedback, offer handoff",
+        status: "In review",
+        metric: "3 offers",
+        action: "Move best candidates forward",
+        detail: "Interview evidence, hiring-manager feedback, and offer blockers are visible in the same workspace."
+    }
+];
+
+export const screeningRules = [
+    { label: "Auto-shortlist", threshold: "85+", action: "Draft AI test invite and put candidate in recruiter approval queue", guardrail: "Never sends without recruiter approval" },
+    { label: "Recruiter review", threshold: "70-84", action: "Show missing skills, risks, and suggested follow-up questions", guardrail: "Human decides shortlist/reject" },
+    { label: "Low-fit", threshold: "Below 70", action: "Draft respectful rejection or keep warm email", guardrail: "Bulk action requires reason logging" }
+];
+
+export const testEmailDrafts = [
+    { candidate: "Alice Wang", role: "Lead Data Scientist", score: 94, test: "45-min ML case study + SQL exercise", subject: "Next step for your Lead Data Scientist application", status: "Ready to send" },
+    { candidate: "Arjun Singh", role: "Senior Backend Engineer", score: 82, test: "System design async interview", subject: "ReCruItAI technical interview link", status: "Needs scorecard review" },
+    { candidate: "Robert Garcia", role: "DevOps Engineer", score: 88, test: "Infrastructure troubleshooting task", subject: "DevOps assessment invitation", status: "Ready to send" }
+];

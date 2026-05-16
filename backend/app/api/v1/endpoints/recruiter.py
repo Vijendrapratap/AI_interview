@@ -10,6 +10,7 @@ from app.schemas.recruiter import (
     RecruiterActionResponse,
     RecruiterCandidate,
     RecruiterDashboardResponse,
+    RecruiterHiringFlowResponse,
     RecruiterJob,
 )
 from app.services.job_description import jd_generator
@@ -101,6 +102,11 @@ async def get_collaboration_queue():
 @router.get("/analytics")
 async def get_recruiter_analytics():
     return recruiter_ats_service.get_analytics()
+
+
+@router.get("/hiring-flow", response_model=RecruiterHiringFlowResponse)
+async def get_hiring_flow():
+    return recruiter_ats_service.get_hiring_flow()
 
 
 @router.post("/generate-jd")

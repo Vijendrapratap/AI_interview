@@ -7,10 +7,14 @@ from app.schemas.recruiter import (
     DashboardMetric,
     FeedbackRequestCreate,
     InterviewInviteRequest,
+    JobBoardChannel,
     RecruiterActionResponse,
     RecruiterCandidate,
     RecruiterDashboardResponse,
+    RecruiterHiringFlowResponse,
     RecruiterJob,
+    ScreeningRule,
+    TestEmailDraft,
 )
 
 
@@ -143,6 +147,27 @@ class RecruiterATSService:
             "offer_acceptance": "53%",
             "sla_risks": len([job for job in self._jobs if job.sla_status == "At Risk"]),
         }
+
+    def get_hiring_flow(self) -> RecruiterHiringFlowResponse:
+        """Simple recruiter workflow contract: post, collect, screen, test, decide."""
+        return RecruiterHiringFlowResponse(
+            job_boards=[
+                JobBoardChannel(name="LinkedIn", status="Ready", reach="1.2M", cost="$1,200", recommendation="Use for senior and passive talent"),
+                JobBoardChannel(name="Naukri", status="Connected", reach="850K", cost="$650", recommendation="Prioritize India engineering and operations roles"),
+                JobBoardChannel(name="Indeed", status="Ready", reach="740K", cost="$450", recommendation="Use knockout questions for high-volume roles"),
+                JobBoardChannel(name="Company careers page", status="Live", reach="Organic", cost="$0", recommendation="Keep employer-brand copy updated"),
+            ],
+            screening_rules=[
+                ScreeningRule(label="Auto-shortlist", threshold="85+", action="Draft AI test invite and put candidate in recruiter approval queue", guardrail="Never sends without recruiter approval"),
+                ScreeningRule(label="Recruiter review", threshold="70-84", action="Show missing skills, risks, and suggested follow-up questions", guardrail="Human decides shortlist/reject"),
+                ScreeningRule(label="Low-fit", threshold="Below 70", action="Draft respectful rejection or keep warm email", guardrail="Bulk action requires reason logging"),
+            ],
+            test_email_drafts=[
+                TestEmailDraft(candidate="Alice Wang", role="Lead Data Scientist", score=94, test="45-min ML case study + SQL exercise", subject="Next step for your Lead Data Scientist application", status="Ready to send"),
+                TestEmailDraft(candidate="Arjun Singh", role="Senior Backend Engineer", score=82, test="System design async interview", subject="ReCruItAI technical interview link", status="Needs scorecard review"),
+                TestEmailDraft(candidate="Robert Garcia", role="DevOps Engineer", score=88, test="Infrastructure troubleshooting task", subject="DevOps assessment invitation", status="Ready to send"),
+            ],
+        )
 
     def _build_jobs(self) -> list[RecruiterJob]:
         return [

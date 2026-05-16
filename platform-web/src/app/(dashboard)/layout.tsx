@@ -16,7 +16,8 @@ import {
     MessageSquare,
     Mail,
     Bot,
-    Radar
+    Radar,
+    Route
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <nav className="p-4 space-y-1 flex flex-col h-[calc(100%-4rem)] justify-between">
                     <div className="space-y-1">
                         <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />}>Dashboard</NavItem>
+                        <NavItem href="/dashboard/hiring-flow" icon={<Route size={20} />}>Hiring Flow</NavItem>
                         <NavItem href="/dashboard/jobs" icon={<Briefcase size={20} />}>Jobs</NavItem>
                         <NavItem href="/dashboard/pipeline" icon={<Kanban size={20} />}>Pipeline</NavItem>
                         <NavItem href="/dashboard/candidates" icon={<Users size={20} />}>Candidates</NavItem>

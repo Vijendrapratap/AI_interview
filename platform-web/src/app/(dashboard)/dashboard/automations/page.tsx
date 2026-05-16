@@ -1,7 +1,7 @@
 "use client"
 
-import { Bot, ShieldCheck, Zap } from "lucide-react";
-import { mockAutomations } from "@/lib/mockData";
+import { Bot, MailCheck, ShieldCheck, Zap } from "lucide-react";
+import { mockAutomations, screeningRules, testEmailDrafts } from "@/lib/mockData";
 
 export default function AutomationsPage() {
     return (
@@ -16,6 +16,51 @@ export default function AutomationsPage() {
                 <Summary icon={<ShieldCheck />} label="Human approvals" value="Required" />
                 <Summary icon={<Zap />} label="Admin hours saved" value="11h/wk" />
             </div>
+
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Resume score → test email rule</h2>
+                        <p className="text-sm text-gray-500">This converts incoming resumes into a clear recruiter approval queue.</p>
+                    </div>
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">Default pass score: 75</span>
+                </div>
+                <div className="grid gap-3 lg:grid-cols-3">
+                    {screeningRules.map(rule => (
+                        <div key={rule.label} className="rounded-lg border border-gray-100 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{rule.threshold}</p>
+                            <h3 className="mt-1 font-bold text-gray-900">{rule.label}</h3>
+                            <p className="mt-2 text-sm text-gray-600">{rule.action}</p>
+                            <p className="mt-3 text-xs font-medium text-emerald-700">{rule.guardrail}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-3">
+                    <div className="rounded-lg bg-blue-50 p-2 text-blue-700"><MailCheck size={20} /></div>
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Test emails waiting for recruiter approval</h2>
+                        <p className="text-sm text-gray-500">The platform drafts the next step; recruiters approve before anything goes out.</p>
+                    </div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                    {testEmailDrafts.map(draft => (
+                        <div key={draft.candidate} className="grid gap-3 py-4 md:grid-cols-[1fr_1fr_auto] md:items-center">
+                            <div>
+                                <p className="font-semibold text-gray-900">{draft.candidate}</p>
+                                <p className="text-sm text-gray-500">{draft.role} · AI score {draft.score}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-900">{draft.subject}</p>
+                                <p className="text-sm text-gray-500">{draft.test}</p>
+                            </div>
+                            <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Approve send</button>
+                        </div>
+                    ))}
+                </div>
+            </section>
 
             <section className="grid gap-4 md:grid-cols-2">
                 {mockAutomations.map(automation => (

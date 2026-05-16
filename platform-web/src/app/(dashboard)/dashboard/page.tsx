@@ -11,9 +11,10 @@ import {
     Plus,
     ShieldCheck,
     Sparkles,
-    Users
+    Users,
+    Route
 } from "lucide-react";
-import { mockAnalytics, mockCandidates, mockJobs } from "@/lib/mockData";
+import { mockAnalytics, mockCandidates, mockJobs, recruiterFlowSteps } from "@/lib/mockData";
 
 export default function Dashboard() {
     const priorityQueue = mockCandidates
@@ -49,6 +50,28 @@ export default function Dashboard() {
                 <StatCard label="Interviews Pending" value={mockAnalytics.interviews_pending.toString()} trend="Awaiting completion" tone="purple" icon={<CalendarClock />} />
                 <StatCard label="Offers Pending" value={mockAnalytics.offers_pending.toString()} trend="Ready to close" tone="green" icon={<CheckCircle2 />} />
             </div>
+
+            <section className="rounded-xl border border-blue-100 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-blue-50 p-2 text-blue-700"><Route size={20} /></div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Simple hiring flow</h2>
+                            <p className="text-sm text-gray-500">The product now centers the recruiter around one clear workflow.</p>
+                        </div>
+                    </div>
+                    <Link href="/dashboard/hiring-flow" className="text-sm font-semibold text-blue-600 hover:underline">Open flow view</Link>
+                </div>
+                <div className="grid gap-3 md:grid-cols-5">
+                    {recruiterFlowSteps.map(step => (
+                        <div key={step.id} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                            <p className="text-xs font-semibold text-blue-700">Step {step.step}</p>
+                            <p className="mt-1 font-semibold text-gray-900">{step.title}</p>
+                            <p className="mt-2 text-xs text-gray-500">{step.action}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
 
             <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">
                 <section className="rounded-xl border border-gray-200 bg-white shadow-sm">

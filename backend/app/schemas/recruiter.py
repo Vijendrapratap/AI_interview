@@ -164,3 +164,33 @@ class FeedbackRequestCreate(BaseModel):
 class RecruiterActionResponse(BaseModel):
     ok: bool
     message: str
+
+
+class JobBoardChannel(BaseModel):
+    name: str
+    status: str
+    reach: str
+    cost: str
+    recommendation: str
+
+
+class ScreeningRule(BaseModel):
+    label: str
+    threshold: str
+    action: str
+    guardrail: str
+
+
+class TestEmailDraft(BaseModel):
+    candidate: str
+    role: str
+    score: int = Field(ge=0, le=100)
+    test: str
+    subject: str
+    status: str
+
+
+class RecruiterHiringFlowResponse(BaseModel):
+    job_boards: List[JobBoardChannel]
+    screening_rules: List[ScreeningRule]
+    test_email_drafts: List[TestEmailDraft]

@@ -1,5 +1,6 @@
 
-import { Save, User, Building, Settings as SettingsIcon } from "lucide-react";
+import { Save, User, Building, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
+import { mockEnterpriseControls } from "@/lib/mockData";
 
 export default function SettingsPage() {
     return (
@@ -61,6 +62,27 @@ export default function SettingsPage() {
                             <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
                                 <Save size={18} /> Save Changes
                             </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="mb-5 flex items-center gap-3">
+                            <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700"><ShieldCheck size={20} /></div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">Enterprise controls</h2>
+                                <p className="text-sm text-gray-500">Keep the recruiter UX simple while enterprise controls run quietly underneath.</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {mockEnterpriseControls.map(control => (
+                                <div key={control.area} className="rounded-lg border border-gray-100 p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="font-semibold text-gray-900">{control.area}</p>
+                                        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">{control.status}</span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-gray-600">{control.detail}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
