@@ -2,12 +2,14 @@
 
 import { BarChart3, Clock, ShieldAlert, TrendingUp, Users } from "lucide-react";
 import { mockAnalytics } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function AnalyticsPage() {
     const maxPipeline = mockAnalytics.pipeline_stats[0]?.value || 1;
 
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Recruiting Analytics</h1>
                 <p className="text-gray-500">Measure speed, quality, source ROI, bottlenecks, and AI screening impact.</p>

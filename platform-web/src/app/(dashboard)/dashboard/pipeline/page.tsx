@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { mockCandidates, type PipelineStage } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 const stages: PipelineStage[] = ["Received", "Screening", "Interview", "Offer", "Hired", "Rejected"];
 
 export default function PipelinePage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Hiring Pipeline</h1>
                 <p className="text-gray-500">Kanban view for moving candidates from application to hire with AI context visible.</p>

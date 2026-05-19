@@ -2,10 +2,12 @@
 
 import { Search, Send, TrendingUp } from "lucide-react";
 import { mockJobBoards, mockSourcingChannels } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function SourcingPage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Sourcing & Talent Rediscovery</h1>
                 <p className="text-gray-500">Track channel quality and rediscover past applicants before paying for new sourcing.</p>

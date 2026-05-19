@@ -2,10 +2,12 @@
 
 import { Bot, MailCheck, ShieldCheck, Zap } from "lucide-react";
 import { mockAutomations, screeningRules, testEmailDrafts } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function AutomationsPage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Recruiter Copilot Automations</h1>
                 <p className="text-gray-500">AI assists the workflow, but recruiter approval stays in the loop for high-impact decisions.</p>

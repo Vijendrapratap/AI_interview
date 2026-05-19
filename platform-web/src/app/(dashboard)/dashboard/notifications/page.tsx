@@ -1,4 +1,5 @@
 import { UserPlus, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { ComingSoonBanner } from "@/components/Banner";
 
 const NOTIFICATIONS = [
     {
@@ -46,6 +47,7 @@ const NOTIFICATIONS = [
 export default function NotificationsPage() {
     return (
         <div className="p-8 max-w-4xl mx-auto">
+            <ComingSoonBanner className="mb-6" />
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-1">Notifications</h1>

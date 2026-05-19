@@ -1,9 +1,11 @@
 
 import { User, Mail, Shield, Key, LogOut } from "lucide-react";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function ProfilePage() {
     return (
         <div className="p-8 max-w-4xl mx-auto">
+            <ComingSoonBanner className="mb-6" />
             <h1 className="text-2xl font-bold text-gray-900 mb-8">My Profile</h1>
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8">

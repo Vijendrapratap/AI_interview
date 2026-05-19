@@ -2,10 +2,12 @@
 
 import { Mail, MessageCircle, Send } from "lucide-react";
 import { mockCommunicationTemplates } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function CommunicationsPage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Communication Center</h1>
                 <p className="text-gray-500">Templates and candidate updates that reduce repetitive recruiter admin work.</p>

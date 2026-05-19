@@ -2,10 +2,12 @@
 
 import { CheckCircle2, Mail, Send, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import { recruiterFlowSteps, screeningRules, testEmailDrafts } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function HiringFlowPage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8 text-white shadow-sm">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-3xl">

@@ -2,10 +2,12 @@
 
 import { Bell, MessageSquare, Users } from "lucide-react";
 import { mockCollaborationQueue } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function CollaborationPage() {
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Hiring Team Collaboration</h1>
                 <p className="text-gray-500">Keep hiring managers, interviewers, and recruiters aligned on decisions.</p>

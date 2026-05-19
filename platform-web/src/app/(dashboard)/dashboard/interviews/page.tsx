@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { CalendarClock, Copy, Sparkles } from "lucide-react";
 import { mockCandidates } from "@/lib/mockData";
+import { ComingSoonBanner } from "@/components/Banner";
 
 export default function InterviewsPage() {
     const interviewCandidates = mockCandidates.filter(candidate => candidate.status !== "Rejected");
 
     return (
         <div className="p-8 space-y-8">
+            <ComingSoonBanner className="mb-6" />
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">AI Interview Center</h1>
