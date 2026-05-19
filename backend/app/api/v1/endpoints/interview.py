@@ -612,19 +612,3 @@ async def get_interview_report(session_id: str):
         logger.error(f"Error generating report: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
 
-
-@router.post("/debug/inject_resume")
-async def debug_inject_resume():
-    """Debug endpoint to inject a fake resume for bypass testing"""
-    import uuid
-    from datetime import datetime
-    rid = str(uuid.uuid4())
-    resume_storage[rid] = {
-        "id": rid,
-        "filename": "debug_resume.pdf",
-        "upload_date": datetime.utcnow().isoformat(),
-        "text_content": "A highly skilled software engineer with 10 years experience in Python, AWS and React.",
-        "status": "processed"
-    }
-    return {"resume_id": rid}
-
