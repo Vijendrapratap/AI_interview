@@ -1,41 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
   subsets: ["latin"],
+  variable: "--font-fraunces",
+  axes: ["SOFT", "WONK", "opsz"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "ReCruItAI — AI Recruiting Workspace",
-  description:
-    "Test ReCruItAI, an AI-first applicant tracking workspace for resume screening, interview workflows, candidate pipeline management, and recruiting analytics.",
-  openGraph: {
-    title: "ReCruItAI — AI Recruiting Workspace",
-    description:
-      "AI-first ATS workspace for recruiters to screen resumes, manage candidates, coordinate interviews, and review hiring analytics.",
-    type: "website",
-  },
+  title: "ReCruItAI — AI-first ATS for recruiters",
+  description: "Screen, interview, and hire faster with AI assistance.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+    <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+      <body className="bg-surface text-ink font-sans antialiased">{children}</body>
     </html>
   );
 }
