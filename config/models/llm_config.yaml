@@ -76,18 +76,28 @@ providers:
     # - gemma2-9b-it (lightweight)
 
   openrouter:
-    # OpenRouter provides access to many models
-    # Recommended for reasoning: deepseek/deepseek-r1
-    # Recommended for general: deepseek/deepseek-chat-v3 or qwen/qwen-2.5-72b-instruct
-    model: "deepseek/deepseek-r1"
+    # OpenRouter provides access to many models.
+    # Default model below is the winner of the Task 7.4 interview-engine
+    # benchmark (backend/benchmarks/llm_1779219059.json):
+    #   deepseek/deepseek-v3.2-exp -- 3/3 cases passed, 2.62s avg latency,
+    #   strongest follow-up specificity (named Kafka vs RabbitMQ trade-offs
+    #   explicitly), valid raw JSON without code fences, $0.27/M input.
+    model: "deepseek/deepseek-v3.2-exp"
     api_key_env: "OPENROUTER_API_KEY"
     base_url: "https://openrouter.ai/api/v1"
     temperature: 0.7
     max_tokens: 8192
     timeout: 90
-    # Recommended alternatives on OpenRouter:
+    # Fallback models, ordered by benchmark score. Not auto-consumed by the
+    # current LLMService -- documented here so operators can swap by editing
+    # `model:` above without re-running the benchmark.
+    fallback_models:
+      - "anthropic/claude-haiku-4.5"     # 3/3 pass, 2.34s, fenced JSON but parseable
+      - "google/gemini-2.5-flash"        # 3/3 pass, 1.86s, tested baseline (prior default)
+      - "moonshotai/kimi-k2-0905"        # 3/3 pass, 5.8s, deepest AZ-conflict drill-down
+    # Other strong alternatives on OpenRouter:
     # BEST REASONING (thinking models):
-    # - deepseek/deepseek-r1 (RECOMMENDED - best open reasoning model)
+    # - deepseek/deepseek-r1 (best open reasoning model)
     # - deepseek/deepseek-r1-distill-qwen-32b (lighter, still excellent)
     # - qwen/qwen3-235b-a22b (massive, very capable)
     #
@@ -109,18 +119,46 @@ task_models:
   # Resume analysis benefits from strong reasoning
   resume_analysis: null  # Uses default
 
-  # Interview questions need creativity + reasoning
-  # Using Gemini Flash for better conversational quality in voice interviews
-  interview_questions: "gemini"
+  # Interview questions need creativity + reasoning + specificity.
+  # Routed to openrouter -> deepseek/deepseek-v3.2-exp per Task 7.4 benchmark.
+  # See top-level `interview_question:` block below for the picked-model summary,
+  # and backend/benchmarks/llm_1779219059.json for the raw 3-turn comparison.
+  interview_questions: "openrouter"
 
-  # Response evaluation needs consistency
-  response_evaluation: "gemini"  # Same model for consistent scoring
+  # Response evaluation needs consistency + reliable JSON output.
+  # Routed to the same openrouter provider so scoring uses the same model
+  # the candidate-facing engine just spoke to (style/scoring drift = lower).
+  response_evaluation: "openrouter"
 
   # Report generation needs good writing
   report_generation: null  # Uses default
 
   # Experience extraction (for career analytics)
   experience_extraction: null  # Uses default
+
+# =============================================================================
+# INTERVIEW-ENGINE MODEL PICK (Task 7.4)
+# Authoritative record of the benchmarked winner + runners-up.
+# The interview engine pulls the active model via task_models.interview_questions
+# -> providers.openrouter.model. Keep this block in sync with that path.
+# Raw benchmark JSON: backend/benchmarks/llm_1779219059.json
+# =============================================================================
+interview_question:
+  provider: openrouter
+  model: "deepseek/deepseek-v3.2-exp"
+  fallback_models:
+    - "anthropic/claude-haiku-4.5"
+    - "google/gemini-2.5-flash"   # always included as a tested baseline
+    - "moonshotai/kimi-k2-0905"
+  temperature: 0.7
+  max_tokens: 1024
+  # Why this won:
+  # - 3/3 cases passed in benchmark (icebreaker, follow-up, scoring JSON)
+  # - 2.62s avg latency (well under the 8s/turn target)
+  # - Follow-up actually drilled into the Kafka-vs-RabbitMQ trade-off rather
+  #   than asking a generic "tell me more" question.
+  # - Scoring returned raw, parseable JSON (no markdown fencing).
+  # - Cheapest of the contenders that hit all quality bars ($0.27/M in).
 
 # =============================================================================
 # REASONING MODE CONFIGURATION

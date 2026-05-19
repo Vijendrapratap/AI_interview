@@ -1,0 +1,324 @@
+{
+  "generated_at": 1779219059,
+  "models": [
+    "google/gemini-2.5-flash",
+    "deepseek/deepseek-v3.2-exp",
+    "moonshotai/kimi-k2-0905",
+    "anthropic/claude-haiku-4.5",
+    "openai/gpt-5-mini"
+  ],
+  "summary": [
+    {
+      "model": "google/gemini-2.5-flash",
+      "passed": "3/3",
+      "avg_latency_s": 1.86,
+      "json_ok": true,
+      "icebreaker_signals": 6,
+      "followup_signals": 1
+    },
+    {
+      "model": "deepseek/deepseek-v3.2-exp",
+      "passed": "3/3",
+      "avg_latency_s": 2.62,
+      "json_ok": true,
+      "icebreaker_signals": 4,
+      "followup_signals": 3
+    },
+    {
+      "model": "moonshotai/kimi-k2-0905",
+      "passed": "3/3",
+      "avg_latency_s": 5.8,
+      "json_ok": true,
+      "icebreaker_signals": 3,
+      "followup_signals": 2
+    },
+    {
+      "model": "anthropic/claude-haiku-4.5",
+      "passed": "3/3",
+      "avg_latency_s": 2.34,
+      "json_ok": true,
+      "icebreaker_signals": 5,
+      "followup_signals": 1
+    },
+    {
+      "model": "openai/gpt-5-mini",
+      "passed": "3/3",
+      "avg_latency_s": 8.42,
+      "json_ok": true,
+      "icebreaker_signals": 6,
+      "followup_signals": null
+    }
+  ],
+  "detail": [
+    {
+      "model": "google/gemini-2.5-flash",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_latency_s": 1.86,
+      "results": [
+        {
+          "case": "icebreaker",
+          "latency_s": 1.68,
+          "chars": 341,
+          "preview": "\"It's impressive to see your work at TechCorp, particularly with that high-throughput payment processing service handling over $5M daily. Could you walk me through the most significant architectural decision you made when designing that system, especially considering your use of Kafka, PostgreSQL logical replication, and idempotency keys?\"",
+          "signal_hits": [
+            "payment",
+            "kafka",
+            "techcorp",
+            "$5m",
+            "idempot",
+            "replication"
+          ],
+          "signal_hit_count": 6,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "follow_up",
+          "latency_s": 1.67,
+          "chars": 198,
+          "preview": "What were the specific challenges and architectural decisions you made to handle potential data inconsistencies between your active-active PostgreSQL instances, given the use of logical replication?",
+          "signal_hits": [
+            "replication"
+          ],
+          "signal_hit_count": 1,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "scoring",
+          "latency_s": 2.23,
+          "chars": 260,
+          "preview": "{\n  \"technical_depth\": 7,\n  \"communication\": 8,\n  \"star_method\": 4,\n  \"one_line_feedback\": \"The response highlights technical understanding and a leadership role, but lacks a complete STAR structure to fully elaborate on the situation, actions, and results.\"\n}",
+          "signal_hits": [
+            "technical_depth",
+            "communication",
+            "star_method"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": true,
+          "parsed_json": {
+            "technical_depth": 7,
+            "communication": 8,
+            "star_method": 4,
+            "one_line_feedback": "The response highlights technical understanding and a leadership role, but lacks a complete STAR structure to fully elaborate on the situation, actions, and results."
+          }
+        }
+      ]
+    },
+    {
+      "model": "deepseek/deepseek-v3.2-exp",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_latency_s": 2.62,
+      "results": [
+        {
+          "case": "icebreaker",
+          "latency_s": 2.57,
+          "chars": 193,
+          "preview": "Tell me about the payment processing service you built at TechCorp\u2014how did you leverage Kafka and PostgreSQL logical replication to achieve that high throughput while ensuring data consistency?",
+          "signal_hits": [
+            "payment",
+            "kafka",
+            "techcorp",
+            "replication"
+          ],
+          "signal_hit_count": 4,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "follow_up",
+          "latency_s": 3.14,
+          "chars": 223,
+          "preview": "What specific trade-offs did you evaluate between Kafka's partitioning model and RabbitMQ's queuing semantics when prioritizing horizontal scaling, particularly regarding message ordering guarantees or dead letter handling?",
+          "signal_hits": [
+            "kafka",
+            "rabbit",
+            "trade"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "scoring",
+          "latency_s": 2.14,
+          "chars": 222,
+          "preview": "{\n  \"technical_depth\": 7,\n  \"communication\": 7,\n  \"star_method\": 5,\n  \"one_line_feedback\": \"Clear and specific technically, but the STAR structure is incomplete, lacking full Situation, Task, Action, and Result details.\"\n}",
+          "signal_hits": [
+            "technical_depth",
+            "communication",
+            "star_method"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": true,
+          "parsed_json": {
+            "technical_depth": 7,
+            "communication": 7,
+            "star_method": 5,
+            "one_line_feedback": "Clear and specific technically, but the STAR structure is incomplete, lacking full Situation, Task, Action, and Result details."
+          }
+        }
+      ]
+    },
+    {
+      "model": "moonshotai/kimi-k2-0905",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_latency_s": 5.8,
+      "results": [
+        {
+          "case": "icebreaker",
+          "latency_s": 8.72,
+          "chars": 225,
+          "preview": "I noticed you engineered a payment pipeline that reliably settles over $5 million each day\u2014what specific challenge around idempotency keys or Kafka partitioning first pushed that system to its limit, and how did you solve it?",
+          "signal_hits": [
+            "payment",
+            "kafka",
+            "idempot"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "follow_up",
+          "latency_s": 6.09,
+          "chars": 225,
+          "preview": "You mention PostgreSQL logical replication for active-active across three AZs\u2014how did you handle write conflicts and maintain ACID guarantees when two transactions in different AZs tried to update the same row simultaneously?",
+          "signal_hits": [
+            "replication",
+            "az"
+          ],
+          "signal_hit_count": 2,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "scoring",
+          "latency_s": 2.59,
+          "chars": 155,
+          "preview": "{\"technical_depth\":8,\"communication\":7,\"star_method\":3,\"one_line_feedback\":\"Strong tech insight but lacks structured Situation/Task/Action/Result detail.\"}",
+          "signal_hits": [
+            "technical_depth",
+            "communication",
+            "star_method"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": true,
+          "parsed_json": {
+            "technical_depth": 8,
+            "communication": 7,
+            "star_method": 3,
+            "one_line_feedback": "Strong tech insight but lacks structured Situation/Task/Action/Result detail."
+          }
+        }
+      ]
+    },
+    {
+      "model": "anthropic/claude-haiku-4.5",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_latency_s": 2.34,
+      "results": [
+        {
+          "case": "icebreaker",
+          "latency_s": 2.09,
+          "chars": 302,
+          "preview": "Can you walk me through the architecture decisions you made when building that payment processing service at TechCorp\u2014specifically, how you used Kafka and PostgreSQL logical replication together to handle the volume reliably, and what role idempotency keys played in ensuring correctness at that scale?",
+          "signal_hits": [
+            "payment",
+            "kafka",
+            "techcorp",
+            "idempot",
+            "replication"
+          ],
+          "signal_hit_count": 5,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "follow_up",
+          "latency_s": 2.52,
+          "chars": 256,
+          "preview": "How did you handle the consistency guarantees between Kafka's at-least-once delivery and PostgreSQL's eventual consistency model when processing high-value transactions, and what specific scenarios forced you to choose one consistency model over the other?",
+          "signal_hits": [
+            "kafka"
+          ],
+          "signal_hit_count": 1,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "scoring",
+          "latency_s": 2.42,
+          "chars": 260,
+          "preview": "```json\n{\n  \"technical_depth\": 8,\n  \"communication\": 8,\n  \"star_method\": 6,\n  \"one_line_feedback\": \"Strong technical knowledge and clear communication, but lacks explicit context setup and measurable outcome details required for complete STAR structure.\"\n}\n```",
+          "signal_hits": [
+            "technical_depth",
+            "communication",
+            "star_method"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": true,
+          "parsed_json": {
+            "technical_depth": 8,
+            "communication": 8,
+            "star_method": 6,
+            "one_line_feedback": "Strong technical knowledge and clear communication, but lacks explicit context setup and measurable outcome details required for complete STAR structure."
+          }
+        }
+      ]
+    },
+    {
+      "model": "openai/gpt-5-mini",
+      "cases_passed": 3,
+      "cases_total": 3,
+      "avg_latency_s": 8.42,
+      "results": [
+        {
+          "case": "icebreaker",
+          "latency_s": 8.66,
+          "chars": 377,
+          "preview": "I'd love to hear about the payment processing service you built at TechCorp handling $5M+/day with Kafka, PostgreSQL logical replication, and idempotency keys \u2014 could you walk me through the end-to-end architecture, the key design decisions you made to balance throughput, consistency, and fault tolerance, and any production incident that caused you to change those decisions?",
+          "signal_hits": [
+            "payment",
+            "kafka",
+            "techcorp",
+            "$5m",
+            "idempot",
+            "replication"
+          ],
+          "signal_hit_count": 6,
+          "json_parse_ok": null,
+          "parsed_json": null
+        },
+        {
+          "case": "follow_up",
+          "latency_s": 12.42,
+          "error": "AttributeError: 'NoneType' object has no attribute 'lower'"
+        },
+        {
+          "case": "scoring",
+          "latency_s": 4.18,
+          "chars": 286,
+          "preview": "{\"technical_depth\": 4, \"communication\": 6, \"star_method\": 2, \"one_line_feedback\": \"Clear and concise but lacks detailed technical justification, specifics of the design and benchmark methodology, and explicit STAR-structured actions and measurable outcomes\u2014expand actions and results.\"}",
+          "signal_hits": [
+            "technical_depth",
+            "communication",
+            "star_method"
+          ],
+          "signal_hit_count": 3,
+          "json_parse_ok": true,
+          "parsed_json": {
+            "technical_depth": 4,
+            "communication": 6,
+            "star_method": 2,
+            "one_line_feedback": "Clear and concise but lacks detailed technical justification, specifics of the design and benchmark methodology, and explicit STAR-structured actions and measurable outcomes\u2014expand actions and results."
+          }
+        }
+      ]
+    }
+  ]
+}
