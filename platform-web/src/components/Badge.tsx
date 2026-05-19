@@ -4,12 +4,12 @@ type Tone = "accent" | "success" | "warning" | "danger" | "info" | "neutral";
 interface Props extends HTMLAttributes<HTMLSpanElement> { tone?: Tone }
 
 const tones: Record<Tone, string> = {
-  accent: "bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)]",
-  success: "bg-[#E7F0E9] text-[var(--color-success)]",
-  warning: "bg-[#F5E7D3] text-[var(--color-warning)]",
-  danger: "bg-[#F2D9D5] text-[var(--color-danger)]",
-  info: "bg-[#DDE5EE] text-[var(--color-info)]",
-  neutral: "bg-[var(--color-surface-muted)] text-[var(--color-ink-2)]",
+  accent: "bg-accent-soft text-accent-ink",
+  success: "bg-[#E7F0E9] text-success",
+  warning: "bg-[#F5E7D3] text-warning",
+  danger: "bg-[#F2D9D5] text-danger",
+  info: "bg-[#DDE5EE] text-info",
+  neutral: "bg-surface-muted text-ink-2",
 };
 
 export function Badge({ tone = "neutral", className = "", ...rest }: Props) {
