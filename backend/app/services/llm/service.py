@@ -62,13 +62,22 @@ class LLMService:
         # Get provider configuration
         provider_config = self.config.get("providers", {}).get(provider_name, {})
 
-        # Initialize provider
+        # Store provider config + name for lazy initialization
         self.provider_name = provider_name
-        self.provider = self._create_provider(provider_name, provider_config)
+        self.provider_config = provider_config
+        self._provider: Optional[BaseLLMProvider] = None  # lazy
 
         # Store settings
         self.temperature = provider_config.get("temperature", 0.7)
         self.max_tokens = provider_config.get("max_tokens", 4096)
+
+    @property
+    def provider(self) -> BaseLLMProvider:
+        """Lazily create the provider on first access so that missing API keys
+        don't break module import / app boot."""
+        if self._provider is None:
+            self._provider = self._create_provider(self.provider_name, self.provider_config)
+        return self._provider
 
     def _create_provider(self, name: str, config: Dict) -> BaseLLMProvider:
         """Create provider instance"""
@@ -205,7 +214,9 @@ class LLMService:
         """
         provider_config = self.config.get("providers", {}).get(provider, {})
         self.provider_name = provider
-        self.provider = self._create_provider(provider, provider_config)
+        self.provider_config = provider_config
+        # Reset cached provider; will be lazily re-created on next access
+        self._provider = None
         self.temperature = provider_config.get("temperature", 0.7)
         self.max_tokens = provider_config.get("max_tokens", 4096)
 

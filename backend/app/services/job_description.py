@@ -55,5 +55,3 @@ class JDGeneratorService:
         except Exception as e:
             logger.error(f"JD Generation failed: {str(e)}")
             raise
-
-jd_generator = JDGeneratorService()

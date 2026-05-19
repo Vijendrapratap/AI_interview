@@ -13,7 +13,7 @@ from app.schemas.recruiter import (
     RecruiterHiringFlowResponse,
     RecruiterJob,
 )
-from app.services.job_description import jd_generator
+from app.services.job_description import JDGeneratorService
 from app.services.recruiter.ats import recruiter_ats_service
 
 router = APIRouter()
@@ -115,7 +115,8 @@ async def generate_jd(
     current_user: dict = Depends(deps.get_current_active_user)
 ):
     try:
-        jd = await jd_generator.generate_jd(
+        service = JDGeneratorService()
+        jd = await service.generate_jd(
             role=request.role,
             industry=request.industry,
             seniority=request.seniority,
