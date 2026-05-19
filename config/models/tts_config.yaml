@@ -1,7 +1,16 @@
 # TTS (Text-to-Speech) Configuration
 # Change 'default' to switch between providers
 
-default: "personaplex"  # Options: elevenlabs, openai, google, edge, kokoro, personaplex
+default: "google"  # Options: elevenlabs, openai, google, edge, kokoro, personaplex
+# NOTE: google (gTTS) chosen as default because it requires no API key and
+# returns audio in <1s. Kokoro is higher quality (#1 TTS Arena) but ~6s warm
+# latency is too slow for interactive interview flow. Edge TTS is currently
+# blocked by Bing (HTTP 403). Switch to personaplex/elevenlabs/openai once
+# their API keys are configured.
+fallback_order:
+  - "google"
+  - "kokoro"
+  - "edge"
 
 # =============================================================================
 # RECOMMENDED OPEN-SOURCE TTS MODELS (2025-2026)
