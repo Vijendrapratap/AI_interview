@@ -55,15 +55,16 @@ export default function LoginPage() {
                 <p className="text-ink-2 mb-8">Sign in to your recruiter workspace</p>
 
                 {error && (
-                    <div className="mb-4 text-danger text-sm">
+                    <div role="alert" aria-live="polite" className="mb-4 text-danger text-sm">
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-ink mb-1">Email address</label>
+                        <label htmlFor="email" className="block text-sm font-medium text-ink mb-1">Email address</label>
                         <input
+                            id="email"
                             type="email"
                             required
                             value={email}
@@ -74,9 +75,10 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-ink mb-1">Password</label>
+                        <label htmlFor="password" className="block text-sm font-medium text-ink mb-1">Password</label>
                         <div className="relative">
                             <input
+                                id="password"
                                 type={showPassword ? "text" : "password"}
                                 required
                                 value={password}
@@ -87,9 +89,11 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                aria-pressed={showPassword}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-2"
                             >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                             </button>
                         </div>
                     </div>
@@ -107,7 +111,7 @@ export default function LoginPage() {
                     <Button variant="primary" type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? (
                             <>
-                                <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                                <Loader2 aria-hidden="true" className="animate-spin w-4 h-4 mr-2" />
                                 Signing in…
                             </>
                         ) : (
