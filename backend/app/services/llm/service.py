@@ -73,8 +73,14 @@ class LLMService:
 
     @property
     def provider(self) -> BaseLLMProvider:
-        """Lazily create the provider on first access so that missing API keys
-        don't break module import / app boot."""
+        """Returns the underlying provider, creating it on first access.
+
+        Lazy so the backend can boot without API keys configured. Current
+        consumers are request-scoped (LLMService is instantiated per-request
+        by each service), so race-on-first-create is not observed in practice.
+        If LLMService ever becomes an app-wide singleton, wrap the create
+        step in an asyncio.Lock to avoid duplicate provider construction.
+        """
         if self._provider is None:
             self._provider = self._create_provider(self.provider_name, self.provider_config)
         return self._provider
@@ -206,11 +212,13 @@ class LLMService:
         return self.provider.parse_json_response(response)
 
     def switch_provider(self, provider: str):
-        """
-        Switch to a different provider.
+        """Switch to a different provider configuration.
 
-        Args:
-            provider: Name of the provider to switch to
+        Resets the cached provider so the next call to `self.provider` will
+        lazily construct the new one. NOTE: errors from the new provider's
+        construction (e.g., missing API key) surface on the NEXT `self.provider`
+        access, not from this call. Callers that need eager validation should
+        explicitly access `self.provider` once after switching.
         """
         provider_config = self.config.get("providers", {}).get(provider, {})
         self.provider_name = provider
