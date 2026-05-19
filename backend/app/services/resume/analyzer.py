@@ -537,9 +537,13 @@ class ResumeAnalyzer:
         Returns:
             Dict with quick analysis summary
         """
-        prompt = self.prompts.get("quick_analysis_prompt", "").format(
-            resume_text=resume_text
-        )
+        prompt_template = self.prompts.get("quick_analysis_prompt")
+        if not prompt_template:
+            raise RuntimeError(
+                "quick_analysis_prompt is missing from resume_analysis.yaml; "
+                "cannot run quick analysis with an empty prompt."
+            )
+        prompt = prompt_template.format(resume_text=resume_text)
 
         try:
             response = await self.llm.generate(
@@ -611,9 +615,13 @@ class ResumeAnalyzer:
         Returns:
             Dict with categorized keywords
         """
-        prompt = self.prompts.get("keyword_extraction_prompt", "").format(
-            resume_text=resume_text
-        )
+        prompt_template = self.prompts.get("keyword_extraction_prompt")
+        if not prompt_template:
+            raise RuntimeError(
+                "keyword_extraction_prompt is missing from resume_analysis.yaml; "
+                "cannot extract keywords with an empty prompt."
+            )
+        prompt = prompt_template.format(resume_text=resume_text)
 
         try:
             result = await self.llm.generate_json(

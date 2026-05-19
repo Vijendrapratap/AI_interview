@@ -584,3 +584,55 @@ analysis_prompt: |
     }},
     "verdict": "<recruiter_verdict>"
   }}
+
+# =============================================================================
+# QUICK ANALYSIS PROMPT
+# Lightweight prose summary returned by /api/v1/analysis/quick-analyze.
+# Kept short so it runs fast and stays well within model context limits.
+# =============================================================================
+quick_analysis_prompt: |
+  You are an expert technical recruiter. Provide a SHORT (3-5 sentence) overview
+  of the following resume so a hiring manager can decide whether to read it in
+  full.
+
+  RESUME:
+  {resume_text}
+
+  Cover:
+  - An overall score out of 100 (e.g. "Score: 78/100").
+  - The candidate's single biggest strength (one sentence starting with
+    "Strength:").
+  - The single biggest area for improvement (one sentence starting with
+    "Improvement:").
+
+  Return plain prose, no JSON, no markdown headings.
+
+# =============================================================================
+# KEYWORD EXTRACTION PROMPT
+# Categorised keyword pull used by /api/v1/analysis/keywords/{id}.
+# Returns strict JSON so the endpoint can serialise it directly.
+# =============================================================================
+keyword_extraction_prompt: |
+  Extract and categorise every keyword from the following resume.
+
+  RESUME:
+  {resume_text}
+
+  Return ONLY a valid JSON object with these keys (omit any category that has
+  no entries by returning an empty list):
+
+  {{
+    "technical_skills": ["<programming languages, frameworks, libraries>"],
+    "soft_skills": ["<communication, leadership, teamwork, etc.>"],
+    "tools_technologies": ["<IDEs, platforms, databases, cloud services>"],
+    "industry_terms": ["<domain-specific terminology>"],
+    "certifications": ["<certifications, licences>"],
+    "job_titles": ["<roles held>"]
+  }}
+
+  Rules:
+  - Do NOT invent keywords that are not in the resume.
+  - Deduplicate within a category.
+  - Use the exact casing from the resume when possible (e.g. "PostgreSQL", not
+    "postgresql").
+  - Return raw JSON only, no markdown fences, no commentary.

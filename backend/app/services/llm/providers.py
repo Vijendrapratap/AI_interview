@@ -70,6 +70,14 @@ class OpenAIProvider(BaseLLMProvider):
                 json=payload,
                 timeout=60.0
             )
+            # Surface the upstream provider's error body in logs before raising,
+            # so a stray 400/422 doesn't become an opaque "Client error" string.
+            if response.status_code >= 400:
+                logger.error(
+                    "OpenAI-compatible provider returned %s: %s",
+                    response.status_code,
+                    response.text[:2000],
+                )
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"]
