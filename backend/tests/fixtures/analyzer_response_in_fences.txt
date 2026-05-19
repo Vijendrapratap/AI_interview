@@ -1,0 +1,24 @@
+```json
+{
+  "overall_score": 91,
+  "skills_score": 92,
+  "experience_score": 88,
+  "education_score": 85,
+  "quality_score": 90,
+  "jd_match_score": 88,
+  "technical_skills": {
+    "languages": ["Python", "Rust"],
+    "frameworks": ["FastAPI"],
+    "databases": ["PostgreSQL"],
+    "cloud_devops": ["AWS", "Terraform"]
+  },
+  "experience_summary": [
+    {"company": "RustyCo", "duration": "2021-Present", "role": "Staff Engineer", "highlight": "Led platform rewrite"}
+  ],
+  "education": [
+    {"degree": "BS Computer Science", "institution": "MIT", "year": "2014"}
+  ],
+  "concerns": ["Limited frontend exposure"],
+  "verdict": "Top-tier staff engineer candidate. Strong technical depth and clear leadership signal."
+}
+```

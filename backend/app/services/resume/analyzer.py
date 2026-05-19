@@ -2,8 +2,9 @@
 Resume Analyzer - AI-powered resume analysis
 """
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union, Any
 import asyncio
+import json
 import logging
 
 from app.services.llm import LLMService
@@ -14,6 +15,199 @@ from app.services.analytics.skills_analytics import SkillsAnalytics
 from app.services.analytics.question_generator import ResumeQuestionGenerator
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_score(value: Any) -> float:
+    """Best-effort numeric coercion for an LLM-returned score."""
+    if value is None or value == "":
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _strip_markdown_fences(text: str) -> str:
+    """Remove ```json ... ``` fences that some LLMs wrap JSON output in."""
+    s = text.strip()
+    if not s.startswith("```"):
+        return s
+    # Strip the opening fence (possibly with a language tag like ```json)
+    s = s[3:]
+    # Drop an optional language tag on the first line
+    newline = s.find("\n")
+    if newline != -1:
+        first_line = s[:newline].strip().lower()
+        if first_line in {"json", "javascript", "js", ""}:
+            s = s[newline + 1:]
+    # Drop the trailing fence
+    if "```" in s:
+        s = s.rsplit("```", 1)[0]
+    return s.strip()
+
+
+def _first(*candidates):
+    """Return the first non-empty (truthy or numeric-zero ok) value from candidates.
+
+    None and empty containers/strings are treated as missing; everything else is
+    accepted (including 0 and 0.0).
+    """
+    for c in candidates:
+        if c is None:
+            continue
+        if isinstance(c, (str, list, dict)) and len(c) == 0:
+            continue
+        return c
+    return None
+
+
+def _build_sections_from_recruiter_payload(data: Dict) -> Dict:
+    """Construct a sections dict from the recruiter-prompt payload."""
+    sections: Dict[str, Any] = {}
+    if data.get("candidate_profile"):
+        sections["summary"] = data["candidate_profile"]
+    if data.get("experience_summary"):
+        sections["experience"] = data["experience_summary"]
+    if data.get("education"):
+        sections["education"] = data["education"]
+    if data.get("technical_skills"):
+        sections["skills"] = data["technical_skills"]
+    if data.get("career_highlights"):
+        sections["highlights"] = data["career_highlights"]
+    if data.get("certifications"):
+        sections["certifications"] = data["certifications"]
+    return sections
+
+
+def _build_improvements_from_recruiter_payload(data: Dict) -> List:
+    """Collate improvement suggestions from the various recruiter-style fields."""
+    items: List = []
+
+    # Plain string concerns / verification items / suggested actions
+    for key in ("improvements", "suggestions", "concerns", "verification_needed"):
+        value = data.get(key)
+        if isinstance(value, list):
+            items.extend(v for v in value if v)
+
+    # Gap analysis missing-skill bullets
+    gap = data.get("gap_analysis")
+    if isinstance(gap, dict):
+        for sub_key in ("missing_required", "missing_preferred", "experience_gaps"):
+            sub = gap.get(sub_key)
+            if isinstance(sub, list):
+                for s in sub:
+                    if s:
+                        items.append(f"{sub_key.replace('_', ' ').title()}: {s}")
+
+    # Red flags
+    red_flags = data.get("red_flags")
+    if isinstance(red_flags, list):
+        for rf in red_flags:
+            if isinstance(rf, dict):
+                desc = rf.get("description") or rf.get("issue")
+                if desc:
+                    items.append(desc)
+            elif isinstance(rf, str):
+                items.append(rf)
+
+    return items
+
+
+def _parse_analysis_response(
+    raw: Union[str, Dict],
+    has_jd: bool = True,
+) -> Dict[str, Any]:
+    """Convert an LLM analysis response into the AnalysisResponse field dict.
+
+    Handles:
+    - String input wrapped in ```json ... ``` markdown fences
+    - Multiple key aliases (e.g. ``ats``/``ats_score``, ``feedback``/``detailed_feedback``)
+    - Falling back to derived values when the recruiter-style prompt
+      emitted ``skills_score``/``experience_score``/etc. instead of the
+      schema-shape ``ats_score``/``content_score``/``format_score``.
+
+    The output dict contains exactly the keys consumed by
+    ``app.schemas.analysis.AnalysisResponse``. It is safe to merge into a
+    larger result dict (the caller may also keep the original recruiter
+    fields alongside).
+    """
+    if isinstance(raw, str):
+        data = json.loads(_strip_markdown_fences(raw))
+    elif isinstance(raw, dict):
+        data = raw
+    else:
+        raise TypeError(f"Unsupported response type for parser: {type(raw)!r}")
+
+    # ---- Scores ---------------------------------------------------------
+    skills_score = _coerce_score(data.get("skills_score") or data.get("skills"))
+    experience_score = _coerce_score(
+        data.get("experience_score") or data.get("experience")
+    )
+    quality_score = _coerce_score(data.get("quality_score") or data.get("quality"))
+
+    overall_score = _coerce_score(
+        _first(data.get("overall_score"), data.get("overall"))
+    )
+
+    # ATS / format / content: prefer explicit keys, otherwise derive from
+    # the recruiter-style component scores. ATS is essentially how cleanly
+    # an ATS can parse the resume -> use quality as the proxy. Content is
+    # the substance of the resume -> use experience as the proxy. Format
+    # mirrors quality.
+    ats_score = _coerce_score(
+        _first(data.get("ats_score"), data.get("ats"), quality_score)
+    )
+    content_score = _coerce_score(
+        _first(data.get("content_score"), data.get("content"), experience_score)
+    )
+    format_score = _coerce_score(
+        _first(data.get("format_score"), data.get("format"), quality_score)
+    )
+
+    jd_match_raw = _first(data.get("jd_match_score"), data.get("jd_match"))
+    jd_match_score = _coerce_score(jd_match_raw) if jd_match_raw is not None else None
+
+    # ---- Sections / keywords / improvements / feedback -----------------
+    sections = data.get("sections")
+    if not isinstance(sections, dict) or not sections:
+        sections = _build_sections_from_recruiter_payload(data)
+
+    keywords = data.get("keywords")
+    if not isinstance(keywords, dict) or not keywords:
+        # technical_skills is already a dict of {languages, frameworks, ...}
+        tech = data.get("technical_skills")
+        if isinstance(tech, dict):
+            keywords = tech
+        else:
+            keywords = {}
+
+    improvements = data.get("improvements")
+    if not isinstance(improvements, list) or not improvements:
+        improvements = _build_improvements_from_recruiter_payload(data)
+
+    detailed_feedback = (
+        data.get("detailed_feedback")
+        or data.get("feedback")
+        or data.get("verdict")
+        or ""
+    )
+
+    rewrite_examples = data.get("rewrite_examples") or []
+    if not isinstance(rewrite_examples, list):
+        rewrite_examples = []
+
+    return {
+        "overall_score": overall_score,
+        "ats_score": ats_score,
+        "content_score": content_score,
+        "format_score": format_score,
+        "jd_match_score": jd_match_score,
+        "sections": sections,
+        "keywords": keywords,
+        "improvements": improvements,
+        "detailed_feedback": detailed_feedback,
+        "rewrite_examples": rewrite_examples,
+    }
 
 
 class ResumeAnalyzer:
@@ -128,8 +322,25 @@ class ResumeAnalyzer:
                 temperature=0.3  # Lower temperature for more consistent scoring
             )
 
-            # Ensure required fields exist
-            result = self._validate_result(result, has_jd=bool(job_description and job_description.strip()))
+            has_jd = bool(job_description and job_description.strip())
+
+            # Ensure required fields exist (legacy recruiter-shape defaults +
+            # component-score backfilling)
+            result = self._validate_result(result, has_jd=has_jd)
+
+            # Map the LLM payload onto the AnalysisResponse schema fields so
+            # the API endpoint can return a fully populated response. We merge
+            # the schema-shape keys onto the recruiter-shape dict; downstream
+            # code keeps access to both views.
+            schema_fields = _parse_analysis_response(result, has_jd=has_jd)
+            for key, value in schema_fields.items():
+                # Preserve recruiter-side overall_score / jd_match_score if
+                # they were already integers from _validate_result.
+                if key == "overall_score" and result.get("overall_score"):
+                    continue
+                if key == "jd_match_score" and result.get("jd_match_score") is not None:
+                    continue
+                result[key] = value
 
             return result
 

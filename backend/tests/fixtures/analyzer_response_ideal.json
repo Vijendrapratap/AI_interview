@@ -1,0 +1,43 @@
+{
+  "overall_score": 87,
+  "ats_score": 80,
+  "content_score": 85,
+  "format_score": 90,
+  "jd_match_score": 72,
+  "sections": {
+    "summary": {
+      "title": "Senior Backend Engineer",
+      "years_experience": "8"
+    },
+    "experience": [
+      {"company": "Acme Corp", "duration": "2020-2024", "role": "Senior Engineer", "highlight": "Led migration to microservices"}
+    ],
+    "education": [
+      {"degree": "BS Computer Science", "institution": "State University", "year": "2016"}
+    ],
+    "skills": {
+      "languages": ["Python", "Go"],
+      "frameworks": ["FastAPI", "Django"]
+    }
+  },
+  "keywords": {
+    "languages": ["Python", "Go", "TypeScript"],
+    "frameworks": ["FastAPI", "Django", "React"],
+    "databases": ["PostgreSQL", "Redis"],
+    "cloud_devops": ["AWS", "Docker", "Kubernetes"]
+  },
+  "improvements": [
+    "Add measurable outcomes to the Acme Corp role",
+    "Quantify the impact of the microservices migration",
+    "Surface leadership and mentoring experience"
+  ],
+  "detailed_feedback": "Strong senior backend candidate with deep Python and cloud experience. Recommend phone screen to verify leadership scope.",
+  "rewrite_examples": [
+    {
+      "original": "Worked on backend services",
+      "improved": "Designed and shipped 4 backend microservices serving 2M+ requests/day with 99.95% uptime",
+      "explanation": "Quantifies scale and reliability",
+      "impact": "high"
+    }
+  ]
+}

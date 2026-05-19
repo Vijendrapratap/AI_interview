@@ -1,0 +1,42 @@
+{
+  "overall": 78,
+  "ats": 74,
+  "content": 80,
+  "format": 76,
+  "jd_match": 65,
+  "candidate_profile": {
+    "title": "Data Scientist",
+    "career_stage": "Mid",
+    "domain": "E-commerce",
+    "years_experience": "4",
+    "current_company": "ShopCo",
+    "current_role": "Data Scientist"
+  },
+  "experience_summary": [
+    {"company": "ShopCo", "duration": "2022-Present", "role": "Data Scientist", "highlight": "Built recommendation engine"},
+    {"company": "DataStart", "duration": "2020-2022", "role": "ML Engineer", "highlight": "Forecasting models in production"}
+  ],
+  "education": [
+    {"degree": "MS Statistics", "institution": "Tech University", "year": "2020"}
+  ],
+  "technical_skills": {
+    "languages": ["Python", "SQL", "R"],
+    "frameworks": ["TensorFlow", "PyTorch", "scikit-learn"],
+    "databases": ["Snowflake", "PostgreSQL"],
+    "cloud_devops": ["AWS", "Airflow"]
+  },
+  "soft_skills": ["communication", "stakeholder management"],
+  "career_highlights": ["Increased AOV by 12% via recommender", "Reduced model training time by 60%"],
+  "certifications": ["AWS Certified ML Specialty"],
+  "concerns": ["No leadership experience yet", "Tenure at DataStart only 2 years"],
+  "verification_needed": ["Verify recommender engine impact metric"],
+  "gap_analysis": {
+    "missing_required": ["Kubernetes"],
+    "missing_preferred": ["Spark"],
+    "experience_gaps": ["No experience leading a team of ML engineers"]
+  },
+  "red_flags": [
+    {"type": "tenure", "description": "Multiple roles under 2 years", "severity": "low"}
+  ],
+  "feedback": "Solid mid-level data scientist with strong ML fundamentals. Good fit for IC roles; not ready for lead positions yet."
+}
