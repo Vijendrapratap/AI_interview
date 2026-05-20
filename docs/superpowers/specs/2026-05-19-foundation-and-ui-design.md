@@ -2,36 +2,38 @@
 title: Slice 1 — Foundation + UI System
 status: approved-for-planning
 date: 2026-05-19
+revised: 2026-05-21
 owner: ReCruItAI team
-estimate: 8–10 working days
+estimate: 9–11 working days
 ---
 
 # Slice 1 — Foundation + UI System
 
 ## 1. Goal (definition of done)
 
-A stranger lands on the marketing page, signs up, creates an organization, invites a teammate, posts a job, adds a candidate with a resume, sees the candidate scored by AI, and moves the candidate between pipeline stages. Everything survives a server restart. A second organization's data is invisible to the first. Every page the user touches in this flow uses the new visual system (warm cream surface, Fraunces headlines, lime accent, soft cards) and ships without any `alert()` or hard-coded mock data.
+A stranger lands on the marketing page, signs up, creates an organization, invites a teammate, posts a job, adds a candidate with a resume, sees the candidate scored by AI, and moves the candidate between pipeline stages. Everything survives a server restart. A second organization's data is invisible to the first. Every page the user touches in this flow uses the new visual system (warm cream surface, Fraunces headlines, lime accent, soft cards) and ships without any `alert()` or hard-coded mock data. The frontend and the FastAPI backend are both deployed on Vercel, so the entire flow works from a shared public link — not only on localhost.
 
 ## 2. Non-goals (explicitly out of this slice)
 
-Pipeline drag-and-drop, automations engine, communications real sends (Gmail/SendGrid), sourcing distribution to LinkedIn/Indeed, analytics calculation, scorecards write-back beyond what already runs, unified inbox, **dark-mode pass on the dashboard** (mirrors the phone-mockup look — done in the follow-up slice). The legacy `frontend/` (Vite) directory is not touched. Existing `/interview/[id]` and `/portal` flows keep working unchanged except for the new visual tokens.
+Pipeline drag-and-drop, automations engine, communications real sends (Gmail/SendGrid), sourcing distribution to LinkedIn/Indeed, analytics calculation, scorecards write-back beyond what already runs, unified inbox, **dark-mode pass on the dashboard** (mirrors the phone-mockup look — done in the follow-up slice). The legacy `frontend/` (Vite) directory is not touched. Existing `/interview/[id]` and `/portal` flows keep working unchanged except for the new visual tokens. Deep "premium" component polish, end-to-end AI-feature verification, and the multi-platform job-posting feature are their own later work-streams (B, C, D) — this slice delivers the working, persistent, deployed foundation they build on.
 
 ## 3. Architecture
 
 ```
-Next.js (platform-web)
+Next.js (platform-web)            ── Vercel project A
   ├─ @supabase/ssr               signup, login, session cookies
   ├─ Org switcher                writes active org_id to cookie
   └─ fetch(FastAPI)              Authorization: Bearer <supabase JWT>
                                  X-Organization-Id: <uuid>
 
-FastAPI (backend)
+FastAPI (backend)                 ── Vercel project B
   ├─ app/auth/supabase.py        verifies JWT via Supabase JWKS
   ├─ app/db.py                   psycopg async pool to Supabase Postgres
+  ├─ app/storage.py              Supabase Storage client for resume files
   ├─ Service layer               replaces in-memory dicts with SQL
   └─ LLM/TTS providers           lazy-init on first call
 
-Supabase (project redgbugvyoidjwhovmxa)
+Supabase (project redgbugvyoidjwhovmxa, region ap-southeast-2)
   ├─ Auth                        email+password + Google OAuth
   ├─ Postgres + RLS              every org-scoped row filtered by membership
   └─ Storage bucket `resumes`    path = {org_id}/{candidate_id}/{filename}
@@ -99,15 +101,17 @@ create policy jobs_owner_admin_delete on jobs for delete
 
 Files to add:
 - `app/auth/supabase.py` — JWT verification using Supabase JWKS (cached); `get_current_context()` FastAPI dependency returns `Context(user_id, org_id, role)`. Org resolved from `X-Organization-Id` header, falling back to first membership.
-- `app/db.py` — async psycopg pool, configured from `SUPABASE_DB_URL` env var.
+- `app/db.py` — async psycopg pool, configured from `SUPABASE_DB_URL` env var. Prepared statements disabled (`prepare_threshold=None`) so the pool is safe behind the Supabase transaction pooler.
+- `app/storage.py` — Supabase Storage client (service-role key) that uploads and fetches resume files in the `resumes` bucket at `{org_id}/{candidate_id}/{filename}`. Replaces all local-disk writes.
 - Repository modules under `app/repositories/` for each table: `jobs.py`, `candidates.py`, `applications.py`, `resumes.py`, `analyses.py`, `sessions.py`. Pure SQL, no business logic.
 
 Files to change:
 - `app/services/job_description.py:59` — remove module-level `jd_generator = JDGeneratorService()`; instantiate per-request inside the endpoint.
-- `app/services/llm/service.py:67` — defer `_create_provider` to first `complete()` call. Boot succeeds with no API keys set.
-- `app/api/v1/endpoints/interview.py:616` — **delete** `POST /interview/debug/inject_resume`.
+- `app/services/llm/service.py` — ensure `_create_provider` is deferred to the first `complete()` call so boot succeeds with no API keys set (commit `8043c26` may already cover this — verify and complete if not).
+- `app/api/v1/endpoints/interview.py:616` — **delete** `POST /interview/debug/inject_resume` (if not already removed).
 - `app/api/v1/endpoints/resume.py`, `analysis.py`, `interview.py`, `recruiter.py` — replace the in-memory `*_storage` dicts with repository calls. Every endpoint gains `ctx: Context = Depends(get_current_context)` and scopes every read/write by `ctx.org_id`.
-- `app/core/config.py` — add `SUPABASE_URL`, `SUPABASE_JWT_SECRET` (or JWKS URL), `SUPABASE_DB_URL`, `SUPABASE_SERVICE_ROLE_KEY` env vars. None required at boot; checked at first use.
+- `app/api/v1/endpoints/resume.py` additionally — resume file bytes go to Supabase Storage via `app/storage.py`, never to the local `uploads/` directory; the `uploads/` write path is removed (Vercel's filesystem is ephemeral).
+- `app/core/config.py` — add `SUPABASE_URL`, `SUPABASE_DB_URL`, `SUPABASE_SERVICE_ROLE_KEY` env vars, and set `CORS_ORIGINS` to include the deployed frontend domain. JWTs are verified against the project's JWKS endpoint (asymmetric keys), derived from `SUPABASE_URL` — no shared HS256 secret. None required at boot; checked at first use.
 
 Files to remove: `fake_users_db` block in `app/api/v1/endpoints/auth.py:17–39`. The whole `auth.py` collapses to a single `GET /me` endpoint that takes the verified Supabase JWT context and returns `{user_id, email, memberships: [{org_id, name, role}]}`. Signup, login, password reset, OAuth all happen client-side against Supabase; FastAPI never sees a password.
 
@@ -189,13 +193,29 @@ Tailwind extension maps these to `bg-surface`, `bg-card`, `text-ink`, `border-bo
 
 ## 9. Migrations
 
-Single Supabase SQL migration applied via the project-scoped MCP after Claude Code restart:
+Three idempotent SQL migrations under `supabase/migrations/`, applied in order by `backend/scripts/apply_migrations.py` (psycopg):
 
-- `001_foundation_schema.sql` — enums, tables, indexes, RLS policies, owner trigger, storage bucket + policies.
+- `001_foundation_schema.sql` — enums, the 10 tables, indexes, owner trigger.
+- `002_rls_policies.sql` — enables row-level security and creates the per-table policies.
+- `003_storage_bucket.sql` — private `resumes` storage bucket + org-scoped storage policies.
 
-Migration is idempotent (`if not exists`) so re-running is safe. Rollback is a paired `001_foundation_schema_down.sql` for emergencies; not part of normal flow.
+All three use `if not exists` / `do $$` guards, so re-running is safe. The applicator connects with the **session-pooler** `SUPABASE_DB_URL` (port 5432) — set and verified working 2026-05-21. As of 2026-05-21 the migration files are written but **not yet applied** (0 tables live); applying them is step 1 of implementation. After a Claude Code restart, the read-only Supabase MCP (`mcp__supabase__*`) is available to inspect the applied schema and advisors.
 
-## 10. Testing
+## 10. Deployment (Vercel)
+
+Both apps deploy on Vercel as **two separate projects from this one repo**:
+
+- **Project A — frontend.** Root `platform-web/` (the existing project, public URL `recruitai-test.vercel.app`). Env: `NEXT_PUBLIC_API_URL` (Project B's URL), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- **Project B — backend.** New project rooted at `backend/`. Add a Python ASGI entrypoint (`api/index.py` exporting the FastAPI `app`) and a `vercel.json` routing all paths to it. Runs on Vercel's Python runtime / Fluid Compute (300s function timeout — ample for LLM calls). Env: `SUPABASE_DB_URL` (transaction pooler, port 6543), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS`.
+
+Serverless constraints this slice must respect:
+- **Ephemeral filesystem** — no local file write survives a request. Resume files go to Supabase Storage via `app/storage.py`; the `uploads/` directory is abandoned.
+- **No in-process state across requests** — interview sessions, analyses, and resume metadata all live in Postgres (the repository refactor already does this; nothing relies on a warm process).
+- **Connection pooling** — the deployed backend uses the Supabase **transaction pooler** (port 6543) with psycopg `prepare_threshold=None`. The migration applicator keeps the **session pooler** (port 5432). Two connection strings, each for its job.
+
+Definition of done for deployment: the Section 1 happy path runs end-to-end against the deployed Project B backend from the deployed Project A frontend, verified once on the public URLs.
+
+## 11. Testing
 
 **Backend (pytest)**:
 - Auth bridge: valid JWT → context resolves; expired/wrong-issuer/garbage → 401.
@@ -207,30 +227,34 @@ Migration is idempotent (`if not exists`) so re-running is safe. Rollback is a p
 - Happy path: signup → create org → post job → invite teammate → second user accepts → second user sees the job.
 - Negative path: second org's user cannot read first org's job (404 from API).
 
-CI runs both; both must be green before merge.
+**Deploy smoke-test**: after both Vercel projects are live, the happy path is run once against the public URLs and the result recorded in the PR.
 
-## 11. Risks
+CI runs the pytest + Playwright suites; both must be green before merge.
+
+## 12. Risks
 
 1. **Supabase JWKS verification** — easy to misconfigure `issuer`/`audience` on first try. Mitigation: start from a known-good snippet, covered by pytest.
 2. **RLS policy gaps** — easy to forget a policy on `update`/`delete` and leave a table read-only or fully open. Mitigation: explicit per-table checklist in the migration review.
 3. **Background trigger ordering** — the `organizations` insert trigger must complete before the API returns success, otherwise the first member is missing. Mitigation: trigger runs in the same transaction as the insert; pytest verifies.
 4. **psycopg async pool sizing** — too small under load. Mitigation: default 10, env-tunable.
 5. **Fraunces + Inter font weight** in dev — `next/font` self-hosts so no FOUT, but the variable font file is ~150KB. Acceptable.
+6. **Vercel serverless fit** — ephemeral FS and per-request isolation break any code that assumes local files or warm in-memory state. Mitigation: the repository + Supabase Storage refactor removes both reliances; the deploy smoke-test on the public URL is part of the DoD. The transaction-pooler + psycopg prepared-statement clash is a known footgun — disabled explicitly via `prepare_threshold=None`.
 
-## 12. Timeline
+## 13. Timeline
 
 | Day | Backend | Frontend |
 |---|---|---|
-| 1 | Lazy-init LLM, remove debug endpoint, write `supabase.py` auth + `db.py` pool | Tokens + globals.css + Tailwind extension; install Supabase libs |
-| 2 | Apply 001 migration; `jobs` + `candidates` + `applications` repos + endpoints | Signup, login, invite pages; org switcher |
-| 3 | `resumes` + `analyses` + `sessions` repos; wire existing flows to repos | Jobs list + new + detail (real fetch) |
+| 1 | Lazy-init LLM, remove debug endpoint, write `supabase.py` auth + `db.py` pool + `storage.py` | Tokens + globals.css + Tailwind extension; install Supabase libs |
+| 2 | Apply the 3 migrations; `jobs` + `candidates` + `applications` repos + endpoints | Signup, login, invite pages; org switcher |
+| 3 | `resumes` + `analyses` + `sessions` repos; resume upload → Supabase Storage; wire existing flows | Jobs list + new + detail (real fetch) |
 | 4 | Tests for auth bridge + org isolation + CRUD | Candidates list + detail (real fetch); team-members tab |
 | 5 | Backend cleanup, error paths, observability | Playwright happy + negative paths |
-| 6 | Buffer | Visual polish pass on remaining wired pages |
-| 7 | Buffer | Buffer |
+| 6 | Vercel Project B: ASGI entrypoint + `vercel.json` + env; deploy | Wire `NEXT_PUBLIC_API_URL`; deploy; smoke-test the public happy path |
+| 7 | Buffer | Visual polish pass on remaining wired pages |
+| 8 | Buffer | Buffer |
 
-8–10 day window total (5 dev days + 2–3 days slack).
+Eight scheduled days (six build, two buffer); the 9–11 working-day estimate adds slack for review cycles and deploy iteration.
 
-## 13. Open questions
+## 14. Open questions
 
-None at this time. All forks resolved: multi-org membership (Option 2), Supabase managed stack, lime accent `#B8DC4E`, Fraunces serif headlines, bundled foundation + UI in one slice.
+None at this time. All forks resolved: multi-org membership (Option 2), Supabase managed stack, lime accent `#B8DC4E`, Fraunces serif headlines, bundled foundation + UI in one slice, and (resolved 2026-05-21) the FastAPI backend deploys as a second Vercel project.
