@@ -1,104 +1,135 @@
 import Link from "next/link";
-import { ArrowRight, Brain, Shield, Mic } from "lucide-react";
+import { ArrowRight, Brain, CheckCircle2, Mic, Shield, Sparkles } from "lucide-react";
 import Footer from "@/components/layout/Footer";
+
+const proofPoints = [
+  "AI screening with recruiter approval",
+  "Structured voice interviews",
+  "Pipeline decisions in one workspace",
+];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-              AI
+    <div className="min-h-screen overflow-hidden bg-surface text-ink">
+      <header className="fixed top-0 z-50 w-full border-b border-border/80 bg-surface/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-sm font-black text-surface">
+              R
             </div>
-            <span className="text-xl font-bold text-gray-900">Recruiter.ai</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium">
+            <div>
+              <span className="block text-lg font-black tracking-tight text-ink">ReCruItAI</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-3">Recruiter OS</span>
+            </div>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="rounded-full px-4 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-card hover:text-ink">
               Log in
             </Link>
             <Link
               href="/dashboard"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-ink transition-transform hover:-translate-y-0.5 hover:brightness-95"
             >
-              Get Started
+              Open workspace
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            New: Voice Interview Engine v1.0
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 tracking-tight mb-8">
-            Hiring on Autopilot <br />
-            <span className="text-blue-600">Powered by AI</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Automate resume screening, verify identities, and conduct AI voice interviews at scale.
-            Reduce time-to-hire by 70% with standard evaluation.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/dashboard"
-              className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-            >
-              Start Hiring <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              href="#"
-              className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-semibold text-lg hover:bg-gray-50 transition-all"
-            >
-              View Demo
-            </Link>
-          </div>
-        </div>
-      </section>
+      <main>
+        <section className="relative px-4 pb-20 pt-32 sm:px-6 lg:px-8">
+          <div className="absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-accent/25 blur-3xl" />
+          <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div>
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-ink-2 shadow-card">
+                <Sparkles className="h-4 w-4 text-success" />
+                Warm cream UI · Slice 1 live
+              </div>
+              <h1 className="max-w-4xl font-serif text-5xl font-semibold leading-[0.95] tracking-tight text-ink md:text-7xl">
+                The calm recruiter workspace for faster hiring decisions.
+              </h1>
+              <p className="mt-7 max-w-2xl text-lg leading-8 text-ink-2 md:text-xl">
+                Screen resumes, run structured AI interviews, and manage candidate decisions from a clean ATS cockpit built around recruiter approval.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-7 py-4 text-base font-bold text-surface transition-transform hover:-translate-y-0.5"
+                >
+                  View command center <ArrowRight className="h-5 w-5" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-card px-7 py-4 text-base font-bold text-ink transition-colors hover:bg-surface-muted"
+                >
+                  Try demo login
+                </Link>
+              </div>
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                {proofPoints.map((point) => (
+                  <div key={point} className="flex items-center gap-2 text-sm font-semibold text-ink-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    {point}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      {/* Features Grid */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<Brain className="w-6 h-6 text-purple-600" />}
-              title="Smart Resume Analysis"
-              description="AI scores resumes on 15+ dimensions including impact, gaps, and technical depth."
-            />
-            <FeatureCard
-              icon={<Shield className="w-6 h-6 text-green-600" />}
-              title="Identity Verification"
-              description="Prevent fraud with automated government ID checks and document validation."
-            />
-            <FeatureCard
-              icon={<Mic className="w-6 h-6 text-orange-600" />}
-              title="Voice Interviews"
-              description="Conduct 1,000+ simultaneous voice interviews with real-time scoring."
-            />
+            <div className="rounded-[2rem] border border-border bg-card p-4 shadow-card">
+              <div className="rounded-[1.5rem] bg-ink p-5 text-surface">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-surface/50">Today</p>
+                    <h2 className="mt-1 text-xl font-bold">Recruiter cockpit</h2>
+                  </div>
+                  <div className="rounded-full bg-accent px-3 py-1 text-xs font-black text-ink">LIVE</div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Metric label="Needs review" value="17" />
+                  <Metric label="SLA risks" value="4" />
+                  <Metric label="Interviews" value="9" />
+                  <Metric label="Offers" value="3" />
+                </div>
+                <div className="mt-5 rounded-2xl bg-surface/10 p-4">
+                  <p className="text-sm font-bold">Next best action</p>
+                  <p className="mt-2 text-sm leading-6 text-surface/70">Send AI technical interview to the top-scored candidate and move two profiles to recruiter review.</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="border-y border-border bg-card/60 py-16">
+          <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+            <FeatureCard icon={<Brain className="h-6 w-6" />} title="Explainable screening" description="Score candidates with must-have matches, gaps, risks, and a plain-language next step." />
+            <FeatureCard icon={<Shield className="h-6 w-6" />} title="Recruiter approval" description="AI drafts actions, but recruiters approve test invites, interviews, and decision emails." />
+            <FeatureCard icon={<Mic className="h-6 w-6" />} title="AI interview engine" description="Structured voice interviews feed scorecards and keep the hiring team aligned." />
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </div>
   );
 }
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-surface/10 bg-surface/10 p-4">
+      <p className="text-3xl font-black text-accent">{value}</p>
+      <p className="mt-1 text-sm text-surface/65">{label}</p>
+    </div>
+  );
+}
+
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-      <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-6">
+    <div className="rounded-[1.5rem] border border-border bg-card p-7 shadow-card transition-transform hover:-translate-y-1">
+      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-ink">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{description}</p>
+      <h3 className="text-xl font-black text-ink">{title}</h3>
+      <p className="mt-3 leading-7 text-ink-2">{description}</p>
     </div>
   );
 }

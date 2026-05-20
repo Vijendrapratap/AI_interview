@@ -27,18 +27,18 @@ export default function Dashboard() {
         .slice(0, 4);
 
     return (
-        <div className="p-8 space-y-8">
+        <div className="space-y-8 p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-ink-2 shadow-card">
                         <Sparkles size={14} /> AI-first ATS workspace
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Recruiter Command Center</h1>
-                    <p className="text-gray-500">Focus on the candidates, requisitions, and decisions that need attention today.</p>
+                    <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">Recruiter Command Center</h1>
+                    <p className="mt-1 text-ink-2">Focus on candidates, requisitions, and decisions that need attention today.</p>
                 </div>
                 <Link
                     href="/dashboard/jobs/new"
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+                    className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-bold text-surface transition-transform hover:-translate-y-0.5"
                 >
                     <Plus size={18} /> New Job
                 </Link>
@@ -51,71 +51,71 @@ export default function Dashboard() {
                 <StatCard label="Offers Pending" value={mockAnalytics.offers_pending.toString()} trend="Ready to close" tone="green" icon={<CheckCircle2 />} />
             </div>
 
-            <section className="rounded-xl border border-blue-100 bg-white p-6 shadow-sm">
+            <section className="rounded-[1.5rem] border border-border bg-card p-6 shadow-card">
                 <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-blue-50 p-2 text-blue-700"><Route size={20} /></div>
+                        <div className="rounded-full bg-accent p-2 text-ink"><Route size={20} /></div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Simple hiring flow</h2>
-                            <p className="text-sm text-gray-500">The product now centers the recruiter around one clear workflow.</p>
+                            <h2 className="text-lg font-black text-ink">Simple hiring flow</h2>
+                            <p className="text-sm text-ink-3">The product now centers the recruiter around one clear workflow.</p>
                         </div>
                     </div>
-                    <Link href="/dashboard/hiring-flow" className="text-sm font-semibold text-blue-600 hover:underline">Open flow view</Link>
+                    <Link href="/dashboard/hiring-flow" className="text-sm font-bold text-ink hover:underline">Open flow view</Link>
                 </div>
                 <div className="grid gap-3 md:grid-cols-5">
                     {recruiterFlowSteps.map(step => (
-                        <div key={step.id} className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                            <p className="text-xs font-semibold text-blue-700">Step {step.step}</p>
-                            <p className="mt-1 font-semibold text-gray-900">{step.title}</p>
-                            <p className="mt-2 text-xs text-gray-500">{step.action}</p>
+                        <div key={step.id} className="rounded-2xl border border-border bg-surface p-4">
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-success">Step {step.step}</p>
+                            <p className="mt-1 font-semibold text-ink">{step.title}</p>
+                            <p className="mt-2 text-xs text-ink-3">{step.action}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
             <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-                <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="flex items-center justify-between border-b border-gray-100 p-6">
+                <section className="rounded-[1.5rem] border border-border bg-card shadow-card">
+                    <div className="flex items-center justify-between border-b border-border p-6">
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Today&apos;s Priority Queue</h2>
-                            <p className="text-sm text-gray-500">Ranked by fit, urgency, and pending recruiter action.</p>
+                            <h2 className="text-lg font-black text-ink">Today&apos;s Priority Queue</h2>
+                            <p className="text-sm text-ink-3">Ranked by fit, urgency, and pending recruiter action.</p>
                         </div>
-                        <Link href="/dashboard/candidates" className="text-sm font-medium text-blue-600 hover:underline">View pipeline</Link>
+                        <Link href="/dashboard/candidates" className="text-sm font-bold text-ink hover:underline">View pipeline</Link>
                     </div>
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-border">
                         {priorityQueue.map(candidate => (
                             <Link
                                 href={`/dashboard/candidates/${candidate.id}`}
                                 key={candidate.id}
-                                className="grid gap-4 p-5 transition-colors hover:bg-gray-50 md:grid-cols-[1fr_auto]"
+                                className="grid gap-4 p-5 transition-colors hover:bg-surface md:grid-cols-[1fr_auto]"
                             >
                                 <div className="flex gap-4">
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-surface">
                                         {candidate.avatar}
                                     </div>
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <p className="font-semibold text-gray-900">{candidate.name}</p>
-                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{candidate.status}</span>
+                                            <p className="font-semibold text-ink">{candidate.name}</p>
+                                            <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-ink-2">{candidate.status}</span>
                                             <RiskBadge risk={candidate.risk_level} />
                                         </div>
-                                        <p className="mt-1 text-sm text-gray-500">{candidate.role_applied} · {candidate.source}</p>
-                                        <p className="mt-2 text-sm text-gray-700">{candidate.next_action}</p>
+                                        <p className="mt-1 text-sm text-ink-3">{candidate.role_applied} · {candidate.source}</p>
+                                        <p className="mt-2 text-sm text-ink-2">{candidate.next_action}</p>
                                     </div>
                                 </div>
                                 <div className="text-left md:text-right">
-                                    <div className="text-2xl font-bold text-green-600">{candidate.score}</div>
-                                    <div className="text-xs text-gray-400">AI fit score</div>
+                                    <div className="text-2xl font-black text-success">{candidate.score}</div>
+                                    <div className="text-xs text-ink-3">AI fit score</div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 </section>
 
-                <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-100 p-6">
-                        <h2 className="text-lg font-bold text-gray-900">Hiring Bottlenecks</h2>
-                        <p className="text-sm text-gray-500">Simple operating signals for the recruiting team.</p>
+                <section className="rounded-[1.5rem] border border-border bg-card shadow-card">
+                    <div className="border-b border-border p-6">
+                        <h2 className="text-lg font-black text-ink">Hiring Bottlenecks</h2>
+                        <p className="text-sm text-ink-3">Simple operating signals for the recruiting team.</p>
                     </div>
                     <div className="space-y-4 p-6">
                         <SignalRow icon={<Clock3 size={18} />} label="Top bottleneck" value={mockAnalytics.top_bottleneck} />
@@ -126,17 +126,17 @@ export default function Dashboard() {
                 </section>
             </div>
 
-            <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-gray-100 p-6">
+            <section className="rounded-[1.5rem] border border-border bg-card shadow-card">
+                <div className="flex items-center justify-between border-b border-border p-6">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">Active Requisition Health</h2>
-                        <p className="text-sm text-gray-500">High-level view of pipeline volume, ownership, and next action.</p>
+                        <h2 className="text-lg font-black text-ink">Active Requisition Health</h2>
+                        <p className="text-sm text-ink-3">High-level view of pipeline volume, ownership, and next action.</p>
                     </div>
-                    <Link href="/dashboard/jobs" className="text-sm font-medium text-blue-600 hover:underline">View all jobs</Link>
+                    <Link href="/dashboard/jobs" className="text-sm font-bold text-ink hover:underline">View all jobs</Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 text-xs font-medium uppercase text-gray-500">
+                        <thead className="bg-surface text-xs font-bold uppercase tracking-[0.12em] text-ink-3">
                             <tr>
                                 <th className="px-6 py-4">Requisition</th>
                                 <th className="px-6 py-4">Owner</th>
@@ -145,17 +145,17 @@ export default function Dashboard() {
                                 <th className="px-6 py-4">Next Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-border">
                             {atRiskJobs.map(job => (
-                                <tr key={job.id} className="hover:bg-gray-50/60">
+                                <tr key={job.id} className="hover:bg-surface/70">
                                     <td className="px-6 py-4">
-                                        <p className="font-semibold text-gray-900">{job.title}</p>
-                                        <p className="text-xs text-gray-500">{job.requisition_id} · {job.days_open} days open</p>
+                                        <p className="font-semibold text-ink">{job.title}</p>
+                                        <p className="text-xs text-ink-3">{job.requisition_id} · {job.days_open} days open</p>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{job.owner}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{job.applicants_count} candidates</td>
+                                    <td className="px-6 py-4 text-sm text-ink-2">{job.owner}</td>
+                                    <td className="px-6 py-4 text-sm text-ink-2">{job.applicants_count} candidates</td>
                                     <td className="px-6 py-4"><SLABadge status={job.sla_status} /></td>
-                                    <td className="px-6 py-4 text-sm text-gray-700">{job.next_action}</td>
+                                    <td className="px-6 py-4 text-sm text-ink-2">{job.next_action}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -168,40 +168,40 @@ export default function Dashboard() {
 
 function StatCard({ label, value, trend, icon, tone }: { label: string; value: string; trend: string; icon: React.ReactNode; tone: "blue" | "red" | "purple" | "green" }) {
     const tones = {
-        blue: "bg-blue-50 text-blue-700",
-        red: "bg-red-50 text-red-700",
-        purple: "bg-purple-50 text-purple-700",
-        green: "bg-green-50 text-green-700"
+        blue: "bg-accent-soft text-ink",
+        red: "bg-red-50 text-danger",
+        purple: "bg-surface text-info",
+        green: "bg-green-50 text-success"
     };
 
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+        <div className="rounded-[1.5rem] border border-border bg-card p-6 shadow-card transition-transform hover:-translate-y-0.5">
             <div className="mb-4 flex items-center justify-between">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tones[tone]}`}>
                     {icon}
                 </div>
                 <span className={`rounded-full px-2 py-1 text-xs font-medium ${tones[tone]}`}>{trend}</span>
             </div>
-            <p className="mb-1 text-2xl font-bold text-gray-900">{value}</p>
-            <p className="text-sm text-gray-500">{label}</p>
+            <p className="mb-1 text-3xl font-black text-ink">{value}</p>
+            <p className="text-sm text-ink-3">{label}</p>
         </div>
     );
 }
 
 function SignalRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-            <div className="flex items-center gap-3 text-gray-500">{icon}<span className="text-sm">{label}</span></div>
-            <span className="text-sm font-semibold text-gray-900">{value}</span>
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
+            <div className="flex items-center gap-3 text-ink-3">{icon}<span className="text-sm">{label}</span></div>
+            <span className="text-sm font-semibold text-ink">{value}</span>
         </div>
     );
 }
 
 function RiskBadge({ risk }: { risk: string }) {
     const styles: Record<string, string> = {
-        Low: "bg-green-50 text-green-700",
-        Medium: "bg-yellow-50 text-yellow-700",
-        High: "bg-red-50 text-red-700"
+        Low: "bg-green-50 text-success",
+        Medium: "bg-yellow-50 text-warning",
+        High: "bg-red-50 text-danger"
     };
 
     return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[risk] || "bg-gray-100 text-gray-600"}`}>{risk} risk</span>;
@@ -209,9 +209,9 @@ function RiskBadge({ risk }: { risk: string }) {
 
 function SLABadge({ status }: { status: string }) {
     const styles: Record<string, string> = {
-        Healthy: "bg-green-50 text-green-700 border-green-200",
-        Watch: "bg-yellow-50 text-yellow-700 border-yellow-200",
-        "At Risk": "bg-red-50 text-red-700 border-red-200"
+        Healthy: "bg-green-50 text-success border-green-200",
+        Watch: "bg-yellow-50 text-warning border-yellow-200",
+        "At Risk": "bg-red-50 text-danger border-red-200"
     };
 
     return <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[status] || "bg-gray-50 text-gray-600 border-gray-200"}`}>{status}</span>;
