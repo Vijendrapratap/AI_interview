@@ -88,3 +88,12 @@ https://recruitai-test.vercel.app/dashboard
 - Stage specific files, not broad `git add .`, unless the change set is intentionally reviewed.
 - Do not commit `.env*`, Vercel output, build output, logs, or local scratch files.
 - If Vercel shows old UI, first verify which folder is deployed and whether the visible files in `platform-web/` actually changed.
+
+## Supabase / Claude MCP context
+
+- ReCruItAI Supabase project ref: `redgbugvyoidjwhovmxa`.
+- Prefer the authenticated Claude account connector named `claude.ai Supabase` / tool prefix `mcp__claude_ai_Supabase__`.
+- Do not add a duplicate project-scoped `.mcp.json` Supabase server unless the Supabase OAuth account has access to this project; otherwise Claude Code shows `Needs authentication` or `permission denied`.
+- If Supabase MCP says the project is not accessible, the connected Supabase account is wrong. Re-authenticate the Supabase connector with the account that owns `redgbugvyoidjwhovmxa`, or invite the connected account to that Supabase organization.
+- Backend `SUPABASE_DB_URL` must be a Postgres pooler connection string beginning with `postgresql://`, not the HTTPS project API URL.
+
