@@ -74,3 +74,4 @@ htmlcov/
 
 # Claude
 .claude/
+.superpowers/
