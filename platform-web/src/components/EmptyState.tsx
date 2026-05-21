@@ -1,28 +1,26 @@
 import { ReactNode } from "react";
-import Link from "next/link";
-import { Button } from "./Button";
 
-interface Props {
-  title: string;
-  body?: string;
-  action?: { label: string; onClick?: () => void; href?: string };
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
   icon?: ReactNode;
-}
-
-const primaryLinkClasses =
-  "inline-flex items-center justify-center font-medium transition-colors h-10 px-5 text-sm rounded-full bg-accent text-accent-ink hover:brightness-95";
-
-export function EmptyState({ title, body, action, icon }: Props) {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16">
-      {icon && <div className="text-ink-3 mb-4">{icon}</div>}
-      <h3 className="font-serif italic text-2xl text-ink mb-2 tracking-tight">{title}</h3>
-      {body && <p className="text-ink-2 max-w-md mb-6">{body}</p>}
-      {action && (action.href ? (
-        <Link href={action.href} className={primaryLinkClasses}>{action.label}</Link>
-      ) : (
-        <Button variant="primary" onClick={action.onClick}>{action.label}</Button>
-      ))}
+    <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-border px-6 py-12 text-center">
+      {icon && (
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-pill bg-surface-muted text-ink-3">
+          {icon}
+        </div>
+      )}
+      <h3 className="text-card-title">{title}</h3>
+      {description && <p className="text-meta mt-1 max-w-sm">{description}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

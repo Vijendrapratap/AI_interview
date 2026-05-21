@@ -1,17 +1,49 @@
 import { ReactNode } from "react";
 
-interface Props {
-  children?: ReactNode;
-  className?: string;
-}
+type Tone = "neutral" | "accent" | "warning" | "danger";
+const tones: Record<Tone, string> = {
+  neutral: "bg-neutral-soft text-neutral-soft-ink",
+  accent: "bg-accent-soft text-accent-soft-ink",
+  warning: "bg-warning-soft text-warning-soft-ink",
+  danger: "bg-danger-soft text-danger-soft-ink",
+};
 
-export function ComingSoonBanner({ children, className = "" }: Props) {
+export function Banner({
+  tone = "neutral",
+  icon,
+  children,
+}: {
+  tone?: Tone;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <div
-      role="status"
-      className={`rounded-md bg-accent-soft border border-border px-4 py-2 text-sm text-ink-2 ${className}`}
+      className={`flex items-center gap-2.5 rounded-card px-4 py-3 text-[13px] font-medium ${tones[tone]}`}
     >
-      {children ?? "This area is read-only for now — full functionality lands in Slice 2."}
+      {icon}
+      <span>{children}</span>
+    </div>
+  );
+}
+
+/**
+ * Backward-compat shim for the redesign migration. Existing pages import
+ * `ComingSoonBanner`; page-rebuild tasks replace it with <Banner>. The final
+ * verification task deletes this shim once no page references it.
+ */
+export function ComingSoonBanner({
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <Banner tone="neutral">
+        {children ?? "This area is read-only for now — full functionality lands in Slice 2."}
+      </Banner>
     </div>
   );
 }
