@@ -1,31 +1,74 @@
 @import "tailwindcss";
 
 @theme {
+  /* Canvas */
   --color-surface: #EFE7DC;
+  --color-surface-deep: #EBDBCC;
   --color-surface-muted: #E6DDD0;
   --color-card: #FFFFFF;
-  --color-ink: #1B1B1B;
-  --color-ink-2: #4A4944;
-  --color-ink-3: #8A8780;
-  --color-border: #E0D6C7;
-  --color-border-card: #EEE7DA;
 
-  --color-accent: #B8DC4E;
-  --color-accent-ink: var(--color-ink);
-  --color-accent-soft: #EAF2C2;
+  /* Ink */
+  --color-ink: #1F1E1C;
+  --color-ink-2: #57544E;
+  --color-ink-3: #908C82;
 
+  /* Borders */
+  --color-border: #E4DBCC;
+  --color-border-card: #ECE4D6;
+
+  /* Sage accent */
+  --color-accent: #4F6B45;
+  --color-accent-hover: #445D3C;
+  --color-accent-ink: #F3F6EE;
+  --color-accent-soft: #E7EEE0;
+  --color-accent-soft-ink: #46603E;
+
+  /* Status */
   --color-success: #4F8A5B;
-  --color-warning: #C9913D;
-  --color-danger: #B14B3C;
-  --color-info: #4E6B8A;
+  --color-success-soft: #E7EEE0;
+  --color-success-soft-ink: #46603E;
+  --color-warning: #9A7430;
+  --color-warning-soft: #F6EEDC;
+  --color-warning-soft-ink: #9A7430;
+  --color-danger: #B5503F;
+  --color-danger-soft: #F2E3DE;
+  --color-danger-soft-ink: #B5503F;
+  --color-neutral: #57544E;
+  --color-neutral-soft: #EDE6D9;
+  --color-neutral-soft-ink: #57544E;
 
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  /* Radius */
+  --radius-card: 16px;
+  --radius-field: 12px;
+  --radius-tile: 10px;
+  --radius-pill: 999px;
 
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(31,30,28,.05), 0 1px 1px rgba(31,30,28,.03);
+  --shadow-pop: 0 8px 28px rgba(31,30,28,.12);
+
+  /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), Georgia, serif;
 }
 
-html, body { background: var(--color-surface); color: var(--color-ink); }
-.shadow-card { box-shadow: 0 1px 0 rgba(27,27,27,.04); }
+html, body {
+  background: linear-gradient(160deg, #F5F0E8 0%, #EFE7DC 52%, #EBDBCC 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--color-ink);
+}
+
+@layer components {
+  .text-eyebrow {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--color-ink-3);
+  }
+  .text-page-title {
+    font-family: var(--font-serif); font-size: 30px; font-weight: 600;
+    letter-spacing: -0.01em; color: var(--color-ink);
+  }
+  .text-card-title { font-size: 14px; font-weight: 700; color: var(--color-ink); }
+  .text-metric { font-size: 28px; font-weight: 800; color: var(--color-ink); line-height: 1.1; }
+  .text-meta { font-size: 11.5px; font-weight: 500; color: var(--color-ink-3); }
+}
