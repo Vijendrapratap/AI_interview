@@ -2,56 +2,89 @@
 
 import { BarChart3, Clock, ShieldAlert, TrendingUp, Users } from "lucide-react";
 import { mockAnalytics } from "@/lib/mockData";
-import { ComingSoonBanner } from "@/components/Banner";
+import { PageHeader, Banner, StatCard, SectionCard } from "@/components";
 
 export default function AnalyticsPage() {
-    const maxPipeline = mockAnalytics.pipeline_stats[0]?.value || 1;
+    const maxStage = Math.max(...mockAnalytics.pipeline_stats.map(s => s.value));
 
     return (
         <div className="p-8 space-y-8">
-            <ComingSoonBanner className="mb-6" />
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Recruiting Analytics</h1>
-                <p className="text-gray-500">Measure speed, quality, source ROI, bottlenecks, and AI screening impact.</p>
-            </div>
+            <Banner tone="neutral">
+                This area is read-only for now — full functionality lands in Slice 2.
+            </Banner>
+
+            <PageHeader
+                title="Recruiting Analytics"
+                subtitle="Measure speed, quality, source ROI, bottlenecks, and AI screening impact."
+            />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
-                <StatBox label="Time to Hire" value={mockAnalytics.avg_time_to_hire} icon={<Clock className="text-blue-600" />} />
-                <StatBox label="Offer Acceptance" value="53%" icon={<TrendingUp className="text-green-600" />} />
-                <StatBox label="Candidates" value={mockAnalytics.total_candidates} icon={<Users className="text-purple-600" />} />
-                <StatBox label="AI Pass Rate" value="41%" icon={<BarChart3 className="text-orange-600" />} />
-                <StatBox label="SLA Risks" value={mockAnalytics.sla_risks} icon={<ShieldAlert className="text-red-600" />} />
+                <StatCard
+                    icon={<Clock />}
+                    value={String(mockAnalytics.avg_time_to_hire)}
+                    label="Time to Hire"
+                    tone="neutral"
+                />
+                <StatCard
+                    icon={<TrendingUp />}
+                    value="53%"
+                    label="Offer Acceptance"
+                    tone="success"
+                />
+                <StatCard
+                    icon={<Users />}
+                    value={String(mockAnalytics.total_candidates)}
+                    label="Candidates"
+                    tone="accent"
+                />
+                <StatCard
+                    icon={<BarChart3 />}
+                    value="41%"
+                    label="AI Pass Rate"
+                    tone="warning"
+                />
+                <StatCard
+                    icon={<ShieldAlert />}
+                    value={String(mockAnalytics.sla_risks)}
+                    label="SLA Risks"
+                    tone="danger"
+                />
             </div>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-6 text-lg font-bold text-gray-900">Pipeline Conversion</h3>
+                <SectionCard title="Pipeline Conversion">
                     <div className="space-y-4">
-                        {mockAnalytics.pipeline_stats.map((stat, idx) => (
+                        {mockAnalytics.pipeline_stats.map((stat) => (
                             <div key={stat.name}>
-                                <div className="mb-1 flex justify-between text-sm font-medium"><span className="text-gray-700">{stat.name}</span><span className="text-gray-900">{stat.value}</span></div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100"><div className={`h-full rounded-full ${["bg-gray-400", "bg-blue-500", "bg-purple-500", "bg-green-500", "bg-green-600"][idx]}`} style={{ width: `${(stat.value / maxPipeline) * 100}%` }} /></div>
+                                <div className="mb-1 flex justify-between text-sm font-medium">
+                                    <span className="text-ink-2">{stat.name}</span>
+                                    <span className="text-ink">{stat.value}</span>
+                                </div>
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+                                    <div
+                                        className="h-full rounded-full bg-accent"
+                                        style={{ width: `${(stat.value / maxStage) * 100}%` }}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>
-                </section>
+                </SectionCard>
 
-                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-6 text-lg font-bold text-gray-900">Source Quality</h3>
+                <SectionCard title="Source Quality">
                     <div className="space-y-4">
                         {mockAnalytics.source_performance.map(source => (
-                            <div key={source.source} className="rounded-lg border border-gray-100 p-4">
-                                <div className="mb-2 flex justify-between"><span className="font-medium text-gray-900">{source.source}</span><span className="font-bold text-green-700">{source.quality}%</span></div>
-                                <p className="text-sm text-gray-500">{source.candidates} candidates reviewed</p>
+                            <div key={source.source} className="rounded-card border border-border-card p-4">
+                                <div className="mb-2 flex justify-between">
+                                    <span className="font-medium text-ink">{source.source}</span>
+                                    <span className="font-bold text-success-soft-ink">{source.quality}%</span>
+                                </div>
+                                <p className="text-sm text-ink-3">{source.candidates} candidates reviewed</p>
                             </div>
                         ))}
                     </div>
-                </section>
+                </SectionCard>
             </div>
         </div>
     );
-}
-
-function StatBox({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
-    return <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-start justify-between"><div><p className="mb-1 text-sm font-medium text-gray-500">{label}</p><h3 className="text-2xl font-bold text-gray-900">{value}</h3></div><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50">{icon}</div></div></div>;
 }
