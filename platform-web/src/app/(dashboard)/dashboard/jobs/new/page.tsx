@@ -3,12 +3,14 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
+import { PageHeader, Button } from "@/components"
+import { Label, Input, Textarea, Select } from "@/components"
 
 export default function NewJobPage() {
     const [formData, setFormData] = useState({
         title: "",
         department: "",
-        location: "Remote",
+        location: "",
         type: "Full-time",
         salary_range: "",
         description: "",
@@ -25,119 +27,122 @@ export default function NewJobPage() {
     }
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <Link href="/dashboard/jobs" className="flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back to Jobs
+        <div className="p-8 max-w-4xl mx-auto space-y-6">
+            <Link href="/dashboard/jobs" className="inline-flex items-center gap-1.5 text-meta hover:text-ink transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Back to Jobs
             </Link>
 
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Create New Job</h1>
-                    <p className="text-gray-500">Post a new opening to start collecting applications.</p>
-                </div>
-            </div>
+            <PageHeader
+                eyebrow="Jobs"
+                title="Create New Job"
+                subtitle="Post a new opening to start collecting applications."
+            />
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div className="bg-card border border-border-card rounded-card shadow-card p-8 space-y-6">
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                            <input
+                            <Label required>Job Title</Label>
+                            <Input
                                 type="text"
                                 name="title"
                                 value={formData.title}
                                 onChange={handleChange}
                                 placeholder="e.g. Senior Frontend Engineer"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <input
-                                type="text"
+                            <Label required>Department</Label>
+                            <Select
                                 name="department"
                                 value={formData.department}
                                 onChange={handleChange}
-                                placeholder="e.g. Engineering"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
-                            />
+                            >
+                                <option value="" disabled>Select department…</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Design">Design</option>
+                                <option value="Product">Product</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Operations">Operations</option>
+                                <option value="People">People</option>
+                            </Select>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                            <input
+                            <Label>Location</Label>
+                            <Input
                                 type="text"
                                 name="location"
                                 value={formData.location}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Remote"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                            <select
+                            <Label>Type</Label>
+                            <Select
                                 name="type"
                                 value={formData.type}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option>Full-time</option>
                                 <option>Part-time</option>
                                 <option>Contract</option>
                                 <option>Internship</option>
-                            </select>
+                            </Select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Salary Range</label>
-                            <input
+                            <Label>Salary Range</Label>
+                            <Input
                                 type="text"
                                 name="salary_range"
                                 value={formData.salary_range}
                                 onChange={handleChange}
                                 placeholder="e.g. $120k - $150k"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea
+                        <Label>Description</Label>
+                        <Textarea
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
                             rows={4}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Describe the role and responsibilities..."
-                        ></textarea>
+                        />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Key Requirements (Comma shared)</label>
-                        <textarea
+                        <Label>Key Requirements (Comma separated)</Label>
+                        <Textarea
                             name="requirements"
                             value={formData.requirements}
                             onChange={handleChange}
                             rows={2}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="e.g. React, TypeScript, Node.js, 5+ years experience"
-                        ></textarea>
+                        />
                     </div>
 
                 </div>
 
                 <div className="flex justify-end gap-3">
-                    <Link href="/dashboard/jobs" className="px-6 py-2 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-gray-50">
+                    <Link
+                        href="/dashboard/jobs"
+                        className="inline-flex items-center justify-center h-10 px-5 rounded-pill border border-border bg-card text-[13px] font-bold text-ink hover:bg-surface-muted"
+                    >
                         Cancel
                     </Link>
-                    <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm flex items-center gap-2">
-                        <Save size={18} /> Publish Job
-                    </button>
+                    <Button type="submit" variant="primary">
+                        <Save size={16} /> Publish Job
+                    </Button>
                 </div>
             </form>
         </div>

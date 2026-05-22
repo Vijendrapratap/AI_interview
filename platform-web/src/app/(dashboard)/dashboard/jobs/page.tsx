@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { mockJobs } from "@/lib/mockData"
 import Link from "next/link"
 import { Search, Plus, MapPin, DollarSign, Filter, MoreHorizontal, Briefcase } from "lucide-react"
+import { PageHeader, Card, Badge, EmptyState } from "@/components"
 
 export default function JobsPage() {
     const [searchQuery, setSearchQuery] = useState("")
@@ -17,92 +18,107 @@ export default function JobsPage() {
     }, [searchQuery])
 
     return (
-        <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Active Jobs</h1>
-                    <p className="text-gray-500">Manage your job postings and hiring pipelines.</p>
-                </div>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-                    <Plus size={18} /> New Job
-                </button>
-            </div>
+        <div className="p-8 space-y-6">
+            <PageHeader
+                eyebrow="Hiring"
+                title="Active Jobs"
+                subtitle="Manage your job postings and hiring pipelines."
+                actions={
+                    <Link
+                        href="/dashboard/jobs/new"
+                        className="inline-flex items-center gap-2 rounded-pill bg-accent px-5 h-10 text-[13px] font-bold text-accent-ink hover:bg-accent-hover"
+                    >
+                        <Plus size={16} /> New Job
+                    </Link>
+                }
+            />
 
             {/* Toolbar */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex justify-between items-center">
+            <Card variant="compact" className="flex justify-between items-center">
                 <div className="relative w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" size={18} />
                     <input
                         type="text"
                         placeholder="Search jobs, locations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-border rounded-field text-[13px] text-ink bg-card placeholder:text-ink-3 outline-none focus:border-accent"
                     />
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                    <button className="flex items-center gap-2 px-3 py-2 border border-border rounded-field text-[13px] text-ink-2 hover:bg-surface-muted">
                         <Filter size={16} /> Filter
                     </button>
                 </div>
-            </div>
+            </Card>
 
             <div className="grid gap-4">
                 {filteredJobs.length > 0 ? (
                     filteredJobs.map(job => (
-                        <div key={job.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow group">
+                        <Card key={job.id} className="hover:shadow-card transition-shadow group">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <div className="w-12 h-12 bg-accent-soft rounded-tile flex items-center justify-center text-accent-soft-ink group-hover:bg-accent group-hover:text-accent-ink transition-colors">
                                         <Briefcase size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-lg text-gray-900">{job.title}</h3>
-                                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                                        <h3 className="text-card-title">{job.title}</h3>
+                                        <div className="flex items-center gap-4 text-meta mt-1">
                                             <span className="flex items-center gap-1"><MapPin size={14} /> {job.location}</span>
                                             <span className="flex items-center gap-1"><DollarSign size={14} /> {job.salary_range}</span>
-                                            <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">{job.type}</span>
+                                            <Badge tone="neutral">{job.type}</Badge>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                        }`}>
+                                    <Badge tone={job.status === 'Active' ? 'success' : 'neutral'}>
                                         {job.status}
-                                    </span>
-                                    <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50">
+                                    </Badge>
+                                    <button className="p-2 text-ink-3 hover:text-ink-2 rounded-pill hover:bg-surface-muted">
                                         <MoreHorizontal size={20} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 pt-4 mt-2">
+                            <div className="border-t border-border-card pt-4 mt-2">
                                 <div className="flex justify-between items-center">
-                                    <div className="flex gap-6 text-sm">
+                                    <div className="flex gap-6 text-[13px]">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-500 text-xs uppercase font-semibold">Total</span>
-                                            <span className="font-bold text-gray-900">{job.stages.received + job.stages.screening + job.stages.interview + job.stages.offer}</span>
+                                            <span className="text-meta uppercase font-semibold">Total</span>
+                                            <span className="font-bold text-ink">{job.stages.received + job.stages.screening + job.stages.interview + job.stages.offer}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-gray-500 text-xs uppercase font-semibold">Interview</span>
-                                            <span className="font-bold text-blue-600">{job.stages.interview}</span>
+                                            <span className="text-meta uppercase font-semibold">Interview</span>
+                                            <span className="font-bold text-accent-soft-ink">{job.stages.interview}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-gray-500 text-xs uppercase font-semibold">Offer</span>
-                                            <span className="font-bold text-green-600">{job.stages.offer}</span>
+                                            <span className="text-meta uppercase font-semibold">Offer</span>
+                                            <span className="font-bold text-success-soft-ink">{job.stages.offer}</span>
                                         </div>
                                     </div>
-                                    <Link href={`/dashboard/jobs/${job.id}`} className="text-blue-600 text-sm font-medium hover:underline">
+                                    <Link href={`/dashboard/jobs/${job.id}`} className="text-[13px] font-bold text-accent-soft-ink hover:underline">
                                         View Details
                                     </Link>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ))
                 ) : (
-                    <div className="p-12 text-center text-gray-500 bg-white rounded-xl border border-gray-200 border-dashed">
-                        No jobs found matching &quot;{searchQuery}&quot;
-                    </div>
+                    <EmptyState
+                        icon={<Briefcase size={24} />}
+                        title={searchQuery ? `No jobs matching "${searchQuery}"` : "No jobs yet"}
+                        description={searchQuery ? "Try a different search term." : "Create your first job posting to start collecting applications."}
+                        action={
+                            !searchQuery && (
+                                <Link
+                                    href="/dashboard/jobs/new"
+                                    className="inline-flex items-center gap-2 rounded-pill bg-accent px-5 h-10 text-[13px] font-bold text-accent-ink hover:bg-accent-hover"
+                                >
+                                    <Plus size={16} /> New Job
+                                </Link>
+                            )
+                        }
+                    />
                 )}
             </div>
         </div>
