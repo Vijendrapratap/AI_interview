@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,8 +8,30 @@ import {
     LogOut, Kanban, CalendarClock, MessageSquare, Mail, Bot, Radar, Route
 } from "lucide-react";
 import { ToastProvider } from "@/components";
+import { createClient } from "@/lib/supabase/client";
+import { signOut } from "./actions";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const [userInitials, setUserInitials] = useState("??");
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (!user) return;
+            const email = user.email ?? "";
+            const fullName: string = user.user_metadata?.full_name ?? "";
+            if (fullName) {
+                const parts = fullName.trim().split(/\s+/);
+                const initials = parts.length >= 2
+                    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                    : parts[0].slice(0, 2).toUpperCase();
+                setUserInitials(initials);
+            } else if (email) {
+                setUserInitials(email.slice(0, 2).toUpperCase());
+            }
+        });
+    }, []);
+
     return (
         <ToastProvider>
             <div className="flex min-h-screen text-ink">
@@ -39,10 +62,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
 
                         <div className="border-t border-border pt-4">
-                            <Link href="/" className="flex items-center gap-3 rounded-pill px-3 py-2 text-[13px] font-bold text-danger transition-colors hover:bg-danger-soft">
-                                <LogOut size={18} />
-                                Sign Out
-                            </Link>
+                            <form action={signOut}>
+                                <button
+                                    type="submit"
+                                    className="flex w-full items-center gap-3 rounded-pill px-3 py-2 text-[13px] font-bold text-danger transition-colors hover:bg-danger-soft"
+                                >
+                                    <LogOut size={18} />
+                                    Sign Out
+                                </button>
+                            </form>
                         </div>
                     </nav>
                 </aside>
@@ -64,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </Link>
                             <Link href="/dashboard/profile" className="block">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-pill bg-accent text-[13px] font-bold text-accent-ink transition-transform hover:-translate-y-0.5">
-                                    DR
+                                    {userInitials}
                                 </div>
                             </Link>
                         </div>

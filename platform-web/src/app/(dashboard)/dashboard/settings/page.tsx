@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Save, ShieldCheck } from "lucide-react";
+import { useState, useEffect, useTransition } from "react";
+import { Save, ShieldCheck, UserPlus } from "lucide-react";
 import { mockEnterpriseControls } from "@/lib/mockData";
 import {
     PageHeader,
@@ -15,8 +15,117 @@ import {
     Select,
     useToast,
 } from "@/components";
+import { listMembers, inviteMember, type OrgRole } from "@/lib/data/organizations";
 
 const TABS = ["Organization", "Team Members", "Integrations"];
+
+const ORG_ROLES: { value: OrgRole; label: string }[] = [
+    { value: "recruiter", label: "Recruiter" },
+    { value: "hiring_manager", label: "Hiring Manager" },
+    { value: "interviewer", label: "Interviewer" },
+    { value: "admin", label: "Admin" },
+];
+
+type Member = { user_id: string; role: string; created_at: string };
+
+function TeamMembersTab() {
+    const toast = useToast();
+    const [members, setMembers] = useState<Member[]>([]);
+    const [loadingMembers, setLoadingMembers] = useState(true);
+    const [inviteEmail, setInviteEmail] = useState("");
+    const [inviteRole, setInviteRole] = useState<OrgRole>("recruiter");
+    const [isPending, startTransition] = useTransition();
+    const [inviteError, setInviteError] = useState("");
+
+    useEffect(() => {
+        listMembers()
+            .then((data) => setMembers(data as Member[]))
+            .finally(() => setLoadingMembers(false));
+    }, []);
+
+    function handleInvite(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setInviteError("");
+        startTransition(async () => {
+            try {
+                const token = await inviteMember(inviteEmail, inviteRole);
+                const link = `${window.location.origin}/accept-invite?token=${token}`;
+                toast(`Invite link: ${link}`);
+                setInviteEmail("");
+                // Refresh member list
+                const updated = await listMembers();
+                setMembers(updated as Member[]);
+            } catch (err) {
+                setInviteError(err instanceof Error ? err.message : "Failed to send invite");
+            }
+        });
+    }
+
+    return (
+        <div className="space-y-6">
+            <SectionCard
+                title="Invite a team member"
+                subtitle="Send an invitation link to add someone to your organization."
+            >
+                {inviteError && (
+                    <div role="alert" aria-live="polite" className="mb-4 text-danger text-sm">
+                        {inviteError}
+                    </div>
+                )}
+                <form onSubmit={handleInvite} className="flex items-end gap-3">
+                    <div className="flex-1">
+                        <Label>Email address</Label>
+                        <Input
+                            type="email"
+                            required
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="colleague@company.com"
+                        />
+                    </div>
+                    <div className="w-44">
+                        <Label>Role</Label>
+                        <Select
+                            value={inviteRole}
+                            onChange={(e) => setInviteRole(e.target.value as OrgRole)}
+                        >
+                            {ORG_ROLES.map((r) => (
+                                <option key={r.value} value={r.value}>
+                                    {r.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                    <Button variant="primary" type="submit" disabled={isPending}>
+                        <UserPlus size={16} />
+                        {isPending ? "Sending…" : "Send invite"}
+                    </Button>
+                </form>
+            </SectionCard>
+
+            <Card>
+                <h2 className="text-card-title mb-4">Current members</h2>
+                {loadingMembers ? (
+                    <p className="text-ink-2 text-[13px]">Loading members…</p>
+                ) : members.length === 0 ? (
+                    <p className="text-ink-2 text-[13px]">No members yet.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {members.map((m) => (
+                            <div
+                                key={m.user_id}
+                                className="flex items-center justify-between rounded-field border border-border px-4 py-3"
+                            >
+                                <span className="text-[13px] font-medium text-ink">{m.user_id}</span>
+                                <Badge tone="neutral">{m.role}</Badge>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
+        </div>
+    );
+}
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("Organization");
@@ -105,11 +214,7 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {activeTab === "Team Members" && (
-                <Card>
-                    <p className="text-ink-2 text-[13px]">Team Members management coming in Slice 2.</p>
-                </Card>
-            )}
+            {activeTab === "Team Members" && <TeamMembersTab />}
 
             {activeTab === "Integrations" && (
                 <Card>
