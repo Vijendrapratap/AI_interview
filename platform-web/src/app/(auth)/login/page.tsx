@@ -7,6 +7,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
 import { Card } from "@/components/Card"
 import { Button } from "@/components/Button"
+import { Input } from "@/components/Field"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -49,7 +50,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-surface">
+        <div className="min-h-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-md p-10">
                 <h1 className="font-serif text-3xl text-ink mb-1 tracking-tight">Welcome back</h1>
                 <p className="text-ink-2 mb-8">Sign in to your recruiter workspace</p>
@@ -62,28 +63,31 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-ink mb-1">Email address</label>
-                        <input
+                        <label htmlFor="email" className="mb-1.5 block text-[12px] font-bold text-ink-2">
+                            Email address
+                        </label>
+                        <Input
                             id="email"
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full h-10 px-3 rounded-md border border-border bg-card text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent"
                             placeholder="name@company.com"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-ink mb-1">Password</label>
+                        <label htmlFor="password" className="mb-1.5 block text-[12px] font-bold text-ink-2">
+                            Password
+                        </label>
                         <div className="relative">
-                            <input
+                            <Input
                                 id="password"
                                 type={showPassword ? "text" : "password"}
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full h-10 px-3 pr-10 rounded-md border border-border bg-card text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="pr-10"
                                 placeholder="••••••••"
                             />
                             <button
