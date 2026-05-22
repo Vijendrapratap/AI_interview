@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, FileText, CheckCircle, ArrowRight, Play, Loader2, BarChart2, TrendingUp, Target, MessageSquare, RotateCcw } from "lucide-react"
+import { FileText, CheckCircle, ArrowRight, Play, Loader2, TrendingUp, Target, MessageSquare, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAppStore } from "@/lib/store"
+import { Card, SectionCard, Badge, Button } from "@/components"
 
 export default function CandidatePortalPage() {
     const router = useRouter()
@@ -128,12 +129,8 @@ export default function CandidatePortalPage() {
         <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Section */}
             <div className="space-y-6">
-                <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Upload size={20} className="text-blue-600" />
-                        1. Upload Code/Resume
-                    </h2>
-                    <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors relative">
+                <SectionCard title="1. Upload Code/Resume">
+                    <div className="border-2 border-dashed border-border rounded-card p-8 text-center hover:bg-surface-muted transition-colors relative">
                         <input
                             type="file"
                             accept=".pdf,.docx,.txt"
@@ -142,38 +139,35 @@ export default function CandidatePortalPage() {
                             disabled={!!analysisResult}
                         />
                         {hasFile ? (
-                            <div className="flex flex-col items-center text-blue-600">
+                            <div className="flex flex-col items-center text-accent">
                                 <CheckCircle size={32} className="mb-2" />
-                                <span className="font-medium">{displayFileName}</span>
-                                <span className="text-sm text-gray-500">{displayFileSize ? (displayFileSize / 1024).toFixed(0) : 0} KB</span>
+                                <span className="font-medium text-ink">{displayFileName}</span>
+                                <span className="text-sm text-ink-3">{displayFileSize ? (displayFileSize / 1024).toFixed(0) : 0} KB</span>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center text-gray-400">
+                            <div className="flex flex-col items-center text-ink-3">
                                 <FileText size={32} className="mb-2" />
-                                <span className="font-medium text-gray-600">Click to upload or drag & drop</span>
+                                <span className="font-medium text-ink-2">Click to upload or drag &amp; drop</span>
                                 <span className="text-sm">PDF, DOCX, TXT up to 10MB</span>
                             </div>
                         )}
                     </div>
-                </section>
+                </SectionCard>
 
-                <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText size={20} className="text-blue-600" />
-                        2. Job Description (Optional)
-                    </h2>
+                <SectionCard title="2. Job Description (Optional)">
                     <textarea
                         value={jdText}
                         onChange={(e) => setJdText(e.target.value)}
                         placeholder="Paste the Job Description here to get a 'Fit Score' and tailored interview questions..."
-                        className="w-full h-40 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm text-gray-900 bg-white"
+                        className="w-full h-40 p-4 border border-border rounded-field focus:ring-2 focus:ring-accent/40 focus:border-accent outline-none resize-none text-sm text-ink bg-surface"
                     />
-                </section>
+                </SectionCard>
 
-                <button
+                <Button
                     onClick={startAnalysis}
                     disabled={!resumeFile || isAnalyzing || !!analysisResult}
-                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    variant="primary"
+                    className="w-full py-4 text-lg"
                 >
                     {isAnalyzing ? (
                         <>
@@ -185,25 +179,26 @@ export default function CandidatePortalPage() {
                         </>
                     ) : (
                         <>
-                            Analyze & Prepare <ArrowRight size={20} />
+                            Analyze &amp; Prepare <ArrowRight size={20} />
                         </>
                     )}
-                </button>
+                </Button>
 
                 {analysisResult && (
-                    <button
+                    <Button
                         onClick={handleStartOver}
-                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                        variant="secondary"
+                        className="w-full"
                     >
                         <RotateCcw size={18} /> Start Over with New Resume
-                    </button>
+                    </Button>
                 )}
             </div>
 
             {/* Results Section */}
             <div className="space-y-6">
                 {!analysisResult ? (
-                    <div className="h-full bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center text-gray-400 p-12 text-center">
+                    <div className="h-full bg-surface-muted border-2 border-dashed border-border rounded-card flex items-center justify-center text-ink-3 p-12 text-center">
                         <div>
                             <p className="mb-2 font-medium">No Analysis Yet</p>
                             <p className="text-sm">Upload a resume to see your scores and start practicing.</p>
@@ -213,41 +208,37 @@ export default function CandidatePortalPage() {
                     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Score Cards */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100">
-                                <div className="text-sm text-gray-500 mb-1">Resume Score</div>
-                                <div className="text-4xl font-bold text-purple-600">{analysisResult.score}/100</div>
-                            </div>
-                            <div className={`bg-white p-6 rounded-2xl shadow-sm border ${analysisResult.fitScore ? 'border-green-100' : 'border-gray-100'}`}>
-                                <div className="text-sm text-gray-500 mb-1">Job Fit Score</div>
-                                <div className={`text-4xl font-bold ${analysisResult.fitScore ? 'text-green-600' : 'text-gray-300'}`}>
+                            <Card className="p-6">
+                                <div className="text-sm text-ink-3 mb-1">Resume Score</div>
+                                <div className="text-metric text-accent">{analysisResult.score}/100</div>
+                            </Card>
+                            <Card className="p-6">
+                                <div className="text-sm text-ink-3 mb-1">Job Fit Score</div>
+                                <div className={`text-metric ${analysisResult.fitScore ? "text-accent" : "text-ink-3"}`}>
                                     {analysisResult.fitScore || "N/A"}
                                 </div>
-                            </div>
+                            </Card>
                         </div>
 
                         {/* Analysis Details */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-900 mb-4">AI Insights</h3>
-
+                        <SectionCard title="AI Insights">
                             <div className="space-y-4">
                                 <div>
-                                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Strengths</div>
+                                    <div className="text-eyebrow mb-2">Strengths</div>
                                     <div className="flex flex-wrap gap-2">
                                         {analysisResult.topSkills.map((skill: string) => (
-                                            <span key={skill} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                                                {skill}
-                                            </span>
+                                            <Badge key={skill} tone="accent">{skill}</Badge>
                                         ))}
                                     </div>
                                 </div>
 
                                 {analysisResult.suggestions.length > 0 && (
                                     <div>
-                                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Suggestions</div>
+                                        <div className="text-eyebrow mb-2">Suggestions</div>
                                         <ul className="space-y-2">
                                             {analysisResult.suggestions.map((s: string, i: number) => (
-                                                <li key={i} className="flex gap-2 text-sm text-gray-600">
-                                                    <AlertIcon className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                                                <li key={i} className="flex gap-2 text-sm text-ink-2">
+                                                    <AlertIcon className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                                                     {s}
                                                 </li>
                                             ))}
@@ -255,86 +246,82 @@ export default function CandidatePortalPage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </SectionCard>
 
                         {/* View Detailed Reports */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <BarChart2 size={20} className="text-blue-600" />
-                                View Detailed Reports
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-4">
+                        <SectionCard title="View Detailed Reports">
+                            <p className="text-sm text-ink-2 mb-4">
                                 Get in-depth analysis of your resume, skills, career trajectory, and interview performance.
                             </p>
                             <div className="grid grid-cols-2 gap-3">
                                 <Link
                                     href="/portal/reports/resume"
-                                    className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors border border-purple-100"
+                                    className="flex items-center gap-2 p-3 bg-accent-soft hover:bg-accent-soft/80 rounded-card transition-colors border border-border-card"
                                 >
-                                    <FileText size={18} className="text-purple-600" />
+                                    <FileText size={18} className="text-accent-soft-ink" />
                                     <div>
-                                        <div className="text-sm font-medium text-purple-900">Resume Analysis</div>
-                                        <div className="text-xs text-purple-600">Section breakdown, ATS</div>
+                                        <div className="text-sm font-medium text-ink">Resume Analysis</div>
+                                        <div className="text-xs text-ink-3">Section breakdown, ATS</div>
                                     </div>
                                 </Link>
                                 <Link
                                     href="/portal/reports/interview"
-                                    className="flex items-center gap-2 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-100"
+                                    className="flex items-center gap-2 p-3 bg-accent-soft hover:bg-accent-soft/80 rounded-card transition-colors border border-border-card"
                                 >
-                                    <MessageSquare size={18} className="text-indigo-600" />
+                                    <MessageSquare size={18} className="text-accent-soft-ink" />
                                     <div>
-                                        <div className="text-sm font-medium text-indigo-900">Interview</div>
-                                        <div className="text-xs text-indigo-600">Q&A feedback, tips</div>
+                                        <div className="text-sm font-medium text-ink">Interview</div>
+                                        <div className="text-xs text-ink-3">Q&amp;A feedback, tips</div>
                                     </div>
                                 </Link>
                                 <Link
                                     href="/portal/reports/career"
-                                    className="flex items-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-100"
+                                    className="flex items-center gap-2 p-3 bg-accent-soft hover:bg-accent-soft/80 rounded-card transition-colors border border-border-card"
                                 >
-                                    <TrendingUp size={18} className="text-blue-600" />
+                                    <TrendingUp size={18} className="text-accent-soft-ink" />
                                     <div>
-                                        <div className="text-sm font-medium text-blue-900">Career Analytics</div>
-                                        <div className="text-xs text-blue-600">Gaps, stability, trajectory</div>
+                                        <div className="text-sm font-medium text-ink">Career Analytics</div>
+                                        <div className="text-xs text-ink-3">Gaps, stability, trajectory</div>
                                     </div>
                                 </Link>
                                 <Link
                                     href="/portal/reports/skills"
-                                    className="flex items-center gap-2 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-colors border border-green-100"
+                                    className="flex items-center gap-2 p-3 bg-accent-soft hover:bg-accent-soft/80 rounded-card transition-colors border border-border-card"
                                 >
-                                    <Target size={18} className="text-green-600" />
+                                    <Target size={18} className="text-accent-soft-ink" />
                                     <div>
-                                        <div className="text-sm font-medium text-green-900">Skills Assessment</div>
-                                        <div className="text-xs text-green-600">Levels, gaps, roadmap</div>
+                                        <div className="text-sm font-medium text-ink">Skills Assessment</div>
+                                        <div className="text-xs text-ink-3">Levels, gaps, roadmap</div>
                                     </div>
                                 </Link>
                             </div>
-                        </div>
+                        </SectionCard>
 
                         {/* Start Interview CTA */}
-                        <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl shadow-lg text-white">
-                            <h3 className="text-xl font-bold mb-2">Ready to Practice?</h3>
-                            <p className="text-gray-300 mb-6">Start an AI mock interview based on this profile.</p>
+                        <Card className="p-6 bg-ink text-card">
+                            <h3 className="text-xl font-bold mb-2 text-card">Ready to Practice?</h3>
+                            <p className="text-card/70 mb-6">Start an AI mock interview based on this profile.</p>
 
                             {!jdText && (
                                 <div className="mb-4">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Focus Topic (Optional)</label>
+                                    <label className="text-eyebrow text-card/60 mb-2 block">Focus Topic (Optional)</label>
                                     <input
                                         type="text"
                                         placeholder="e.g. System Design, React, Leadership"
                                         value={interviewTopic}
                                         onChange={(e) => setInterviewTopic(e.target.value)}
-                                        className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-4 py-2 bg-card/10 border border-card/20 rounded-field text-card placeholder-card/40 focus:ring-2 focus:ring-accent focus:outline-none"
                                     />
                                 </div>
                             )}
 
                             <button
                                 onClick={startInterview}
-                                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-500 transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-accent text-accent-ink py-3 rounded-pill font-bold hover:bg-accent-hover transition-colors flex items-center justify-center gap-2"
                             >
                                 <Play size={20} fill="currentColor" /> Start Interview Now
                             </button>
-                        </div>
+                        </Card>
                     </div>
                 )}
             </div>

@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from "react"
 import {
-    FileText,
     CheckCircle,
     AlertTriangle,
-    Target,
-    TrendingUp,
     Lightbulb,
     ArrowRight,
     Download,
     Loader2
 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
+import { Badge, SectionCard, Button } from "@/components"
 
 interface SectionAnalysis {
     section_name: string
@@ -168,24 +166,24 @@ export default function ResumeAnalysisPage() {
     }
 
     const getScoreColor = (score: number) => {
-        if (score >= 80) return "text-green-600"
-        if (score >= 60) return "text-yellow-600"
-        return "text-red-600"
+        if (score >= 80) return "text-success"
+        if (score >= 60) return "text-warning"
+        return "text-danger"
     }
 
     const getScoreBg = (score: number) => {
-        if (score >= 80) return "bg-green-100"
-        if (score >= 60) return "bg-yellow-100"
-        return "bg-red-100"
+        if (score >= 80) return "bg-success-soft"
+        if (score >= 60) return "bg-warning-soft"
+        return "bg-danger-soft"
     }
 
-    const getImpactBadge = (impact: string) => {
-        const colors: Record<string, string> = {
-            high: "bg-red-100 text-red-700",
-            medium: "bg-yellow-100 text-yellow-700",
-            low: "bg-gray-100 text-gray-700"
+    const getImpactBadgeTone = (impact: string): "success" | "warning" | "danger" | "neutral" => {
+        const tones: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+            high: "danger",
+            medium: "warning",
+            low: "neutral"
         }
-        return colors[impact?.toLowerCase()] || colors.low
+        return tones[impact?.toLowerCase()] || "neutral"
     }
 
     const handleDownloadPdf = async () => {
@@ -216,8 +214,8 @@ export default function ResumeAnalysisPage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                <span className="ml-3 text-gray-600">Loading report...</span>
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <span className="ml-3 text-ink-2">Loading report...</span>
             </div>
         )
     }
@@ -225,9 +223,9 @@ export default function ResumeAnalysisPage() {
     if (error || !report) {
         return (
             <div className="text-center py-20">
-                <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-                <p className="text-gray-600">{error || "No report data available"}</p>
-                <p className="text-sm text-gray-500 mt-2">
+                <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
+                <p className="text-ink-2">{error || "No report data available"}</p>
+                <p className="text-sm text-ink-3 mt-2">
                     Go back to the portal and analyze a resume first.
                 </p>
             </div>
@@ -239,30 +237,30 @@ export default function ResumeAnalysisPage() {
             {/* Overall Score Section */}
             <div className="grid md:grid-cols-5 gap-4">
                 {/* Main Score */}
-                <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 text-white">
+                <div className="md:col-span-2 bg-accent rounded-card p-6 text-accent-ink">
                     <div className="text-sm font-medium opacity-80 mb-1">Overall Resume Score</div>
                     <div className="text-5xl font-bold mb-2">{report.overall_score}<span className="text-2xl">/100</span></div>
                     <div className="text-sm opacity-80">
-                        {report.overall_score >= 80 ? "Excellent - Your resume is well-optimized" :
-                         report.overall_score >= 60 ? "Good - Some improvements recommended" :
-                         "Needs Work - Follow our suggestions below"}
+                        {report.overall_score >= 80 ? "Excellent — Your resume is well-optimized" :
+                         report.overall_score >= 60 ? "Good — Some improvements recommended" :
+                         "Needs Work — Follow our suggestions below"}
                     </div>
                 </div>
 
                 {/* Score Breakdown */}
                 <div className="md:col-span-3 grid grid-cols-2 gap-3">
                     {Object.entries(report.score_breakdown || {}).map(([key, value]) => (
-                        <div key={key} className="bg-gray-50 rounded-xl p-4">
-                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                        <div key={key} className="bg-surface-muted rounded-card p-4">
+                            <div className="text-eyebrow mb-1">
                                 {key.replace(/_/g, " ").replace("score", "")}
                             </div>
                             <div className={`text-2xl font-bold ${getScoreColor(value || 0)}`}>
                                 {value || "N/A"}
                             </div>
                             {value && (
-                                <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="mt-2 h-2 bg-border rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full ${value >= 80 ? "bg-green-500" : value >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
+                                        className={`h-full rounded-full ${value >= 80 ? "bg-success" : value >= 60 ? "bg-warning" : "bg-danger"}`}
                                         style={{ width: `${value}%` }}
                                     />
                                 </div>
@@ -274,101 +272,85 @@ export default function ResumeAnalysisPage() {
 
             {/* Detected Skills */}
             {analysisResult && (analysisResult.topSkills?.length > 0 || analysisResult.missingSkills?.length > 0) && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Target size={20} className="text-blue-600" />
-                        Skills Overview
-                    </h2>
+                <SectionCard title="Skills Overview">
                     <div className="grid md:grid-cols-2 gap-4">
                         {analysisResult.topSkills?.length > 0 && (
-                            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-                                <div className="text-sm font-bold text-green-700 mb-3">Detected Skills</div>
+                            <div className="bg-success-soft border border-success-soft-ink/20 rounded-card p-4">
+                                <div className="text-sm font-bold text-success-soft-ink mb-3">Detected Skills</div>
                                 <div className="flex flex-wrap gap-2">
                                     {analysisResult.topSkills.map((skill: string) => (
-                                        <span key={skill} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                                            {skill}
-                                        </span>
+                                        <Badge key={skill} tone="success">{skill}</Badge>
                                     ))}
                                 </div>
                             </div>
                         )}
                         {analysisResult.missingSkills?.length > 0 && (
-                            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
-                                <div className="text-sm font-bold text-orange-700 mb-3">Skills to Add</div>
+                            <div className="bg-warning-soft border border-warning-soft-ink/20 rounded-card p-4">
+                                <div className="text-sm font-bold text-warning-soft-ink mb-3">Skills to Add</div>
                                 <div className="flex flex-wrap gap-2">
                                     {analysisResult.missingSkills.map((skill: string) => (
-                                        <span key={skill} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                                            + {skill}
-                                        </span>
+                                        <Badge key={skill} tone="warning">+ {skill}</Badge>
                                     ))}
                                 </div>
                             </div>
                         )}
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Suggestions from Analysis */}
             {analysisResult?.suggestions && analysisResult.suggestions.length > 0 && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Lightbulb size={20} className="text-blue-600" />
-                        AI Recommendations
-                    </h2>
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <SectionCard title="AI Recommendations">
+                    <div className="bg-accent-soft border border-border-card rounded-card p-4">
                         <ul className="space-y-2">
                             {analysisResult.suggestions.map((suggestion: string, i: number) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-blue-800">
-                                    <CheckCircle size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                                <li key={i} className="flex items-start gap-2 text-sm text-accent-soft-ink">
+                                    <CheckCircle size={16} className="text-accent mt-0.5 shrink-0" />
                                     {suggestion}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Section-by-Section Analysis */}
             {report.section_analysis && report.section_analysis.length > 0 && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText size={20} className="text-blue-600" />
-                        Section-by-Section Analysis
-                    </h2>
+                <SectionCard title="Section-by-Section Analysis">
                     <div className="space-y-3">
                         {report.section_analysis.map((section) => (
-                            <div key={section.section_name} className="border border-gray-200 rounded-xl overflow-hidden">
+                            <div key={section.section_name} className="border border-border-card rounded-card overflow-hidden">
                                 <button
                                     onClick={() => toggleSection(section.section_name)}
-                                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 bg-surface-muted hover:bg-surface transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getScoreBg(section.current_score)}`}>
+                                        <div className={`w-10 h-10 rounded-tile flex items-center justify-center ${getScoreBg(section.current_score)}`}>
                                             <span className={`font-bold ${getScoreColor(section.current_score)}`}>
                                                 {section.current_score}
                                             </span>
                                         </div>
-                                        <span className="font-medium text-gray-900">{section.section_name}</span>
+                                        <span className="font-medium text-ink">{section.section_name}</span>
                                     </div>
                                     <ArrowRight
                                         size={18}
-                                        className={`text-gray-400 transition-transform ${expandedSections.includes(section.section_name) ? "rotate-90" : ""}`}
+                                        className={`text-ink-3 transition-transform ${expandedSections.includes(section.section_name) ? "rotate-90" : ""}`}
                                     />
                                 </button>
 
                                 {expandedSections.includes(section.section_name) && (
-                                    <div className="p-4 border-t border-gray-200 space-y-4">
+                                    <div className="p-4 border-t border-border space-y-4">
                                         {/* Issues */}
                                         {section.issues && section.issues.length > 0 && (
                                             <div>
-                                                <div className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                                <div className="text-eyebrow text-danger mb-2 flex items-center gap-1">
                                                     <AlertTriangle size={14} />
                                                     Issues Found
                                                 </div>
                                                 <ul className="space-y-1">
                                                     {section.issues.map((issue, i) => (
-                                                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                                                            <span className="text-red-400 mt-1">•</span>
+                                                        <li key={i} className="text-sm text-ink-2 flex items-start gap-2">
+                                                            <span className="text-danger mt-1">•</span>
                                                             {issue}
                                                         </li>
                                                     ))}
@@ -379,14 +361,14 @@ export default function ResumeAnalysisPage() {
                                         {/* Recommendations */}
                                         {section.recommendations && section.recommendations.length > 0 && (
                                             <div>
-                                                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                                <div className="text-eyebrow text-accent mb-2 flex items-center gap-1">
                                                     <Lightbulb size={14} />
                                                     Recommendations
                                                 </div>
                                                 <ul className="space-y-1">
                                                     {section.recommendations.map((rec, i) => (
-                                                        <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                                                            <CheckCircle size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                                                        <li key={i} className="text-sm text-ink-2 flex items-start gap-2">
+                                                            <CheckCircle size={14} className="text-accent mt-0.5 shrink-0" />
                                                             {rec}
                                                         </li>
                                                     ))}
@@ -397,18 +379,18 @@ export default function ResumeAnalysisPage() {
                                         {/* Before/After Examples */}
                                         {section.before_after_examples && section.before_after_examples.length > 0 && (
                                             <div>
-                                                <div className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
+                                                <div className="text-eyebrow text-success mb-2">
                                                     Rewrite Examples
                                                 </div>
                                                 {section.before_after_examples.map((example, i) => (
                                                     <div key={i} className="grid md:grid-cols-2 gap-3">
-                                                        <div className="bg-red-50 border border-red-100 rounded-lg p-3">
-                                                            <div className="text-xs font-medium text-red-600 mb-1">Before</div>
-                                                            <p className="text-sm text-gray-700">{example.before}</p>
+                                                        <div className="bg-danger-soft border border-danger-soft-ink/20 rounded-tile p-3">
+                                                            <div className="text-xs font-medium text-danger-soft-ink mb-1">Before</div>
+                                                            <p className="text-sm text-ink">{example.before}</p>
                                                         </div>
-                                                        <div className="bg-green-50 border border-green-100 rounded-lg p-3">
-                                                            <div className="text-xs font-medium text-green-600 mb-1">After</div>
-                                                            <p className="text-sm text-gray-700 whitespace-pre-line">{example.after}</p>
+                                                        <div className="bg-success-soft border border-success-soft-ink/20 rounded-tile p-3">
+                                                            <div className="text-xs font-medium text-success-soft-ink mb-1">After</div>
+                                                            <p className="text-sm text-ink whitespace-pre-line">{example.after}</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -419,30 +401,24 @@ export default function ResumeAnalysisPage() {
                             </div>
                         ))}
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Keyword Analysis */}
             {report.keyword_analysis && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Target size={20} className="text-blue-600" />
-                        Keyword Analysis
-                    </h2>
+                <SectionCard title="Keyword Analysis">
                     <div className="grid md:grid-cols-2 gap-4">
                         {/* Found Keywords */}
                         {report.keyword_analysis.found_keywords && (
-                            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-                                <div className="text-sm font-bold text-green-700 mb-3">Found Keywords</div>
+                            <div className="bg-success-soft border border-success-soft-ink/20 rounded-card p-4">
+                                <div className="text-sm font-bold text-success-soft-ink mb-3">Found Keywords</div>
                                 <div className="space-y-3">
                                     {Object.entries(report.keyword_analysis.found_keywords).map(([category, keywords]) => (
                                         <div key={category}>
-                                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">{category}</div>
+                                            <div className="text-eyebrow mb-1">{category}</div>
                                             <div className="flex flex-wrap gap-1">
                                                 {(keywords as string[]).map((kw: string) => (
-                                                    <span key={kw} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
-                                                        {kw}
-                                                    </span>
+                                                    <Badge key={kw} tone="success">{kw}</Badge>
                                                 ))}
                                             </div>
                                         </div>
@@ -453,51 +429,45 @@ export default function ResumeAnalysisPage() {
 
                         {/* Missing Keywords */}
                         {report.keyword_analysis.missing_keywords && report.keyword_analysis.missing_keywords.length > 0 && (
-                            <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                                <div className="text-sm font-bold text-red-700 mb-3">Missing Keywords (Consider Adding)</div>
+                            <div className="bg-danger-soft border border-danger-soft-ink/20 rounded-card p-4">
+                                <div className="text-sm font-bold text-danger-soft-ink mb-3">Missing Keywords (Consider Adding)</div>
                                 <div className="flex flex-wrap gap-2">
                                     {report.keyword_analysis.missing_keywords.map((kw) => (
-                                        <span key={kw} className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-                                            + {kw}
-                                        </span>
+                                        <Badge key={kw} tone="danger">+ {kw}</Badge>
                                     ))}
                                 </div>
                                 {report.keyword_analysis.keyword_density && (
-                                    <div className="mt-4 text-sm text-gray-600">
+                                    <div className="mt-4 text-sm text-ink-2">
                                         <span className="font-medium">Keyword Density:</span> {report.keyword_analysis.keyword_density}%
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* ATS Optimization */}
             {report.ats_optimization && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <TrendingUp size={20} className="text-blue-600" />
-                        ATS Optimization
-                    </h2>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <SectionCard title="ATS Optimization">
+                    <div>
                         {report.ats_optimization.score && (
                             <div className="flex items-center gap-4 mb-4">
                                 <div className={`text-3xl font-bold ${getScoreColor(report.ats_optimization.score)}`}>
                                     {report.ats_optimization.score}%
                                 </div>
-                                <div className="text-sm text-gray-600">ATS Compatibility Score</div>
+                                <div className="text-sm text-ink-2">ATS Compatibility Score</div>
                             </div>
                         )}
 
                         <div className="grid md:grid-cols-2 gap-4">
                             {report.ats_optimization.passed_checks && report.ats_optimization.passed_checks.length > 0 && (
                                 <div>
-                                    <div className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Passed Checks</div>
+                                    <div className="text-eyebrow text-success mb-2">Passed Checks</div>
                                     <ul className="space-y-1">
                                         {report.ats_optimization.passed_checks.map((check, i) => (
-                                            <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                                                <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
+                                            <li key={i} className="text-sm text-ink-2 flex items-start gap-2">
+                                                <CheckCircle size={14} className="text-success mt-0.5 shrink-0" />
                                                 {check}
                                             </li>
                                         ))}
@@ -506,11 +476,11 @@ export default function ResumeAnalysisPage() {
                             )}
                             {report.ats_optimization.failed_checks && report.ats_optimization.failed_checks.length > 0 && (
                                 <div>
-                                    <div className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2">Failed Checks</div>
+                                    <div className="text-eyebrow text-danger mb-2">Failed Checks</div>
                                     <ul className="space-y-1">
                                         {report.ats_optimization.failed_checks.map((check, i) => (
-                                            <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                                                <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
+                                            <li key={i} className="text-sm text-ink-2 flex items-start gap-2">
+                                                <AlertTriangle size={14} className="text-danger mt-0.5 shrink-0" />
                                                 {check}
                                             </li>
                                         ))}
@@ -519,62 +489,54 @@ export default function ResumeAnalysisPage() {
                             )}
                         </div>
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Priority Actions */}
             {report.priority_actions && report.priority_actions.length > 0 && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <AlertTriangle size={20} className="text-blue-600" />
-                        Priority Actions
-                    </h2>
+                <SectionCard title="Priority Actions">
                     <div className="space-y-2">
                         {report.priority_actions.map((action, i) => (
-                            <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+                            <div key={i} className="flex items-center justify-between bg-surface-muted rounded-card p-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm">
+                                    <div className="w-8 h-8 bg-accent-soft rounded-tile flex items-center justify-center text-accent-soft-ink font-bold text-sm">
                                         {i + 1}
                                     </div>
-                                    <span className="text-gray-900">{action.action}</span>
+                                    <span className="text-ink">{action.action}</span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${getImpactBadge(action.impact)}`}>
+                                    <Badge tone={getImpactBadgeTone(action.impact)}>
                                         Impact: {action.impact}
-                                    </span>
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${getImpactBadge(action.urgency)}`}>
+                                    </Badge>
+                                    <Badge tone={getImpactBadgeTone(action.urgency)}>
                                         Urgency: {action.urgency}
-                                    </span>
+                                    </Badge>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Rewrite Examples */}
             {report.rewrite_examples && report.rewrite_examples.length > 0 && (
-                <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Lightbulb size={20} className="text-blue-600" />
-                        Improvement Examples
-                    </h2>
+                <SectionCard title="Improvement Examples">
                     <div className="space-y-4">
                         {report.rewrite_examples.map((example, i) => (
-                            <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                            <div key={i} className="border border-border-card rounded-card overflow-hidden">
                                 <div className="grid md:grid-cols-2">
-                                    <div className="bg-red-50 p-4 border-b md:border-b-0 md:border-r border-gray-200">
-                                        <div className="text-xs font-bold text-red-600 uppercase tracking-wider mb-2">Original</div>
-                                        <p className="text-sm text-gray-700">{example.original}</p>
+                                    <div className="bg-danger-soft p-4 border-b md:border-b-0 md:border-r border-border">
+                                        <div className="text-eyebrow text-danger-soft-ink mb-2">Original</div>
+                                        <p className="text-sm text-ink">{example.original}</p>
                                     </div>
-                                    <div className="bg-green-50 p-4">
-                                        <div className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Improved</div>
-                                        <p className="text-sm text-gray-700">{example.improved}</p>
+                                    <div className="bg-success-soft p-4">
+                                        <div className="text-eyebrow text-success-soft-ink mb-2">Improved</div>
+                                        <p className="text-sm text-ink">{example.improved}</p>
                                     </div>
                                 </div>
                                 {example.explanation && (
-                                    <div className="bg-blue-50 p-3 border-t border-gray-200">
-                                        <div className="text-xs font-medium text-blue-700">
+                                    <div className="bg-accent-soft p-3 border-t border-border">
+                                        <div className="text-xs font-medium text-accent-soft-ink">
                                             <Lightbulb size={12} className="inline mr-1" />
                                             {example.explanation}
                                         </div>
@@ -583,18 +545,15 @@ export default function ResumeAnalysisPage() {
                             </div>
                         ))}
                     </div>
-                </div>
+                </SectionCard>
             )}
 
             {/* Download Button */}
             <div className="flex justify-center pt-4">
-                <button
-                    onClick={handleDownloadPdf}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-                >
+                <Button variant="primary" onClick={handleDownloadPdf}>
                     <Download size={18} />
                     Download Full Report (PDF)
-                </button>
+                </Button>
             </div>
         </div>
     )

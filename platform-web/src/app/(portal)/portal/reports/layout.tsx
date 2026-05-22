@@ -23,23 +23,23 @@ export default function ReportsLayout({
             {/* Back Navigation */}
             <Link
                 href="/portal"
-                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-ink-2 hover:text-ink transition-colors"
             >
                 <ArrowLeft size={16} />
                 Back to Portal
             </Link>
 
             {/* Report Header */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Detailed Reports</h1>
-                <p className="text-gray-600">
+            <div className="bg-card rounded-card shadow-card border border-border-card p-6">
+                <h1 className="text-page-title text-ink mb-2">Your Detailed Reports</h1>
+                <p className="text-ink-2">
                     Comprehensive analysis of your resume, interview performance, career trajectory, and skills.
                 </p>
             </div>
 
             {/* Tab Navigation */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <nav className="flex overflow-x-auto border-b border-gray-200">
+            <div className="bg-card rounded-card shadow-card border border-border-card overflow-hidden">
+                <nav className="flex overflow-x-auto border-b border-border">
                     {reportTabs.map((tab) => {
                         const isActive = pathname.startsWith(tab.href)
                         const Icon = tab.icon
@@ -47,13 +47,13 @@ export default function ReportsLayout({
                             <Link
                                 key={tab.href}
                                 href={tab.href}
-                                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap rounded-pill mx-1 my-1.5 transition-colors ${
                                     isActive
-                                        ? "border-blue-600 text-blue-600 bg-blue-50/50"
-                                        : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                        ? "bg-accent-soft text-accent-soft-ink"
+                                        : "text-ink-2 hover:text-ink hover:bg-surface-muted"
                                 }`}
                             >
-                                <Icon size={18} />
+                                <Icon size={16} />
                                 {tab.name}
                             </Link>
                         )

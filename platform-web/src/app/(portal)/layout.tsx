@@ -2,6 +2,7 @@
 
 import { useAppStore } from "@/lib/store"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components"
 
 export default function PortalLayout({
     children,
@@ -18,26 +19,23 @@ export default function PortalLayout({
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="min-h-screen font-sans">
+            <header className="bg-card border-b border-border sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                        <div className="w-8 h-8 bg-accent rounded-tile flex items-center justify-center text-accent-ink font-bold text-sm">
                             AI
                         </div>
-                        <span className="font-bold text-xl text-gray-900">Candidate Portal</span>
+                        <span className="font-bold text-xl text-ink">Candidate Portal</span>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="text-sm text-gray-500 hidden sm:block">
-                            Welcome, <span className="font-medium text-gray-900">{user?.name || "Candidate"}</span>
+                        <div className="text-sm text-ink-3 hidden sm:block">
+                            Welcome, <span className="font-medium text-ink">{user?.name || "Candidate"}</span>
                         </div>
-                        <button
-                            onClick={handleLogout}
-                            className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleLogout}>
                             Log out
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </header>
