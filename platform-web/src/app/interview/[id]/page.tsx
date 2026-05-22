@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback, use } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, PhoneOff, Settings, Loader2, CheckCircle, Send } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Button, Badge } from "@/components"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -447,24 +448,24 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     // Render setup...
     if (step === 'setup') {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
+            <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <div className="max-w-md w-full bg-card rounded-card shadow-card border border-border-card p-8 text-center">
+                    <div className="w-16 h-16 bg-accent-soft rounded-full flex items-center justify-center mx-auto mb-6 text-accent-soft-ink">
                         <Settings size={32} />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">System Check</h1>
-                    <p className="text-gray-500 mb-6">We need to check your camera and microphone.</p>
+                    <h1 className="text-page-title text-2xl font-bold mb-2">System Check</h1>
+                    <p className="text-ink-3 mb-6">We need to check your camera and microphone.</p>
 
-                    <div className="w-full h-48 bg-black rounded-xl mb-6 overflow-hidden relative border border-gray-200">
+                    <div className="w-full h-48 bg-ink rounded-tile mb-6 overflow-hidden relative border border-border">
                         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
                         {!permissionsGranted && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
-                                <p className="text-sm text-gray-500">Waiting for permissions...</p>
+                            <div className="absolute inset-0 flex items-center justify-center bg-surface-muted z-10">
+                                <p className="text-sm text-ink-3">Waiting for permissions...</p>
                             </div>
                         )}
                         <div className="absolute bottom-2 right-2 flex gap-2">
-                            <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                                <Mic size={12} className={permissionsGranted ? "text-green-400" : "text-red-400"} />
+                            <span className="bg-ink/70 text-card text-xs px-2 py-1 rounded-field flex items-center gap-1">
+                                <Mic size={12} className={permissionsGranted ? "text-success-soft-ink" : "text-danger-soft-ink"} />
                                 {permissionsGranted ? "Mic On" : "Check Mic"}
                             </span>
                         </div>
@@ -474,35 +475,36 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                     <div className="flex gap-3 mb-6">
                         <button
                             onClick={() => setInterviewMode('voice')}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                            className={`flex-1 py-2.5 rounded-field text-sm font-medium transition-all border ${
                                 interviewMode === 'voice'
-                                    ? 'bg-blue-50 border-blue-300 text-blue-700'
-                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-accent-soft border-accent text-accent-soft-ink'
+                                    : 'bg-surface-muted border-border text-ink-3 hover:bg-surface'
                             }`}
                         >
                             <Mic size={14} className="inline mr-1" /> Voice Mode
                         </button>
                         <button
                             onClick={() => setInterviewMode('text')}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
+                            className={`flex-1 py-2.5 rounded-field text-sm font-medium transition-all border ${
                                 interviewMode === 'text'
-                                    ? 'bg-blue-50 border-blue-300 text-blue-700'
-                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                    ? 'bg-accent-soft border-accent text-accent-soft-ink'
+                                    : 'bg-surface-muted border-border text-ink-3 hover:bg-surface'
                             }`}
                         >
                             <Send size={14} className="inline mr-1" /> Text Mode
                         </button>
                     </div>
 
-                    <button
+                    <Button
+                        variant="primary"
                         disabled={!permissionsGranted}
                         onClick={() => setStep('interview')}
-                        className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
+                        className="w-full py-3.5 text-lg"
                     >
                         {permissionsGranted ? "Start Interview" : "Allow Camera Access"}
-                    </button>
+                    </Button>
                     {!permissionsGranted && (
-                        <p className="text-xs text-gray-400 mt-4">Please click &apos;Allow&apos; in your browser pop-up.</p>
+                        <p className="text-meta text-ink-3 mt-4">Please click &apos;Allow&apos; in your browser pop-up.</p>
                     )}
                 </div>
             </div>
@@ -511,34 +513,36 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
 
     if (step === 'completed') {
         return (
-            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+            <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="text-center"
                 >
-                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                    <div className="w-24 h-24 bg-success-soft rounded-full flex items-center justify-center mx-auto mb-6 text-success-soft-ink">
                         <CheckCircle size={48} />
                     </div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Interview Completed</h1>
-                    <p className="text-xl text-gray-600 mb-8 max-w-lg mx-auto">
+                    <h1 className="text-page-title text-4xl font-bold mb-4">Interview Completed</h1>
+                    <p className="text-xl text-ink-2 mb-8 max-w-lg mx-auto">
                         Your responses have been captured and analyzed. View your detailed report below.
                     </p>
                     <div className="flex gap-4 justify-center">
                         {sessionId && (
-                            <button
+                            <Button
+                                variant="primary"
                                 onClick={() => router.push(`/portal/reports/interview?session=${sessionId}`)}
-                                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                                className="px-8 py-3"
                             >
                                 View Report
-                            </button>
+                            </Button>
                         )}
-                        <button
+                        <Button
+                            variant="secondary"
                             onClick={() => router.push('/dashboard/candidates')}
-                            className="bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors"
+                            className="px-8 py-3"
                         >
                             Return to Dashboard
-                        </button>
+                        </Button>
                     </div>
                 </motion.div>
             </div>
@@ -546,24 +550,24 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
     }
 
     return (
-        <div className="min-h-screen bg-[#0f1115] text-white flex flex-col">
+        <div className="min-h-screen bg-ink text-card flex flex-col">
             {/* Header */}
-            <header className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-[#0f1115]">
+            <header className="h-16 border-b border-card/10 flex items-center justify-between px-6 bg-ink">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="font-mono text-sm tracking-wider text-gray-400">REC {formatTime(elapsedTime)}</span>
+                    <div className="w-2 h-2 rounded-full bg-danger animate-pulse"></div>
+                    <span className="font-mono text-sm tracking-wider text-card/60">REC {formatTime(elapsedTime)}</span>
                 </div>
-                <div className="font-semibold text-gray-300">
+                <div className="font-semibold text-card/80">
                     Live AI Interview
                     {currentQuestion && (
-                        <span className="text-gray-500 ml-2 text-sm">
+                        <Badge tone="neutral" className="ml-2">
                             Q{currentQuestion.question_number}/{currentQuestion.total_questions}
-                        </span>
+                        </Badge>
                     )}
                 </div>
                 <button
                     onClick={endCall}
-                    className="bg-red-500/10 text-red-500 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-500/20 flex items-center gap-2"
+                    className="bg-danger-soft/20 text-danger px-4 py-2 rounded-field text-sm font-medium hover:bg-danger-soft/30 flex items-center gap-2 transition-colors"
                 >
                     <PhoneOff size={16} /> End Call
                 </button>
@@ -573,7 +577,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
             <main className="flex-1 flex flex-col md:flex-row p-6 gap-6 overflow-hidden">
 
                 {/* Main Visualizer Area */}
-                <div className="flex-1 bg-[#1a1d24] rounded-2xl relative flex flex-col items-center justify-center overflow-hidden border border-white/5">
+                <div className="flex-1 bg-card/5 rounded-card relative flex flex-col items-center justify-center overflow-hidden border border-card/10">
                     {/* AI Avatar / Visualizer */}
                     <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center mb-12">
                         {/* Pulsing rings */}
@@ -581,12 +585,12 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                             {status === 'ai_speaking' ? (
                                 <>
                                     <motion.div
-                                        className="absolute inset-0 rounded-full border border-blue-500/30"
+                                        className="absolute inset-0 rounded-full border border-accent/40"
                                         animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
                                         transition={{ duration: 2, repeat: Infinity }}
                                     />
                                     <motion.div
-                                        className="absolute inset-0 rounded-full border border-blue-400/20"
+                                        className="absolute inset-0 rounded-full border border-accent/20"
                                         animate={{ scale: [1, 2], opacity: [0.3, 0] }}
                                         transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                                     />
@@ -594,7 +598,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                             ) : null}
                             {status === 'listening' ? (
                                 <motion.div
-                                    className="absolute inset-0 rounded-full border border-green-500/30"
+                                    className="absolute inset-0 rounded-full border border-success/30"
                                     animate={{ scale: [1, 1.2], opacity: [0.3, 0.1] }}
                                     transition={{ duration: 1.5, repeat: Infinity }}
                                 />
@@ -602,16 +606,16 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                         </AnimatePresence>
 
                         {/* Main Orb */}
-                        <div className={`
-                  w-32 h-32 rounded-full flex items-center justify-center shadow-[0_0_60px_-10px_rgba(59,130,246,0.5)] transition-colors duration-500
-                  ${status === 'ai_speaking' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 animate-pulse' : ''}
-                  ${status === 'listening' ? 'bg-gradient-to-br from-green-500 to-emerald-600' : ''}
-                  ${status === 'processing' ? 'bg-gradient-to-br from-purple-500 to-fuchsia-600' : ''}
-                  ${status === 'idle' ? 'bg-gray-700' : ''}
-               `}>
-                            <div className="w-24 h-24 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className={[
+                            "w-32 h-32 rounded-full flex items-center justify-center transition-colors duration-500",
+                            status === 'ai_speaking' ? 'bg-accent animate-pulse shadow-[0_0_60px_-10px_rgba(79,107,69,0.6)]' : '',
+                            status === 'listening' ? 'bg-success shadow-[0_0_60px_-10px_rgba(79,138,91,0.5)]' : '',
+                            status === 'processing' ? 'bg-warning shadow-[0_0_60px_-10px_rgba(154,116,48,0.5)]' : '',
+                            status === 'idle' ? 'bg-card/20' : '',
+                        ].join(' ')}>
+                            <div className="w-24 h-24 rounded-full bg-ink/20 backdrop-blur-sm flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-card/10 flex items-center justify-center">
+                                    <div className="w-2 h-2 bg-card rounded-full"></div>
                                 </div>
                             </div>
                         </div>
@@ -619,20 +623,20 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                         {/* Status Label */}
                         <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
                             {status === 'processing' && (
-                                <div className="flex items-center gap-2 text-purple-400">
+                                <div className="flex items-center gap-2 text-warning text-sm">
                                     <Loader2 className="animate-spin w-4 h-4" /> Analyzing Response...
                                 </div>
                             )}
                             {status === 'listening' && (
-                                <div className="flex items-center gap-2 text-green-400">
+                                <div className="flex items-center gap-2 text-success text-sm">
                                     <Mic className="animate-pulse w-4 h-4" /> Listening (Auto-stop on silence)...
                                 </div>
                             )}
                             {status === 'ai_speaking' && (
-                                <div className="text-blue-400 text-sm">AI is speaking...</div>
+                                <div className="text-accent-soft text-sm">AI is speaking...</div>
                             )}
                             {status === 'idle' && interviewMode === 'text' && (
-                                <div className="text-gray-400 text-sm">Type your response below</div>
+                                <div className="text-card/50 text-sm">Type your response below</div>
                             )}
                         </div>
                     </div>
@@ -644,17 +648,17 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                                 key={currentQuestion.question_number + currentQuestion.question}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="max-w-3xl mx-auto bg-black/40 backdrop-blur-md rounded-2xl p-6 border border-white/10"
+                                className="max-w-3xl mx-auto bg-ink/60 backdrop-blur-md rounded-card p-6 border border-card/10"
                             >
                                 <div className="flex items-center justify-center gap-3 mb-2">
-                                    <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold">
+                                    <h3 className="text-card/50 text-sm uppercase tracking-wider font-bold">
                                         Question {currentQuestion.question_number} of {currentQuestion.total_questions}
                                     </h3>
-                                    <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">
+                                    <Badge tone="neutral" className="bg-card/10 text-card/60 text-xs">
                                         {currentQuestion.question_type}
-                                    </span>
+                                    </Badge>
                                 </div>
-                                <p className="text-xl md:text-2xl font-medium leading-relaxed">
+                                <p className="text-xl md:text-2xl font-medium leading-relaxed text-card">
                                     {currentQuestion.question}
                                 </p>
                             </motion.div>
@@ -665,23 +669,25 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                 {/* Sidebar / Transcript + Text Input */}
                 <div className="w-full md:w-96 flex flex-col gap-6">
                     {/* Camera Preview */}
-                    <div className="h-48 bg-[#1a1d24] rounded-2xl border border-white/5 relative overflow-hidden">
+                    <div className="h-48 bg-card/5 rounded-card border border-card/10 relative overflow-hidden">
                         <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
-                        <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-xs text-white">
+                        <div className="absolute bottom-2 left-2 px-2 py-1 bg-ink/60 rounded-field text-xs text-card">
                             You
                         </div>
                     </div>
 
                     {/* Transcript */}
-                    <div className="flex-1 bg-[#1a1d24] rounded-2xl border border-white/5 flex flex-col overflow-hidden">
-                        <div className="p-4 border-b border-white/5">
-                            <h3 className="font-semibold text-sm text-gray-300">Live Transcript</h3>
+                    <div className="flex-1 bg-card/5 rounded-card border border-card/10 flex flex-col overflow-hidden">
+                        <div className="p-4 border-b border-card/10">
+                            <h3 className="font-semibold text-sm text-card/70">Live Transcript</h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm leading-relaxed scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm leading-relaxed scrollbar-thin scrollbar-thumb-card/10 scrollbar-track-transparent">
                             {transcript.map((entry, i) => (
-                                <div key={i} className={`flex gap-3 ${
-                                    entry.role === 'ai' ? 'text-blue-200' : 'text-gray-300'
-                                } ${entry.type === 'feedback' ? 'opacity-60 text-xs italic' : ''}`}>
+                                <div key={i} className={[
+                                    "flex gap-3",
+                                    entry.role === 'ai' ? 'text-accent-soft' : 'text-card/80',
+                                    entry.type === 'feedback' ? 'opacity-60 text-xs italic' : '',
+                                ].join(' ')}>
                                     <span className="opacity-50 uppercase text-xs mt-1 shrink-0">
                                         {entry.role === 'ai' ? 'AI' : 'You'}
                                     </span>
@@ -693,7 +699,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
 
                         {/* Text Input (text mode) */}
                         {interviewMode === 'text' && status !== 'ai_speaking' && status !== 'processing' && (
-                            <form onSubmit={handleTextSubmit} className="p-3 border-t border-white/5">
+                            <form onSubmit={handleTextSubmit} className="p-3 border-t border-card/10">
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
@@ -701,12 +707,12 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
                                         onChange={(e) => setTextInput(e.target.value)}
                                         placeholder="Type your response..."
                                         disabled={isSubmitting}
-                                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 disabled:opacity-50"
+                                        className="flex-1 bg-card/5 border border-card/10 rounded-field px-4 py-2.5 text-sm text-card placeholder-card/30 focus:outline-none focus:border-accent/50 disabled:opacity-50"
                                     />
                                     <button
                                         type="submit"
                                         disabled={!textInput.trim() || isSubmitting}
-                                        className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-accent text-accent-ink px-4 py-2.5 rounded-field hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Send size={16} />
                                     </button>
@@ -716,10 +722,10 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
 
                         {/* Voice mode manual controls */}
                         {interviewMode === 'voice' && status === 'listening' && (
-                            <div className="p-3 border-t border-white/5 text-center">
+                            <div className="p-3 border-t border-card/10 text-center">
                                 <button
                                     onClick={stopListening}
-                                    className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm hover:bg-red-500/30 transition-colors"
+                                    className="bg-danger-soft/20 text-danger px-4 py-2 rounded-field text-sm hover:bg-danger-soft/30 transition-colors"
                                 >
                                     Stop Recording
                                 </button>
