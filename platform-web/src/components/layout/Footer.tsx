@@ -65,7 +65,7 @@ export default function Footer() {
                     </p>
                     <div className="flex items-center gap-2 text-sm text-ink-3">
                         <span>Made with</span>
-                        <Heart size={16} className="text-red-500 fill-red-500" />
+                        <Heart size={16} className="text-danger fill-danger" />
                         <span>by Engineering Team</span>
                     </div>
                 </div>
@@ -78,7 +78,7 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
     return (
         <Link
             href={href}
-            className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-ink-3 hover:bg-blue-50 hover:text-ink transition-colors"
+            className="w-10 h-10 bg-surface-muted rounded-lg flex items-center justify-center text-ink-3 hover:bg-accent-soft hover:text-accent transition-colors"
         >
             {icon}
         </Link>
