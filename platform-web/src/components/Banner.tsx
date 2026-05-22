@@ -26,24 +26,3 @@ export function Banner({
     </div>
   );
 }
-
-/**
- * Backward-compat shim for the redesign migration. Existing pages import
- * `ComingSoonBanner`; page-rebuild tasks replace it with <Banner>. The final
- * verification task deletes this shim once no page references it.
- */
-export function ComingSoonBanner({
-  children,
-  className = "",
-}: {
-  children?: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <Banner tone="neutral">
-        {children ?? "This area is read-only for now — full functionality lands in Slice 2."}
-      </Banner>
-    </div>
-  );
-}
