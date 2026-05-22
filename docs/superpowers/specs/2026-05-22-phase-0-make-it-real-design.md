@@ -57,6 +57,7 @@ The schema already exists as `supabase/migrations/001_foundation_schema.sql`, `0
 - **Add migration `004_signup_provisioning.sql`** with two `SECURITY DEFINER` functions (RLS would otherwise create a chicken-and-egg on first insert):
   - `provision_organization(org_name text) returns uuid` — inserts an `organizations` row, inserts `organization_members(org, auth.uid(), 'owner')`, returns the org id. If migration 001 already has an org-owner trigger, this function only inserts the org and lets the trigger add the membership — the implementation must read 001 and reconcile so membership is created exactly once.
   - `accept_invitation(invite_token text) returns uuid` — validates an unexpired `invitations` row, inserts `organization_members(org, auth.uid(), invited_role)`, stamps `accepted_at`, returns the org id.
+- **Add migration `005_async_analysis.sql`**: an `analysis_status` enum (`pending | processing | complete | failed`), an `applications.analysis_status` column (default `pending`) and `applications.analysis_error text null`, and **enable Supabase Realtime** on the `applications` table so the UI receives AI-score and stage updates live without polling.
 - Generate TypeScript types from the live schema into `platform-web/src/lib/types/database.ts`.
 
 ## 5. Frontend (`platform-web`)
@@ -98,6 +99,9 @@ Each in-scope page becomes a **server page** (async, fetches via the data layer)
 ### 5.6 States
 Real loading via `Suspense` + the existing `Skeleton`; real empty states via the existing `EmptyState`; an onboarding checklist on the dashboard for a brand-new org (post first job, add first candidate, invite a teammate); error boundaries on each route segment.
 
+### 5.7 Sample data for demos
+The app will be shared with organizations to evaluate directly, so a brand-new org must not look empty. The onboarding checklist includes a one-click **"Load sample data"** Server Action that seeds the *current* org with a handful of example jobs, candidates, and applications spread across pipeline stages, with pre-filled AI scores (content derived from the retired `mockData.ts`). It is strictly org-scoped, labelled as sample data, and a matching **"Clear sample data"** action removes it. This gives an evaluating organization a populated, working workspace in one click while keeping their real data separate.
+
 ## 6. Backend (`backend`) — AI only
 
 - **Retire** `app/services/recruiter/ats.py` and the `/api/v1/recruiter/*` CRUD endpoints (CRUD is now frontend → Supabase).
@@ -106,15 +110,19 @@ Real loading via `Suspense` + the existing `Skeleton`; real empty states via the
 - Resume + analysis endpoints rebuilt around persistence (see §7). Interview/TTS endpoints keep working; persisting interview results fully is Phase 1 — Phase 0 only needs the resume→score path persistent.
 - In-memory dicts (`resume_storage`, `analysis_storage`, etc.) removed for the resume/analysis path.
 
-## 7. The resume → AI screening flow (most important data path)
+## 7. The resume → AI screening flow (must feel instant)
+
+The recruiter must **never wait on an LLM**. Resume analysis is **asynchronous** — the UI is responsive regardless of model latency (a score can take 10–30s+).
 
 1. Recruiter adds a candidate and selects a resume file on the Candidates page.
-2. Browser uploads the file **directly to Supabase Storage** (`resumes` bucket, path `{org_id}/{candidate_id}/{filename}`) — RLS/storage policy enforces org scope.
-3. A Server Action inserts the `resumes` row and the `applications` row (candidate ↔ job), then calls FastAPI `POST /api/v1/analysis/analyze` with `{ resume_id, application_id, job_id }` and the user's Supabase JWT.
-4. FastAPI verifies the JWT, downloads the file from Storage (service role), parses it, scores it against the job via the LLM pipeline, and **writes** a `resume_analyses` row + updates `applications.ai_score` and `recommendation`.
-5. The Server Action `revalidatePath`s; the Candidate Detail page now shows the real, explainable score (skills matched/missing, red flags, breakdown).
+2. Browser uploads the file **directly to Supabase Storage** (`resumes` bucket, path `{org_id}/{candidate_id}/{filename}`) — the storage RLS policy enforces org scope.
+3. A Server Action inserts the `candidates`, `resumes`, and `applications` rows (`analysis_status = 'pending'`) and **returns immediately** — the candidate appears in the list and pipeline at once, marked "AI screening…".
+4. Without blocking that response, the Server Action schedules the analysis via the Next.js `after()` API: it calls FastAPI `POST /api/v1/analysis/analyze` with `{ resume_id, application_id, job_id }` and the user's Supabase JWT.
+5. FastAPI verifies the JWT, sets `analysis_status = 'processing'`, downloads the file from Storage (service role), parses and scores it against the job via the LLM pipeline, writes a `resume_analyses` row, and updates `applications.ai_score`, `recommendation`, and `analysis_status = 'complete'` (or `'failed'` + `analysis_error` on error).
+6. The Candidates / Candidate Detail / Pipeline views **subscribe to `applications` via Supabase Realtime** — when status flips to `complete`, the real explainable score (skills matched/missing, red flags, breakdown) appears live with no refresh. Short-interval polling is the fallback if Realtime is unavailable.
+7. Because `analysis_status` is a real column, any `pending`/`failed` application is visible, and an idempotent **"Re-run screening"** action can re-trigger one that was missed or failed.
 
-Analysis is synchronous in Phase 0 (the request waits). If it proves slow, a background/polling variant is a Phase 1 improvement — not in scope here.
+This keeps every screen responsive no matter how long the model takes.
 
 ## 8. Out of scope (later phases)
 
@@ -148,3 +156,11 @@ Pipeline drag-and-drop; real Scheduling, Offers, Inbox, Sourcing distribution, A
 **New (backend):** `app/auth/supabase.py`, `app/supabase_admin.py`, `supabase/migrations/004_signup_provisioning.sql`.
 **Changed (backend):** `app/api/v1/endpoints/{resume,analysis}.py` (persist to Supabase), `app/main.py` (drop recruiter CRUD router).
 **Removed (backend):** `app/services/recruiter/ats.py` and `app/api/v1/endpoints/recruiter.py` (in-memory CRUD).
+
+## 13. Non-functional — performance & demo-readiness
+
+- **AI never blocks the UI.** Resume analysis is asynchronous (§7); every page renders immediately with a "screening…" pending state and updates live via Realtime. No screen waits on an LLM call.
+- **Fast page loads.** Server Components render on the server with data already fetched (SSR) — no client-side fetch waterfalls. Dashboard and list pages use single aggregate queries (no N+1), backed by the `(organization_id, …)` indexes already in the schema.
+- **Live updates.** Supabase Realtime pushes AI results and stage changes to open views without full-page refreshes.
+- **Demo-ready.** The whole core loop works from the public deployed URLs; every org that signs up is isolated by RLS; the onboarding checklist + one-click "Load sample data" (§5.7) give an evaluating organization a populated workspace immediately; no broken links or `alert()` flows remain in the in-scope surface.
+- **AI cost/latency control.** The FastAPI LLM layer is multi-provider — the analysis path should use a fast, capable model and cap prompt size (truncate very long resumes) so a screening completes in seconds, not minutes.
