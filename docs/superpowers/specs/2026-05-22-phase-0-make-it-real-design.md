@@ -20,7 +20,9 @@ The platform is a high-fidelity prototype that no company can actually use:
 
 A stranger opens the deployed app, **signs up**, an **organization** is created, they **post a job**, **add a candidate and upload a resume**, the candidate is **scored by the real AI pipeline**, they open the **Candidate Detail** page and see the real explainable score, and they **move the candidate between pipeline stages**. Everything **survives a server restart**. A second organization's data is **invisible** to the first. Login is real (Supabase Auth, sessions, protected routes). No `mockData` import remains in any in-scope page; no `alert()`-based fake flows in the core loop.
 
-## 3. Architecture — chosen: "Supabase Auth + direct client; FastAPI for AI only"
+## 3. Architecture — Supabase Auth · Next.js server data layer · FastAPI for AI only
+
+> **Production principle:** all database access goes through the **Next.js server layer** (Server Components for reads, Server Actions for writes) via one typed data layer in `src/lib/data/`. The browser never holds a privileged key and never writes to the database directly. RLS stays enabled as defense-in-depth — multi-tenant isolation is enforced at the database even if application code has a bug. Supabase is used as managed Postgres + Auth + Storage; FastAPI is a narrow AI-compute service. This keeps one product language (TypeScript), isolates Python to AI, and gives one chokepoint (the data layer) for every query.
 
 ```
 Next.js  platform-web              ── Vercel project A
@@ -44,7 +46,7 @@ Supabase  project redgbugvyoidjwhovmxa
   └─ Storage bucket  resumes       path = {org_id}/{candidate_id}/{filename}
 ```
 
-Clean split of responsibility: **Supabase owns data + auth**; **FastAPI owns AI compute**. The frontend reads/writes Supabase directly under RLS; it calls FastAPI only to run AI.
+Clean split of responsibility: **Supabase owns data + auth**; the **Next.js server layer owns application logic and is the API**; **FastAPI owns AI compute**. Every DB read/write goes through Server Components / Server Actions and the typed data layer under RLS; FastAPI is called only to run AI.
 
 ## 4. Database
 
