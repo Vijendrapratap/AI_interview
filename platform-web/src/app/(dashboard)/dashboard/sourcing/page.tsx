@@ -2,72 +2,70 @@
 
 import { Search, Send, TrendingUp } from "lucide-react";
 import { mockJobBoards, mockSourcingChannels } from "@/lib/mockData";
-import { ComingSoonBanner } from "@/components/Banner";
+import { PageHeader, Card, SectionCard, Badge, Button, Banner } from "@/components";
 
 export default function SourcingPage() {
     return (
         <div className="p-8 space-y-8">
-            <ComingSoonBanner className="mb-6" />
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sourcing & Talent Rediscovery</h1>
-                <p className="text-gray-500">Track channel quality and rediscover past applicants before paying for new sourcing.</p>
-            </div>
+            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900">Multi-platform posting</h2>
-                        <p className="text-sm text-gray-500">Write one job once, then publish to the channels that fit the role.</p>
-                    </div>
-                    <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                        <Send size={16} /> Publish selected
-                    </button>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <PageHeader
+                eyebrow="Recruiter Tools"
+                title="Sourcing & Talent Rediscovery"
+                subtitle="Track channel quality and rediscover past applicants before paying for new sourcing."
+            />
+
+            <SectionCard
+                title="Multi-platform posting"
+                subtitle="Write one job once, then publish to the channels that fit the role."
+                action={
+                    <Button variant="primary" size="sm">
+                        <Send size={15} /> Publish selected
+                    </Button>
+                }
+            >
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 items-stretch">
                     {mockJobBoards.map(board => (
-                        <div key={board.name} className="rounded-lg border border-gray-100 p-4">
+                        <Card key={board.name} variant="compact" className="flex flex-col">
                             <div className="flex items-center justify-between">
-                                <p className="font-semibold text-gray-900">{board.name}</p>
-                                <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">{board.status}</span>
+                                <p className="text-card-title">{board.name}</p>
+                                <Badge tone="success">{board.status}</Badge>
                             </div>
-                            <p className="mt-3 text-sm text-gray-600">{board.recommendation}</p>
-                            <div className="mt-4 flex items-center justify-between text-sm">
-                                <span className="text-gray-500">Reach: {board.reach}</span>
-                                <span className="font-semibold text-gray-900">{board.cost}</span>
+                            <p className="mt-3 text-meta flex-1">{board.recommendation}</p>
+                            <div className="mt-4 flex items-center justify-between text-[13px]">
+                                <span className="text-ink-3">Reach: {board.reach}</span>
+                                <span className="font-semibold text-ink">{board.cost}</span>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
-            </section>
+            </SectionCard>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3">
-                    <Search className="text-gray-400" size={18} />
-                    <input className="w-full outline-none" placeholder="Semantic search: Senior Python engineer with AWS and FastAPI..." />
+            <Card variant="flush">
+                <div className="flex items-center gap-3 border-border-card border px-4 py-3 rounded-card mx-5 my-5">
+                    <Search className="text-ink-3" size={18} />
+                    <input className="w-full outline-none bg-transparent text-ink placeholder:text-ink-3 text-[13px]" placeholder="Semantic search: Senior Python engineer with AWS and FastAPI..." />
                 </div>
-                <p className="text-sm text-gray-500">Search is mocked for now; backend semantic candidate rediscovery is the next persistence milestone.</p>
-            </section>
+                <p className="text-meta px-5 pb-5">Search is mocked for now; backend semantic candidate rediscovery is the next persistence milestone.</p>
+            </Card>
 
-            <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-100 p-6">
-                    <h2 className="text-lg font-bold text-gray-900">Source Quality</h2>
-                </div>
-                <div className="divide-y divide-gray-100">
+            <SectionCard title="Source Quality">
+                <div className="divide-y divide-border-card -mx-5 -mb-5">
                     {mockSourcingChannels.map(source => (
-                        <div key={source.source} className="grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">
+                        <div key={source.source} className="grid gap-4 px-5 py-4 md:grid-cols-[1fr_auto] md:items-center">
                             <div>
-                                <p className="font-semibold text-gray-900">{source.source}</p>
-                                <p className="text-sm text-gray-500">{source.recommendation}</p>
+                                <p className="font-semibold text-ink">{source.source}</p>
+                                <p className="text-meta">{source.recommendation}</p>
                             </div>
-                            <div className="flex items-center gap-5 text-sm">
-                                <span>{source.volume} candidates</span>
-                                <span className="flex items-center gap-1 font-semibold text-green-700"><TrendingUp size={16} /> {source.quality}% quality</span>
-                                <span className="text-gray-500">{source.cost}</span>
+                            <div className="flex items-center gap-5 text-[13px]">
+                                <span className="text-ink-3">{source.volume} candidates</span>
+                                <span className="flex items-center gap-1 font-semibold text-success-soft-ink"><TrendingUp size={16} /> {source.quality}% quality</span>
+                                <span className="text-ink-3">{source.cost}</span>
                             </div>
                         </div>
                     ))}
                 </div>
-            </section>
+            </SectionCard>
         </div>
     );
 }
