@@ -1,29 +1,76 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save } from "lucide-react"
 import { PageHeader, Button } from "@/components"
 import { Label, Input, Textarea, Select } from "@/components"
+import { createJob } from "@/lib/data/jobs"
 
 export default function NewJobPage() {
+    const router = useRouter()
     const [formData, setFormData] = useState({
         title: "",
         department: "",
         location: "",
         type: "Full-time",
-        salary_range: "",
+        salary_min: "",
+        salary_max: "",
         description: "",
         requirements: ""
     })
+    const [error, setError] = useState<string | null>(null)
+    const [submitting, setSubmitting] = useState(false)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        alert("This is a demo. In a real app, this would post to the API.")
+        setError(null)
+
+        if (!formData.title.trim()) {
+            setError("Job title is required.")
+            return
+        }
+
+        const requirements = formData.requirements
+            .split(",")
+            .map(r => r.trim())
+            .filter(r => r.length > 0)
+
+        const salary_min = formData.salary_min ? Number(formData.salary_min) : null
+        const salary_max = formData.salary_max ? Number(formData.salary_max) : null
+
+        if (formData.salary_min && isNaN(Number(formData.salary_min))) {
+            setError("Salary min must be a number.")
+            return
+        }
+        if (formData.salary_max && isNaN(Number(formData.salary_max))) {
+            setError("Salary max must be a number.")
+            return
+        }
+
+        setSubmitting(true)
+        try {
+            const newId = await createJob({
+                title: formData.title.trim(),
+                department: formData.department.trim() || null,
+                location: formData.location.trim() || null,
+                employment_type: formData.type,
+                salary_min,
+                salary_max,
+                description: formData.description.trim(),
+                requirements,
+                status: "open"
+            })
+            router.push(`/dashboard/jobs/${newId}`)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
+            setSubmitting(false)
+        }
     }
 
     return (
@@ -41,6 +88,12 @@ export default function NewJobPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="bg-card border border-border-card rounded-card shadow-card p-8 space-y-6">
 
+                    {error && (
+                        <div className="rounded-field border border-danger bg-danger-soft px-4 py-3 text-[13px] text-danger-soft-ink">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <Label required>Job Title</Label>
@@ -54,14 +107,13 @@ export default function NewJobPage() {
                             />
                         </div>
                         <div>
-                            <Label required>Department</Label>
+                            <Label>Department</Label>
                             <Select
                                 name="department"
                                 value={formData.department}
                                 onChange={handleChange}
-                                required
                             >
-                                <option value="" disabled>Select department…</option>
+                                <option value="">Select department…</option>
                                 <option value="Engineering">Engineering</option>
                                 <option value="Design">Design</option>
                                 <option value="Product">Product</option>
@@ -97,15 +149,27 @@ export default function NewJobPage() {
                                 <option>Internship</option>
                             </Select>
                         </div>
-                        <div>
-                            <Label>Salary Range</Label>
-                            <Input
-                                type="text"
-                                name="salary_range"
-                                value={formData.salary_range}
-                                onChange={handleChange}
-                                placeholder="e.g. $120k - $150k"
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label>Salary Min</Label>
+                                <Input
+                                    type="number"
+                                    name="salary_min"
+                                    value={formData.salary_min}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 120000"
+                                />
+                            </div>
+                            <div>
+                                <Label>Salary Max</Label>
+                                <Input
+                                    type="number"
+                                    name="salary_max"
+                                    value={formData.salary_max}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 150000"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -140,8 +204,8 @@ export default function NewJobPage() {
                     >
                         Cancel
                     </Link>
-                    <Button type="submit" variant="primary">
-                        <Save size={16} /> Publish Job
+                    <Button type="submit" variant="primary" disabled={submitting}>
+                        <Save size={16} /> {submitting ? "Publishing…" : "Publish Job"}
                     </Button>
                 </div>
             </form>
