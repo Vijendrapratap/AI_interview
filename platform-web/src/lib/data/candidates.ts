@@ -8,7 +8,7 @@ export async function listCandidates() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("candidates")
-    .select("*, applications(stage, ai_score, analysis_status, job_id, jobs(title))")
+    .select("*, applications(id, stage, ai_score, analysis_status, job_id, jobs(title))")
     .order("created_at", { ascending: false });
   return data ?? [];
 }
@@ -17,8 +17,20 @@ export async function getCandidate(id: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("candidates")
-    .select("*, applications(stage, ai_score, analysis_status, job_id, jobs(title))")
+    .select("*, applications(id, stage, ai_score, analysis_status, job_id, jobs(title))")
     .eq("id", id)
+    .maybeSingle();
+  return data ?? null;
+}
+
+export async function getLatestResume(candidateId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resumes")
+    .select("id, file_name, uploaded_at")
+    .eq("candidate_id", candidateId)
+    .order("uploaded_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   return data ?? null;
 }
