@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard, Users, Briefcase, Settings, Search, Bell, TrendingUp,
     LogOut, Kanban, CalendarClock, MessageSquare, Mail, Bot, Radar, Route
 } from "lucide-react";
 import { ToastProvider } from "@/components";
 import { createClient } from "@/lib/supabase/client";
-import { signOut } from "./actions";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [userInitials, setUserInitials] = useState("??");
+    const router = useRouter();
 
     useEffect(() => {
         const supabase = createClient();
@@ -62,15 +62,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
 
                         <div className="border-t border-border pt-4">
-                            <form action={signOut}>
-                                <button
-                                    type="submit"
-                                    className="flex w-full items-center gap-3 rounded-pill px-3 py-2 text-[13px] font-bold text-danger transition-colors hover:bg-danger-soft"
-                                >
-                                    <LogOut size={18} />
-                                    Sign Out
-                                </button>
-                            </form>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const supabase = createClient();
+                                    await supabase.auth.signOut();
+                                    router.push("/login");
+                                    router.refresh();
+                                }}
+                                className="flex w-full items-center gap-3 rounded-pill px-3 py-2 text-[13px] font-bold text-danger transition-colors hover:bg-danger-soft"
+                            >
+                                <LogOut size={18} />
+                                Sign Out
+                            </button>
                         </div>
                     </nav>
                 </aside>
