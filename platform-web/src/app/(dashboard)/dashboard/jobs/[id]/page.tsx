@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { ArrowLeft, MapPin, DollarSign, Users, Briefcase } from "lucide-react"
-import { PageHeader, SectionCard, Badge, EmptyState } from "@/components"
+import { PageHeader, SectionCard, Badge, EmptyState, Avatar, AnalysisStatus } from "@/components"
 import { getJob } from "@/lib/data/jobs"
+import { listApplications } from "@/lib/data/applications"
 
 function formatSalary(min: number | null, max: number | null, currency: string | null): string | null {
     if (!min && !max) return null
@@ -18,9 +19,24 @@ function statusTone(status: string): "success" | "warning" | "neutral" {
     return "neutral"
 }
 
+function candidateInitials(name: string): string {
+    return name
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase() ?? "")
+        .join("")
+}
+
+function stageTone(stage: string): "success" | "warning" | "neutral" | "accent" {
+    if (stage === "offer" || stage === "hired") return "success"
+    if (stage === "interview") return "accent"
+    if (stage === "screening") return "warning"
+    return "neutral"
+}
+
 export default async function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const job = await getJob(id)
+    const [job, applications] = await Promise.all([getJob(id), listApplications({ jobId: id })])
 
     if (!job) {
         return (
@@ -94,22 +110,56 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                 </SectionCard>
             )}
 
-            {/* Candidates placeholder */}
+            {/* Candidates */}
             <SectionCard
-                title="Candidates"
+                title={`Candidates (${applications.length})`}
                 action={
-                    <div className="flex gap-2">
-                        <button className="inline-flex items-center gap-2 px-3 py-1.5 border border-border rounded-field text-[13px] text-ink-2 hover:bg-surface-muted">
-                            <Users size={14} /> Pipeline Stage
-                        </button>
-                    </div>
+                    <Link
+                        href="/dashboard/pipeline"
+                        className="text-[13px] font-bold text-ink hover:underline shrink-0"
+                    >
+                        View pipeline
+                    </Link>
                 }
             >
-                <EmptyState
-                    icon={<Users size={24} />}
-                    title="No candidates yet"
-                    description="Applications submitted to this job will appear here."
-                />
+                {applications.length === 0 ? (
+                    <EmptyState
+                        icon={<Users size={24} />}
+                        title="No candidates yet"
+                        description="Applications submitted to this job will appear here."
+                    />
+                ) : (
+                    <div className="-mx-5 -mb-5 divide-y divide-border-card">
+                        {applications.map((app) => {
+                            const candidateRaw = app.candidates
+                            const candidate = Array.isArray(candidateRaw) ? candidateRaw[0] : candidateRaw
+                            const name = candidate?.full_name ?? "Unknown"
+                            return (
+                                <Link
+                                    key={app.id}
+                                    href={`/dashboard/candidates/${app.candidate_id}`}
+                                    className="flex items-center gap-4 px-5 py-4 hover:bg-surface transition-colors"
+                                >
+                                    <Avatar initials={candidateInitials(name)} size="sm" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[13px] font-bold text-ink truncate">{name}</p>
+                                        {candidate?.current_role && (
+                                            <p className="text-meta truncate">{candidate.current_role}</p>
+                                        )}
+                                    </div>
+                                    <AnalysisStatus
+                                        applicationId={app.id}
+                                        initialStatus={app.analysis_status as "pending" | "processing" | "complete" | "failed"}
+                                        initialScore={app.ai_score}
+                                    />
+                                    <Badge tone={stageTone(app.stage)}>
+                                        {app.stage.charAt(0).toUpperCase() + app.stage.slice(1)}
+                                    </Badge>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                )}
             </SectionCard>
         </div>
     )

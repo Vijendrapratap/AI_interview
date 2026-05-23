@@ -2,10 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-
-export type Stage = "new" | "screening" | "interview" | "offer" | "hired" | "rejected";
-
-export const STAGES: Stage[] = ["new", "screening", "interview", "offer", "hired", "rejected"];
+import type { Stage } from "./application-types";
 
 const APPLICATION_SELECT =
   "id, stage, ai_score, analysis_status, recommendation, owner_id, created_at, updated_at, candidate_id, job_id, candidates(id, full_name, email, current_role), jobs(id, title)";

@@ -15,3 +15,5 @@ export * from "./Table";
 export * from "./Field";
 export * from "./Kanban";
 export * from "./AnalysisStatus";
+export * from "./OnboardingChecklist";
+export * from "./StageChanger";
