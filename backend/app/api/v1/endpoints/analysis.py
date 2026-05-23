@@ -2,38 +2,154 @@
 Resume Analysis Endpoints
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Optional
 import logging
+import tempfile
+from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
+from app.auth.supabase import verify_supabase_jwt
+from app.supabase_admin import admin_client
+from app.services.analysis_persistence import build_analysis_row
 from app.schemas.analysis import (
     AnalysisRequest,
     AnalysisResponse,
     QuickAnalysisResponse,
     JDComparisonRequest,
-    JDComparisonResponse
+    JDComparisonResponse,
 )
 from app.services.resume.analyzer import ResumeAnalyzer
-from app.api.v1.endpoints.resume import resume_storage
+from app.services.resume.parser import ResumeParser
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Store analysis results (replace with database in production)
-analysis_storage = {}
+# Store analysis results for the legacy /analyze-upload flow (in-memory)
+analysis_storage: dict = {}
 
 
-@router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_resume(request: AnalysisRequest):
+# ---------------------------------------------------------------------------
+# New Supabase-persisted /analyze endpoint
+# ---------------------------------------------------------------------------
+
+class PersistAnalyzeRequest(BaseModel):
+    resume_id: str
+    application_id: str
+    job_id: Optional[str] = None
+
+
+@router.post("/analyze")
+async def analyze_resume_persist(
+    request: PersistAnalyzeRequest,
+    _claims: dict = Depends(verify_supabase_jwt),
+):
     """
-    Perform comprehensive resume analysis with enhanced extraction.
+    Trigger resume analysis and persist results to Supabase.
 
-    Uses LLM for deep analysis and structured extraction for accurate
-    company names, dates, and career analytics.
-
-    Optionally provide a job description for targeted analysis.
+    Accepts { resume_id, application_id, job_id }.
+    Requires a valid Supabase Bearer token.
+    Always returns HTTP 200; errors are recorded in the DB and returned
+    as { ok: false, error: "..." } rather than 4xx/5xx.
     """
-    # Get resume from storage
+    db = admin_client()
+    application_id = request.application_id
+
+    try:
+        # 1. Mark application as processing
+        db.table("applications").update(
+            {"analysis_status": "processing", "analysis_error": None}
+        ).eq("id", application_id).execute()
+
+        # 2. Fetch resume row to get storage_path + organization_id
+        resume_row = (
+            db.table("resumes")
+            .select("storage_path, organization_id")
+            .eq("id", request.resume_id)
+            .single()
+            .execute()
+        )
+        if not resume_row.data:
+            raise ValueError(f"Resume {request.resume_id} not found in DB")
+
+        storage_path: str = resume_row.data["storage_path"]
+        organization_id: str = resume_row.data["organization_id"]
+
+        # 3. Download file bytes from Storage
+        file_bytes: bytes = db.storage.from_("resumes").download(storage_path)
+
+        # 4. Save to temp file and parse
+        suffix = "." + storage_path.rsplit(".", 1)[-1] if "." in storage_path else ".pdf"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = tmp.name
+
+        from pathlib import Path
+        parser = ResumeParser()
+        parsed = await parser.parse(Path(tmp_path))
+        resume_text: str = parsed.get("text", "")
+
+        # 5. Run analyzer
+        analyzer = ResumeAnalyzer()
+        analyzer_output: dict = await analyzer.analyze(
+            resume_text=resume_text,
+            job_description=None,
+            analysis_type="comprehensive",
+        )
+
+        # 6. Build and insert resume_analyses row
+        analysis_row = build_analysis_row(
+            analyzer_output,
+            organization_id=organization_id,
+            resume_id=request.resume_id,
+            job_id=request.job_id,
+        )
+        db.table("resume_analyses").insert(analysis_row).execute()
+
+        # 7. Update application with results
+        db.table("applications").update(
+            {
+                "ai_score": analyzer_output.get("overall_score"),
+                "recommendation": analyzer_output.get("recommendation")
+                or analyzer_output.get("verdict")
+                or analyzer_output.get("hiring_recommendation", {}).get("decision")
+                or "",
+                "analysis_status": "complete",
+                "analysis_error": None,
+            }
+        ).eq("id", application_id).execute()
+
+        return {"ok": True, "application_id": application_id}
+
+    except Exception as exc:
+        logger.error(
+            "Analysis persistence failed for application %s: %s",
+            application_id,
+            exc,
+            exc_info=True,
+        )
+        try:
+            db.table("applications").update(
+                {"analysis_status": "failed", "analysis_error": str(exc)}
+            ).eq("id", application_id).execute()
+        except Exception as inner_exc:
+            logger.error("Failed to record analysis error in DB: %s", inner_exc)
+        return {"ok": False, "application_id": application_id, "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# Legacy upload-then-analyze flow (kept for portal/page.tsx compatibility)
+# ---------------------------------------------------------------------------
+
+@router.post("/analyze-upload", response_model=AnalysisResponse)
+async def analyze_resume_upload(request: AnalysisRequest):
+    """
+    Perform comprehensive resume analysis against an in-memory uploaded resume.
+
+    Legacy endpoint — the NEW flow is POST /analyze with { resume_id, application_id, job_id }.
+    """
+    from app.api.v1.endpoints.resume import resume_storage
+
     if request.resume_id not in resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -42,22 +158,19 @@ async def analyze_resume(request: AnalysisRequest):
     try:
         analyzer = ResumeAnalyzer()
 
-        # Use enhanced analysis for better extraction (includes structured experience, career analytics)
         analysis_result = await analyzer.analyze_enhanced(
             resume_text=resume_data["text_content"],
             job_description=request.job_description,
             analysis_type=request.analysis_type,
-            include_smart_questions=True
+            include_smart_questions=True,
         )
 
-        # Store analysis result
         analysis_id = f"analysis_{request.resume_id}"
         analysis_storage[analysis_id] = {
             "resume_id": request.resume_id,
-            "result": analysis_result
+            "result": analysis_result,
         }
 
-        # Update resume status
         resume_storage[request.resume_id]["status"] = "analyzed"
         resume_storage[request.resume_id]["analysis_id"] = analysis_id
 
@@ -73,16 +186,17 @@ async def analyze_resume(request: AnalysisRequest):
             keywords=analysis_result.get("keywords", {}),
             improvements=analysis_result.get("improvements", []),
             detailed_feedback=analysis_result.get("detailed_feedback", ""),
-            rewrite_examples=analysis_result.get("rewrite_examples", [])
+            rewrite_examples=analysis_result.get("rewrite_examples", []),
         )
 
     except Exception as e:
         import traceback
+
         logger.error(f"Error analyzing resume: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error analyzing resume: {str(e)}"
+            detail=f"Error analyzing resume: {str(e)}",
         )
 
 
@@ -91,6 +205,8 @@ async def quick_analyze_resume(request: AnalysisRequest):
     """
     Perform a quick resume analysis (faster, less detailed).
     """
+    from app.api.v1.endpoints.resume import resume_storage
+
     if request.resume_id not in resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -99,23 +215,21 @@ async def quick_analyze_resume(request: AnalysisRequest):
     try:
         analyzer = ResumeAnalyzer()
 
-        result = await analyzer.quick_analyze(
-            resume_text=resume_data["text_content"]
-        )
+        result = await analyzer.quick_analyze(resume_text=resume_data["text_content"])
 
         return QuickAnalysisResponse(
             resume_id=request.resume_id,
             overall_score=result.get("overall_score", 0),
             summary=result.get("summary", ""),
             top_strength=result.get("top_strength", ""),
-            top_improvement=result.get("top_improvement", "")
+            top_improvement=result.get("top_improvement", ""),
         )
 
     except Exception as e:
         logger.error(f"Error in quick analysis: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error in quick analysis: {str(e)}"
+            detail=f"Error in quick analysis: {str(e)}",
         )
 
 
@@ -124,6 +238,8 @@ async def compare_with_jd(request: JDComparisonRequest):
     """
     Compare resume against a specific job description.
     """
+    from app.api.v1.endpoints.resume import resume_storage
+
     if request.resume_id not in resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -137,7 +253,7 @@ async def compare_with_jd(request: JDComparisonRequest):
 
         result = await analyzer.compare_with_jd(
             resume_text=resume_data["text_content"],
-            job_description=request.job_description
+            job_description=request.job_description,
         )
 
         return JDComparisonResponse(
@@ -147,14 +263,14 @@ async def compare_with_jd(request: JDComparisonRequest):
             missing_requirements=result.get("missing_requirements", []),
             transferable_skills=result.get("transferable_skills", []),
             recommendations=result.get("recommendations", []),
-            gap_analysis=result.get("gap_analysis", {})
+            gap_analysis=result.get("gap_analysis", {}),
         )
 
     except Exception as e:
         logger.error(f"Error comparing with JD: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error comparing with JD: {str(e)}"
+            detail=f"Error comparing with JD: {str(e)}",
         )
 
 
@@ -170,6 +286,8 @@ async def get_analysis(analysis_id: str):
 @router.post("/keywords/{resume_id}")
 async def extract_keywords(resume_id: str):
     """Extract and categorize keywords from resume"""
+    from app.api.v1.endpoints.resume import resume_storage
+
     if resume_id not in resume_storage:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -182,14 +300,11 @@ async def extract_keywords(resume_id: str):
             resume_text=resume_data["text_content"]
         )
 
-        return {
-            "resume_id": resume_id,
-            "keywords": keywords
-        }
+        return {"resume_id": resume_id, "keywords": keywords}
 
     except Exception as e:
         logger.error(f"Error extracting keywords: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error extracting keywords: {str(e)}"
+            detail=f"Error extracting keywords: {str(e)}",
         )
