@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
 import { Card } from "./Card";
+import { Button } from "./Button";
+import { loadSampleData, clearSampleData } from "@/lib/data/sample";
+
+// form action must return void — wrap to discard the summary object
+async function loadSampleAction(): Promise<void> {
+  await loadSampleData();
+}
+
+async function clearSampleAction(): Promise<void> {
+  await clearSampleData();
+}
 
 type Totals = { jobs: number; candidates: number };
 
@@ -62,6 +73,8 @@ function CheckStep({
 }
 
 export function OnboardingChecklist({ totals }: { totals: Totals }) {
+  const hasData = totals.jobs > 0 || totals.candidates > 0;
+
   const steps = [
     {
       label: "Post your first job",
@@ -77,11 +90,6 @@ export function OnboardingChecklist({ totals }: { totals: Totals }) {
       label: "Invite a teammate",
       href: "/dashboard/settings",
       done: false,
-    },
-    {
-      label: "Load sample data",
-      done: false,
-      disabled: true,
     },
   ];
 
@@ -108,6 +116,28 @@ export function OnboardingChecklist({ totals }: { totals: Totals }) {
         {steps.map((step) => (
           <CheckStep key={step.label} {...step} />
         ))}
+
+        {/* Step 4 — Load sample data */}
+        <div className="flex items-center gap-3 py-2.5 px-1">
+          <Circle size={18} className="shrink-0 text-ink-3" />
+          <span className="text-[13px] font-medium text-ink">
+            Load sample data
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <form action={loadSampleAction}>
+              <Button type="submit" variant="primary" size="sm">
+                Load sample data
+              </Button>
+            </form>
+            {hasData && (
+              <form action={clearSampleAction}>
+                <Button type="submit" variant="ghost" size="sm">
+                  Clear sample data
+                </Button>
+              </form>
+            )}
+          </div>
+        </div>
       </div>
     </Card>
   );
