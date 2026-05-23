@@ -6,10 +6,12 @@ import { loadSampleData, clearSampleData } from "@/lib/data/sample";
 
 // form action must return void — wrap to discard the summary object
 async function loadSampleAction(): Promise<void> {
+  "use server";
   await loadSampleData();
 }
 
 async function clearSampleAction(): Promise<void> {
+  "use server";
   await clearSampleData();
 }
 
