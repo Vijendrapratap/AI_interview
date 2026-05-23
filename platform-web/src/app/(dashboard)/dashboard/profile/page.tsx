@@ -7,18 +7,15 @@ import {
     SectionCard,
     Avatar,
     Button,
-    Banner,
     Label,
     Input,
+    PreviewBanner,
 } from "@/components";
 
 export default function ProfilePage() {
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <Banner tone="neutral">
-                This area is read-only for now — full functionality lands in Slice 2.
-            </Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Account"
                 title="My Profile"

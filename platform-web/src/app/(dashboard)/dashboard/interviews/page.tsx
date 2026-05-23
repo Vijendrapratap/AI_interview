@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { CalendarClock, Copy, Sparkles } from "lucide-react";
 import { mockCandidates } from "@/lib/mockData";
-import { Banner, Badge, Button, Card, PageHeader, SectionCard } from "@/components";
+import { Badge, Button, Card, PageHeader, SectionCard, PreviewBanner } from "@/components";
 
 export default function InterviewsPage() {
     const interviewCandidates = mockCandidates.filter(candidate => candidate.status !== "Rejected");
 
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Interviews"
                 title="AI Interview Center"

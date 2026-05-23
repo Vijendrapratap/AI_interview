@@ -2,13 +2,12 @@
 
 import { Bot, MailCheck, ShieldCheck, Zap } from "lucide-react";
 import { mockAutomations, screeningRules, testEmailDrafts } from "@/lib/mockData";
-import { PageHeader, Card, SectionCard, Badge, Button, Banner } from "@/components";
+import { PageHeader, Card, SectionCard, Badge, Button, PreviewBanner } from "@/components";
 
 export default function AutomationsPage() {
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Recruiter Tools"
                 title="Recruiter Copilot Automations"

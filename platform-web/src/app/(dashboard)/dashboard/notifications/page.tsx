@@ -1,7 +1,7 @@
 "use client";
 
 import { UserPlus, FileText, AlertTriangle, CheckCircle } from "lucide-react";
-import { PageHeader, Card, Banner, Button } from "@/components";
+import { PageHeader, Card, Button, PreviewBanner } from "@/components";
 
 const NOTIFICATIONS = [
     {
@@ -49,10 +49,7 @@ const NOTIFICATIONS = [
 export default function NotificationsPage() {
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <Banner tone="neutral">
-                This area is read-only for now — full functionality lands in Slice 2.
-            </Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Inbox"
                 title="Notifications"

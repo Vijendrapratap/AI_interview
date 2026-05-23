@@ -2,13 +2,12 @@
 
 import { Search, Send, TrendingUp } from "lucide-react";
 import { mockJobBoards, mockSourcingChannels } from "@/lib/mockData";
-import { PageHeader, Card, SectionCard, Badge, Button, Banner } from "@/components";
+import { PageHeader, Card, SectionCard, Badge, Button, PreviewBanner } from "@/components";
 
 export default function SourcingPage() {
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Recruiter Tools"
                 title="Sourcing & Talent Rediscovery"

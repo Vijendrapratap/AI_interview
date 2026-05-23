@@ -2,17 +2,14 @@
 
 import { BarChart3, Clock, ShieldAlert, TrendingUp, Users } from "lucide-react";
 import { mockAnalytics } from "@/lib/mockData";
-import { PageHeader, Banner, StatCard, SectionCard } from "@/components";
+import { PageHeader, StatCard, SectionCard, PreviewBanner } from "@/components";
 
 export default function AnalyticsPage() {
     const maxStage = Math.max(...mockAnalytics.pipeline_stats.map(s => s.value));
 
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">
-                This area is read-only for now — full functionality lands in Slice 2.
-            </Banner>
-
+            <PreviewBanner />
             <PageHeader
                 title="Recruiting Analytics"
                 subtitle="Measure speed, quality, source ROI, bottlenecks, and AI screening impact."

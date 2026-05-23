@@ -2,13 +2,12 @@
 
 import { Bell, MessageSquare, Users } from "lucide-react";
 import { mockCollaborationQueue } from "@/lib/mockData";
-import { Avatar, Badge, Banner, Button, Card, PageHeader, SectionCard } from "@/components";
+import { Avatar, Badge, Button, Card, PageHeader, SectionCard, PreviewBanner } from "@/components";
 
 export default function CollaborationPage() {
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Collaboration"
                 title="Hiring Team Collaboration"

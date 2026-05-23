@@ -2,13 +2,12 @@
 
 import { Mail, MessageCircle, Send } from "lucide-react";
 import { mockCommunicationTemplates } from "@/lib/mockData";
-import { PageHeader, Card, SectionCard, Badge, Banner } from "@/components";
+import { PageHeader, Card, SectionCard, Badge, PreviewBanner } from "@/components";
 
 export default function CommunicationsPage() {
     return (
         <div className="p-8 space-y-8">
-            <Banner tone="neutral">This area is read-only for now — full functionality lands in Slice 2.</Banner>
-
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Recruiter Tools"
                 title="Communication Center"

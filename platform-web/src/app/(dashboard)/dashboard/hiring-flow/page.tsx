@@ -2,20 +2,17 @@
 
 import { CheckCircle2, Mail, Send, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import { recruiterFlowSteps, screeningRules, testEmailDrafts } from "@/lib/mockData";
-import { Banner, Badge, Card, PageHeader } from "@/components";
+import { Badge, Card, PageHeader, PreviewBanner } from "@/components";
 
 export default function HiringFlowPage() {
     return (
         <div className="p-8 space-y-8">
+            <PreviewBanner />
             <PageHeader
                 eyebrow="Recruiting"
                 title="Hiring Flow"
                 subtitle="One clean hiring checklist — post, collect, AI screen, send test, decide."
             />
-
-            <Banner tone="neutral">
-                This area is read-only for now — full functionality lands in Slice 2.
-            </Banner>
 
             {/* Dark hero panel */}
             <div className="bg-ink text-card rounded-card p-8 shadow-card">
