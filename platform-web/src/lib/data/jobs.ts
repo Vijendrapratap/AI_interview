@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "./organizations";
 import { revalidatePath } from "next/cache";
+import { demoJobs } from "./demo";
 
 export type JobStatus = "draft" | "open" | "paused" | "closed";
 
@@ -12,13 +13,14 @@ export async function listJobs() {
     .from("jobs")
     .select("*")
     .order("created_at", { ascending: false });
-  return data ?? [];
+  return data?.length ? data : demoJobs;
 }
 
 export async function getJob(id: string) {
+  if (id.startsWith("demo-")) return demoJobs.find((job) => job.id === id) ?? null;
   const supabase = await createClient();
   const { data } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle();
-  return data;
+  return data ?? demoJobs.find((job) => job.id === id) ?? null;
 }
 
 export type CreateJobInput = {

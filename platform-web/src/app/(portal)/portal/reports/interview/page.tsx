@@ -39,7 +39,7 @@ export default function InterviewPerformancePage() {
 
             try {
                 // 1. Get all sessions to find the latest one for this resume
-                const sessionsRes = await fetch("http://localhost:8000/api/v1/interview/sessions")
+                const sessionsRes = await fetch("/api/v1/interview/sessions")
                 if (!sessionsRes.ok) throw new Error("Failed to fetch sessions")
 
                 const sessionsData = await sessionsRes.json()
@@ -55,7 +55,7 @@ export default function InterviewPerformancePage() {
                 const latestSession = mySessions[0]
 
                 // 2. Fetch detailed report
-                const reportRes = await fetch(`http://localhost:8000/api/v1/interview/report/${latestSession.id}`)
+                const reportRes = await fetch(`/api/v1/interview/report/${latestSession.id}`)
                 if (!reportRes.ok) throw new Error("Failed to fetch report")
 
                 const reportData = await reportRes.json()

@@ -125,7 +125,7 @@ export default function ResumeAnalysisPage() {
             if (analysisResult.analysisId) {
                 try {
                     const response = await fetch(
-                        `http://localhost:8000/api/v1/report/resume/${analysisResult.analysisId}`
+                        `/api/v1/report/resume/${analysisResult.analysisId}`
                     )
 
                     if (response.ok) {
@@ -191,7 +191,7 @@ export default function ResumeAnalysisPage() {
 
         try {
             const response = await fetch(
-                `http://localhost:8000/api/v1/report/resume/${analysisResult.analysisId}/pdf`
+                `/api/v1/report/resume/${analysisResult.analysisId}/pdf`
             )
 
             if (!response.ok) throw new Error("Failed to download PDF")

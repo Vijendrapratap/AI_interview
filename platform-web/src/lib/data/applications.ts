@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Stage } from "./application-types";
+import { demoApplications, getDemoPipeline } from "./demo";
 
 const APPLICATION_SELECT =
   "id, stage, ai_score, analysis_status, recommendation, owner_id, created_at, updated_at, candidate_id, job_id, candidates(id, full_name, email, current_role), jobs(id, title)";
@@ -12,13 +13,23 @@ export async function listApplications(opts?: { jobId?: string }) {
   let q = supabase.from("applications").select(APPLICATION_SELECT).order("created_at", { ascending: false });
   if (opts?.jobId) q = q.eq("job_id", opts.jobId);
   const { data } = await q;
-  return data ?? [];
+  const fallback = opts?.jobId
+    ? demoApplications.filter((app) => app.job_id === opts.jobId)
+    : demoApplications;
+  return data?.length ? data : fallback;
 }
 
 /** Returns applications grouped by stage in canonical order. */
 export async function getPipeline(opts?: { jobId?: string }) {
+  if (opts?.jobId?.startsWith("demo-")) {
+    const pipeline = getDemoPipeline();
+    for (const stage of Object.keys(pipeline) as Stage[]) {
+      pipeline[stage] = pipeline[stage].filter((app) => app.job_id === opts.jobId);
+    }
+    return pipeline;
+  }
   const apps = await listApplications(opts);
-  const grouped: Record<Stage, typeof apps> = {
+  const grouped: Record<Stage, any[]> = {
     new: [], screening: [], interview: [], offer: [], hired: [], rejected: [],
   };
   for (const app of apps) {

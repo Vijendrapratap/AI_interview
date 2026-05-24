@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "./organizations";
 import { revalidatePath } from "next/cache";
+import { demoCandidates, demoResume, getDemoAnalysis, getDemoCandidate } from "./demo";
 
 export async function listCandidates() {
   const supabase = await createClient();
@@ -10,20 +11,22 @@ export async function listCandidates() {
     .from("candidates")
     .select("*, applications(id, stage, ai_score, analysis_status, job_id, jobs(title))")
     .order("created_at", { ascending: false });
-  return data ?? [];
+  return data?.length ? data : demoCandidates;
 }
 
 export async function getCandidate(id: string) {
+  if (id.startsWith("demo-")) return getDemoCandidate(id);
   const supabase = await createClient();
   const { data } = await supabase
     .from("candidates")
     .select("*, applications(id, stage, ai_score, analysis_status, job_id, jobs(title))")
     .eq("id", id)
     .maybeSingle();
-  return data ?? null;
+  return data ?? getDemoCandidate(id);
 }
 
 export async function getLatestResume(candidateId: string) {
+  if (candidateId.startsWith("demo-")) return demoResume;
   const supabase = await createClient();
   const { data } = await supabase
     .from("resumes")
@@ -36,6 +39,7 @@ export async function getLatestResume(candidateId: string) {
 }
 
 export async function getLatestAnalysis(resumeId: string) {
+  if (resumeId.startsWith("demo-")) return getDemoAnalysis();
   const supabase = await createClient();
   const { data } = await supabase
     .from("resume_analyses")

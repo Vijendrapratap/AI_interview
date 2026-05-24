@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "./organizations";
+import { getDemoDashboardData } from "./demo";
 
 export type DashboardData = {
   needsReview: number;
@@ -25,10 +26,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
   const orgId = await getCurrentOrgId();
   if (!orgId) {
-    return {
-      needsReview: 0, slaRisks: 0, interviewsPending: 0, offersPending: 0,
-      priorityQueue: [], activeJobs: [], totals: { jobs: 0, candidates: 0 },
-    };
+    return getDemoDashboardData();
   }
 
   const [needsReview, slaRisks, interviewsPending, offersPending, jobsTotal, candidatesTotal] = await Promise.all([
@@ -54,7 +52,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  return {
+  const dashboard = {
     needsReview: needsReview.count ?? 0,
     slaRisks: slaRisks.count ?? 0,
     interviewsPending: interviewsPending.count ?? 0,
@@ -86,4 +84,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     }),
     totals: { jobs: jobsTotal.count ?? 0, candidates: candidatesTotal.count ?? 0 },
   };
+
+  if (dashboard.totals.jobs === 0 && dashboard.totals.candidates === 0) {
+    return getDemoDashboardData();
+  }
+
+  return dashboard;
 }

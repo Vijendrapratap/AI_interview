@@ -8,7 +8,7 @@ import { Mic, PhoneOff, Settings, Loader2, CheckCircle, Send } from "lucide-reac
 import { useRouter } from "next/navigation"
 import { Button, Badge } from "@/components"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ""
 
 interface QuestionData {
     question: string

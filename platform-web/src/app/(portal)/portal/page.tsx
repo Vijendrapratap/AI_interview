@@ -49,7 +49,7 @@ export default function CandidatePortalPage() {
             const formData = new FormData()
             formData.append("file", resumeFile)
 
-            const uploadRes = await fetch("http://localhost:8000/api/v1/resume/upload", {
+            const uploadRes = await fetch("/api/v1/resume/upload", {
                 method: "POST",
                 body: formData
             })
@@ -64,7 +64,7 @@ export default function CandidatePortalPage() {
             const resumeId = uploadData.id
 
             // 2. Call real analysis endpoint
-            const analysisRes = await fetch("http://localhost:8000/api/v1/analysis/analyze", {
+            const analysisRes = await fetch("/api/v1/analysis/analyze", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

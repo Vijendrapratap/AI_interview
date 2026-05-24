@@ -77,7 +77,7 @@ export default function SkillsAssessmentPage() {
             }
 
             try {
-                const res = await fetch(`http://localhost:8000/api/v1/analysis/${analysisResult.analysisId}`)
+                const res = await fetch(`/api/v1/analysis/${analysisResult.analysisId}`)
                 if (!res.ok) throw new Error("Failed to fetch analysis")
 
                 const data = await res.json()
