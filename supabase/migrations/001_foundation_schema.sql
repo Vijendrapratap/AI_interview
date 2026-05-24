@@ -75,7 +75,7 @@ create table if not exists candidates (
   full_name text not null,
   email text not null,
   phone text,
-  current_role text,
+  "current_role" text,
   current_company text,
   source text not null default 'manual',
   created_at timestamptz not null default now()

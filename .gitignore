@@ -72,6 +72,9 @@ htmlcov/
 .tox/
 .nox/
 
-# Claude
+# Claude / agent state
 .claude/
 .superpowers/
+.vercel
+.agents/
+.antigravitycli/
