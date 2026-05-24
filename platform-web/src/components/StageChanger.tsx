@@ -8,9 +8,11 @@ import { STAGES, type Stage } from "@/lib/data/application-types";
 export function StageChanger({
   applicationId,
   currentStage,
+  onMoved,
 }: {
   applicationId: string;
   currentStage: Stage;
+  onMoved?: (applicationId: string, fromStage: Stage, toStage: Stage) => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -18,7 +20,12 @@ export function StageChanger({
     const next = e.target.value as Stage;
     if (next === currentStage) return;
     startTransition(async () => {
-      await moveStage(applicationId, next);
+      const result = await moveStage(applicationId, next);
+      if (result?.ok === false) {
+        window.alert(result.message);
+        return;
+      }
+      onMoved?.(applicationId, currentStage, next);
     });
   }
 

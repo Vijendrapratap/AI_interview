@@ -8,6 +8,18 @@ import { demoApplications, getDemoPipeline } from "./demo";
 const APPLICATION_SELECT =
   "id, stage, ai_score, analysis_status, recommendation, owner_id, created_at, updated_at, candidate_id, job_id, candidates(id, full_name, email, current_role), jobs(id, title)";
 
+type PipelineApplication = {
+  id: string;
+  stage: string | null;
+  ai_score: number | null;
+  analysis_status: string | null;
+  candidate_id: string;
+  job_id?: string | null;
+  candidates: { id?: string; full_name?: string; email?: string; current_role?: string | null } | Array<{ id?: string; full_name?: string; email?: string; current_role?: string | null }> | null;
+  jobs: { id?: string; title?: string } | Array<{ id?: string; title?: string }> | null;
+  [key: string]: unknown;
+};
+
 export async function listApplications(opts?: { jobId?: string }) {
   const supabase = await createClient();
   let q = supabase.from("applications").select(APPLICATION_SELECT).order("created_at", { ascending: false });
@@ -29,26 +41,42 @@ export async function getPipeline(opts?: { jobId?: string }) {
     return pipeline;
   }
   const apps = await listApplications(opts);
-  const grouped: Record<Stage, any[]> = {
+  const grouped: Record<Stage, PipelineApplication[]> = {
     new: [], screening: [], interview: [], offer: [], hired: [], rejected: [],
   };
   for (const app of apps) {
     const stage = (app.stage as Stage) || "new";
-    grouped[stage].push(app);
+    grouped[stage].push(app as PipelineApplication);
   }
   return grouped;
 }
 
 export async function moveStage(applicationId: string, stage: Stage) {
+  if (applicationId.startsWith("demo-")) {
+    revalidatePath("/dashboard/pipeline");
+    revalidatePath("/dashboard/candidates");
+    revalidatePath("/dashboard");
+    return { ok: true };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("applications")
     .update({ stage, updated_at: new Date().toISOString() })
     .eq("id", applicationId);
-  if (error) throw new Error(error.message);
+
+  if (error) {
+    console.error("Failed to move application stage", { applicationId, stage, message: error.message });
+    return {
+      ok: false,
+      message: "Could not update this candidate stage. The demo board is still safe to test with demo candidates.",
+    };
+  }
+
   revalidatePath("/dashboard/pipeline");
   revalidatePath("/dashboard/candidates");
   revalidatePath("/dashboard");
+  return { ok: true };
 }
 
 export async function assignOwner(applicationId: string, userId: string | null) {
