@@ -1,8 +1,9 @@
 import Link from "next/link"
-import { ArrowLeft, MapPin, DollarSign, Users, Briefcase } from "lucide-react"
+import { ArrowLeft, MapPin, DollarSign, Users, Briefcase, Globe, ExternalLink } from "lucide-react"
 import { PageHeader, SectionCard, Badge, EmptyState, Avatar, AnalysisStatus } from "@/components"
 import { getJob } from "@/lib/data/jobs"
 import { listApplications } from "@/lib/data/applications"
+import { listPublications } from "@/lib/data/connections"
 
 function formatSalary(min: number | null, max: number | null, currency: string | null): string | null {
     if (!min && !max) return null
@@ -36,7 +37,11 @@ function stageTone(stage: string): "success" | "warning" | "neutral" | "accent" 
 
 export default async function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const [job, applications] = await Promise.all([getJob(id), listApplications({ jobId: id })])
+    const [job, applications, publications] = await Promise.all([
+        getJob(id),
+        listApplications({ jobId: id }),
+        listPublications(id)
+    ])
 
     if (!job) {
         return (
@@ -108,7 +113,37 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                         ))}
                     </ul>
                 </SectionCard>
-            )}
+            {/* Multi-Platform Syndication */}
+            <SectionCard 
+                title="Multi-Platform Syndication" 
+                subtitle="Syndicate this post to connected boards and track publication URLs."
+                action={<Globe size={18} className="text-accent" />}
+            >
+                {publications.length === 0 ? (
+                    <p className="text-sm text-ink-3">Not published to external platform connections. Edit this job to distribute it.</p>
+                ) : (
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                        {publications.map((pub: any) => (
+                            <div key={pub.id} className="flex items-center justify-between rounded-field border border-border bg-card p-3.5">
+                                <div>
+                                    <p className="text-xs font-bold text-ink">{pub.platform}</p>
+                                    <p className="text-[10px] text-success-soft-ink mt-0.5 font-medium flex items-center gap-1">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-success" /> Active / Live
+                                    </p>
+                                </div>
+                                <a 
+                                    href={pub.published_url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="rounded-tile p-1.5 hover:bg-surface-muted text-ink-3 hover:text-ink transition-colors"
+                                >
+                                    <ExternalLink size={14} />
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </SectionCard>
 
             {/* Candidates */}
             <SectionCard

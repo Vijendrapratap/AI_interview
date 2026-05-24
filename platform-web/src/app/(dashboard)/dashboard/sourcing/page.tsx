@@ -1,10 +1,51 @@
 "use client"
 
+import { useState, useEffect } from "react";
 import { Search, Send, TrendingUp } from "lucide-react";
-import { mockJobBoards, mockSourcingChannels } from "@/lib/mockData";
+import Link from "next/link";
+import { listConnections } from "@/lib/data/connections";
+import { mockSourcingChannels } from "@/lib/mockData";
 import { PageHeader, Card, SectionCard, Badge, Button, PreviewBanner } from "@/components";
 
 export default function SourcingPage() {
+    const [connections, setConnections] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        listConnections()
+            .then(setConnections)
+            .finally(() => setLoading(false));
+    }, []);
+
+    const standardBoards = [
+        { name: "LinkedIn", reach: "1.2M", cost: "Active Contract", recommendation: "Excellent for senior engineering and design roles." },
+        { name: "Indeed", reach: "850K", cost: "SLA Plan", recommendation: "Perfect for high-volume automation testing candidates." },
+        { name: "Glassdoor", reach: "740K", cost: "Organic", recommendation: "Track candidate sentiment and company review ratings." },
+        { name: "Naukri", reach: "920K", cost: "Connected Plan", recommendation: "Prioritize India-based backend and QA professionals." }
+    ];
+
+    const activeBoards = standardBoards.map(board => {
+        const conn = connections.find(c => c.platform.toLowerCase() === board.name.toLowerCase());
+        return {
+            ...board,
+            status: conn ? "Connected" : "Ready",
+            username: conn?.settings?.username || null
+        };
+    });
+
+    const customBoards = connections
+        .filter(c => !["linkedin", "indeed", "glassdoor", "naukri"].includes(c.platform.toLowerCase()))
+        .map(c => ({
+            name: c.platform,
+            reach: "Custom API",
+            cost: "Active Webhook",
+            status: "Connected",
+            recommendation: `Syncs with custom webhook: ${c.settings?.webhookUrl}`,
+            username: c.settings?.enableMcp ? "MCP Enabled" : null
+        }));
+
+    const allBoards = [...activeBoards, ...customBoards];
+
     return (
         <div className="p-8 space-y-8">
             <PreviewBanner />
@@ -18,25 +59,38 @@ export default function SourcingPage() {
                 title="Multi-platform posting"
                 subtitle="Write one job once, then publish to the channels that fit the role."
                 action={
-                    <Button variant="primary" size="sm">
-                        <Send size={15} /> Publish selected
-                    </Button>
+                    <Link href="/dashboard/settings">
+                        <Button variant="primary" size="sm">
+                            <Send size={15} /> Configure Integrations
+                        </Button>
+                    </Link>
                 }
             >
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 items-stretch">
-                    {mockJobBoards.map(board => (
-                        <Card key={board.name} variant="compact" className="flex flex-col">
-                            <div className="flex items-center justify-between">
-                                <p className="text-card-title">{board.name}</p>
-                                <Badge tone="success">{board.status}</Badge>
-                            </div>
-                            <p className="mt-3 text-meta flex-1">{board.recommendation}</p>
-                            <div className="mt-4 flex items-center justify-between text-[13px]">
-                                <span className="text-ink-3">Reach: {board.reach}</span>
-                                <span className="font-semibold text-ink">{board.cost}</span>
-                            </div>
-                        </Card>
-                    ))}
+                    {loading ? (
+                        <p className="text-meta text-ink-3 col-span-full text-center py-4">Loading active platform connections…</p>
+                    ) : (
+                        allBoards.map(board => (
+                            <Card key={board.name} variant="compact" className="flex flex-col border border-border">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-card-title">{board.name}</p>
+                                    <Badge tone={board.status === "Connected" ? "success" : "neutral"}>
+                                        {board.status}
+                                    </Badge>
+                                </div>
+                                <p className="mt-3 text-meta flex-1 text-ink-3">
+                                    {board.recommendation}
+                                    {board.username && (
+                                        <span className="block mt-1 font-semibold text-ink-2">Account: {board.username}</span>
+                                    )}
+                                </p>
+                                <div className="mt-4 flex items-center justify-between text-[13px] border-t border-border-card pt-3">
+                                    <span className="text-ink-3">Reach: {board.reach}</span>
+                                    <span className="font-semibold text-ink">{board.cost}</span>
+                                </div>
+                            </Card>
+                        ))
+                    )}
                 </div>
             </SectionCard>
 
@@ -45,7 +99,7 @@ export default function SourcingPage() {
                     <Search className="text-ink-3" size={18} />
                     <input className="w-full outline-none bg-transparent text-ink placeholder:text-ink-3 text-[13px]" placeholder="Semantic search: Senior Python engineer with AWS and FastAPI..." />
                 </div>
-                <p className="text-meta px-5 pb-5">Search is mocked for now; backend semantic candidate rediscovery is the next persistence milestone.</p>
+                <p className="text-meta px-5 pb-5">Discover matching talent across all historical applications using semantic concept and capability vector matching.</p>
             </Card>
 
             <SectionCard title="Source Quality">

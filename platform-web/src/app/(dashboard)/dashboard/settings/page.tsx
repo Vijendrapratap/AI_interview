@@ -216,11 +216,291 @@ export default function SettingsPage() {
 
             {activeTab === "Team Members" && <TeamMembersTab />}
 
-            {activeTab === "Integrations" && (
-                <Card>
-                    <p className="text-ink-2 text-[13px]">Integrations management coming in Slice 2.</p>
-                </Card>
+            {activeTab === "Integrations" && <IntegrationsTab />}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Premium Integrations Tab Component
+// ---------------------------------------------------------------------------
+import { 
+    ToggleLeft, 
+    ToggleRight, 
+    Radio, 
+    Landmark, 
+    Unplug, 
+    CloudZap,
+    Plus,
+    Share2,
+    Briefcase,
+    CheckCircle2,
+    X
+} from "lucide-react";
+import { 
+    Textarea 
+} from "@/components";
+import { 
+    listConnections, 
+    connectPlatform, 
+    disconnectPlatform, 
+    addCustomPlatform, 
+    type Connection 
+} from "@/lib/data/connections";
+
+function IntegrationsTab() {
+    const toast = useToast();
+    const [connections, setConnections] = useState<Connection[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
+
+    // Modals
+    const [connectModal, setConnectModal] = useState<string | null>(null);
+    const [mcpModal, setMcpModal] = useState(false);
+
+    // Form inputs
+    const [username, setUsername] = useState("");
+    const [apiKey, setApiKey] = useState("");
+    
+    // Custom platform inputs
+    const [customName, setCustomName] = useState("");
+    const [customWebhook, setCustomWebhook] = useState("");
+    const [enableMcp, setEnableMcp] = useState(false);
+    const [mcpConfig, setMcpConfig] = useState("");
+
+    const loadData = () => {
+        setLoading(true);
+        listConnections()
+            .then(setConnections)
+            .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const handleConnect = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!connectModal) return;
+        
+        startTransition(async () => {
+            await connectPlatform(connectModal, { username, apiKey });
+            toast(`${connectModal} connected successfully.`);
+            setConnectModal(null);
+            setUsername("");
+            setApiKey("");
+            loadData();
+        });
+    };
+
+    const handleCustomConnect = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!customName || !customWebhook) return;
+
+        startTransition(async () => {
+            await addCustomPlatform(customName, customWebhook, enableMcp, mcpConfig);
+            toast(`Custom platform ${customName} connected.`);
+            setMcpModal(false);
+            setCustomName("");
+            setCustomWebhook("");
+            setEnableMcp(false);
+            setMcpConfig("");
+            loadData();
+        });
+    };
+
+    const handleDisconnect = (platform: string) => {
+        if (!confirm(`Are you sure you want to disconnect ${platform}?`)) return;
+        startTransition(async () => {
+            await disconnectPlatform(platform);
+            toast(`${platform} disconnected.`);
+            loadData();
+        });
+    };
+
+    const standardPlatforms = [
+        { name: "LinkedIn", detail: "Publish jobs directly to LinkedIn Sourcing and sync applicants.", icon: <Share2 className="text-[#0A66C2]" size={20} /> },
+        { name: "Indeed", detail: "Syndicate roles to Indeed and run high-volume screener flows.", icon: <Briefcase className="text-[#2164F3]" size={20} /> },
+        { name: "Glassdoor", detail: "Share open listings and track employer reviews.", icon: <CheckCircle2 className="text-[#0CAA41]" size={20} /> },
+        { name: "Naukri", detail: "Reach premium technical talent in Asia and track SLA pipelines.", icon: <Landmark className="text-[#102B7B]" size={20} /> }
+    ];
+
+    return (
+        <div className="space-y-6">
+            <SectionCard
+                title="Platform Connections"
+                subtitle="Connect your ATS with international job boards to distribute roles and collect profiles in one workspace."
+                action={
+                    <Button variant="primary" size="sm" onClick={() => setMcpModal(true)}>
+                        <Plus size={15} /> Add Custom Platform
+                    </Button>
+                }
+            >
+                <div className="grid gap-4 md:grid-cols-2">
+                    {standardPlatforms.map(platform => {
+                        const conn = connections.find(c => c.platform.toLowerCase() === platform.name.toLowerCase());
+                        const isConnected = !!conn;
+                        return (
+                            <Card key={platform.name} variant="compact" className="flex flex-col justify-between border-border border">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-card bg-surface-muted p-2">
+                                            {platform.icon}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-[14px] text-ink">{platform.name}</h3>
+                                            <p className="text-meta mt-0.5">{isConnected ? `Connected as ${conn.settings?.username || "Active Account"}` : "Ready to connect"}</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => isConnected ? handleDisconnect(platform.name) : setConnectModal(platform.name)}
+                                        className="text-ink-2 hover:text-ink transition-colors"
+                                    >
+                                        {isConnected ? <ToggleRight className="text-success-soft-ink" size={32} /> : <ToggleLeft size={32} />}
+                                    </button>
+                                </div>
+                                <p className="mt-3 text-meta text-ink-3">{platform.detail}</p>
+                            </Card>
+                        );
+                    })}
+                </div>
+            </SectionCard>
+
+            <Card>
+                <h3 className="text-card-title mb-4">My Custom Webhook & MCP Connections</h3>
+                {loading ? (
+                    <p className="text-meta">Loading custom integrations…</p>
+                ) : connections.filter(c => !["linkedin", "indeed", "glassdoor", "naukri"].includes(c.platform.toLowerCase())).length === 0 ? (
+                    <p className="text-meta text-ink-3 text-center py-6">No custom platforms registered. Click "Add Custom Platform" above to sync with a custom webhook or MCP server.</p>
+                ) : (
+                    <div className="divide-y divide-border-card">
+                        {connections
+                            .filter(c => !["linkedin", "indeed", "glassdoor", "naukri"].includes(c.platform.toLowerCase()))
+                            .map(c => (
+                                <div key={c.id} className="flex items-center justify-between py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="rounded-tile bg-accent-soft p-2 text-accent-soft-ink">
+                                            <CloudZap size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-ink">{c.platform}</p>
+                                            <p className="text-meta text-ink-3 mt-0.5">Webhook: {c.settings?.webhookUrl} {c.settings?.enableMcp && " · MCP Enabled"}</p>
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleDisconnect(c.platform)}>
+                                        <Unplug size={14} className="mr-1" /> Disconnect
+                                    </Button>
+                                </div>
+                            ))}
+                    </div>
+                )}
+            </Card>
+
+            {/* Platform Credentials Modal */}
+            {connectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-card border border-border-card bg-card shadow-card p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                        <h3 className="text-card-title">Connect {connectModal}</h3>
+                        <form onSubmit={handleConnect} className="space-y-4">
+                            <div>
+                                <Label required>Recruiter Username / Account Email</Label>
+                                <Input 
+                                    type="text" 
+                                    required 
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    placeholder="recruiter@codesstellar.com" 
+                                />
+                            </div>
+                            <div>
+                                <Label required>OAuth Token or API Key</Label>
+                                <Input 
+                                    type="password" 
+                                    required 
+                                    value={apiKey}
+                                    onChange={e => setApiKey(e.target.value)}
+                                    placeholder="Enter your api key or client secret" 
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="secondary" size="sm" onClick={() => setConnectModal(null)}>Cancel</Button>
+                                <Button type="submit" variant="primary" size="sm" disabled={isPending}>Connect platform</Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Platform Webhook Modal */}
+            {mcpModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm">
+                    <div className="w-full max-w-lg rounded-card border border-border-card bg-card shadow-card p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="text-card-title">Connect Custom Platform</h3>
+                                <p className="text-meta mt-1">Register a custom webhook to push job posts to an internal board or active MCP server.</p>
+                            </div>
+                            <button type="button" onClick={() => setMcpModal(false)} className="text-ink-3 hover:text-ink">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCustomConnect} className="space-y-4">
+                            <div>
+                                <Label required>Platform Name</Label>
+                                <Input 
+                                    type="text" 
+                                    required 
+                                    value={customName}
+                                    onChange={e => setCustomName(e.target.value)}
+                                    placeholder="e.g. Codesstellar Career Portal" 
+                                />
+                            </div>
+                            <div>
+                                <Label required>Sync Webhook URL</Label>
+                                <Input 
+                                    type="url" 
+                                    required 
+                                    value={customWebhook}
+                                    onChange={e => setCustomWebhook(e.target.value)}
+                                    placeholder="https://api.codesstellar.com/webhooks/jobs" 
+                                />
+                            </div>
+                            <div className="flex items-center justify-between border border-border rounded-field p-3 bg-surface">
+                                <div className="flex items-center gap-2">
+                                    <Radio className="text-accent" size={16} />
+                                    <div>
+                                        <p className="text-xs font-bold text-ink">Enable AI Agent MCP Sync</p>
+                                        <p className="text-[10px] text-ink-3">Allow Claude/Gemini to control and push to this platform via Model Context Protocol</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEnableMcp(p => !p)}
+                                    className="text-ink-2"
+                                >
+                                    {enableMcp ? <ToggleRight className="text-accent" size={28} /> : <ToggleLeft size={28} />}
+                                </button>
+                            </div>
+                            {enableMcp && (
+                                <div>
+                                    <Label>MCP Server Sync Configurations (JSON)</Label>
+                                    <Textarea
+                                        value={mcpConfig}
+                                        onChange={e => setMcpConfig(e.target.value)}
+                                        rows={3}
+                                        placeholder='{ "command": "npx", "args": ["@codesstellar/mcp-server"] }'
+                                    />
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="secondary" size="sm" onClick={() => setMcpModal(false)}>Cancel</Button>
+                                <Button type="submit" variant="primary" size="sm" disabled={isPending}>Create custom connection</Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </div>
     );
 }
+

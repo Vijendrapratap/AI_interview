@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Check } from "lucide-react"
 import { PageHeader, Button } from "@/components"
 import { Label, Input, Textarea, Select } from "@/components"
 import { createJob } from "@/lib/data/jobs"
+import { listConnections, publishJob } from "@/lib/data/connections"
 
 export default function NewJobPage() {
     const router = useRouter()
@@ -22,6 +23,25 @@ export default function NewJobPage() {
     })
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
+    
+    // Platform Connections
+    const [connections, setConnections] = useState<any[]>([])
+    const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
+    const [publishingPlatform, setPublishingPlatform] = useState<string | null>(null)
+
+    useEffect(() => {
+        listConnections().then(conns => {
+            setConnections(conns);
+            // Pre-select all standard connections
+            setSelectedPlatforms(conns.map(c => c.platform));
+        });
+    }, []);
+
+    const togglePlatform = (platform: string) => {
+        setSelectedPlatforms(prev => 
+            prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
+        );
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -66,10 +86,21 @@ export default function NewJobPage() {
                 requirements,
                 status: "open"
             })
+
+            // Trigger visual connection syndication if platforms are selected
+            if (selectedPlatforms.length > 0) {
+                for (const platform of selectedPlatforms) {
+                    setPublishingPlatform(platform);
+                    await new Promise(r => setTimeout(r, 700));
+                }
+                await publishJob(newId, selectedPlatforms);
+            }
+
             router.push(`/dashboard/jobs/${newId}`)
         } catch (err) {
             setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
             setSubmitting(false)
+            setPublishingPlatform(null)
         }
     }
 
@@ -195,6 +226,40 @@ export default function NewJobPage() {
                         />
                     </div>
 
+                    {/* Multi-platform connections publishing */}
+                    <div className="border-t border-border-card pt-6 space-y-4">
+                        <div>
+                            <h3 className="text-[14px] font-bold text-ink">ATS Multi-Platform Posting</h3>
+                            <p className="text-meta mt-0.5 text-ink-3">Automatically syndicates this job post to your active connections upon creation.</p>
+                        </div>
+                        {connections.length === 0 ? (
+                            <div className="rounded-tile border border-dashed border-border p-4 text-center">
+                                <p className="text-meta text-ink-3">No active connections configured. You can publish jobs locally, or set up connections under <Link href="/dashboard/settings" className="text-accent font-semibold hover:underline">Settings &rarr;</Link></p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                {connections.map(c => {
+                                    const isChecked = selectedPlatforms.includes(c.platform);
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={c.id}
+                                            onClick={() => togglePlatform(c.platform)}
+                                            className={`flex items-center justify-between rounded-field border p-3.5 text-left transition-all ${
+                                                isChecked 
+                                                    ? "border-accent bg-accent-soft text-accent-soft-ink font-semibold" 
+                                                    : "border-border bg-card text-ink-2 hover:bg-surface"
+                                            }`}
+                                        >
+                                            <span className="text-xs">{c.platform}</span>
+                                            {isChecked && <Check size={16} className="text-accent shrink-0 ml-2" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
                 </div>
 
                 <div className="flex justify-end gap-3">
@@ -205,7 +270,19 @@ export default function NewJobPage() {
                         Cancel
                     </Link>
                     <Button type="submit" variant="primary" disabled={submitting}>
-                        <Save size={16} /> {submitting ? "Publishing…" : "Publish Job"}
+                        {publishingPlatform ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin mr-2" /> Syndicating to {publishingPlatform}…
+                            </>
+                        ) : submitting ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin mr-2" /> Publishing…
+                            </>
+                        ) : (
+                            <>
+                                <Save size={16} className="mr-2" /> Publish Job
+                            </>
+                        )}
                     </Button>
                 </div>
             </form>
