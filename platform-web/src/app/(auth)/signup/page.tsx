@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { provisionOrganization } from "@/lib/data/organizations"
 import { Card } from "@/components/Card"
 import { Button } from "@/components/Button"
 import { Input } from "@/components/Field"
@@ -19,6 +18,7 @@ export default function SignupPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [checkEmail, setCheckEmail] = useState(false)
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -26,25 +26,46 @@ export default function SignupPage() {
         setError("")
 
         const supabase = createClient()
-        const { error: signUpError } = await supabase.auth.signUp({
+        // Pass org + name as metadata so the org can be provisioned either by the
+        // 007 auth.users trigger (if applied) or by ensureOrganization() once a
+        // real session exists. We do NOT provision here: with email confirmation
+        // ON there is no session yet, which was the original signup failure (B1).
+        const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { full_name: fullName } },
+            options: { data: { full_name: fullName, org_name: orgName } },
         })
         if (signUpError) {
             setError(signUpError.message)
             setIsLoading(false)
             return
         }
-        try {
-            await provisionOrganization(orgName)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create organization")
+        // No session => email confirmation is required. Show a check-your-email state.
+        if (!data.session) {
+            setCheckEmail(true)
             setIsLoading(false)
             return
         }
-        router.push("/dashboard")
+        // Session exists (confirmation off): the /onboarding guard will ensure the org.
+        router.push("/onboarding")
         router.refresh()
+    }
+
+    if (checkEmail) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <Card className="w-full max-w-md p-10 text-center">
+                    <h1 className="font-serif text-3xl text-ink mb-2 tracking-tight">Check your email</h1>
+                    <p className="text-ink-2 mb-6">
+                        We sent a confirmation link to <span className="font-bold text-ink">{email}</span>.
+                        Confirm it to activate <span className="font-bold text-ink">{orgName}</span> and sign in.
+                    </p>
+                    <Link href="/login" className="text-ink underline underline-offset-2">
+                        Back to sign in
+                    </Link>
+                </Card>
+            </div>
+        )
     }
 
     return (

@@ -113,9 +113,10 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                         ))}
                     </ul>
                 </SectionCard>
+            )}
             {/* Multi-Platform Syndication */}
-            <SectionCard 
-                title="Multi-Platform Syndication" 
+            <SectionCard
+                title="Multi-Platform Syndication"
                 subtitle="Syndicate this post to connected boards and track publication URLs."
                 action={<Globe size={18} className="text-accent" />}
             >

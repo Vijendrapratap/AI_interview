@@ -230,7 +230,7 @@ import {
     Radio, 
     Landmark, 
     Unplug, 
-    CloudZap,
+    Cloud,
     Plus,
     Share2,
     Briefcase,
@@ -380,7 +380,7 @@ function IntegrationsTab() {
                                 <div key={c.id} className="flex items-center justify-between py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="rounded-tile bg-accent-soft p-2 text-accent-soft-ink">
-                                            <CloudZap size={18} />
+                                            <Cloud size={18} />
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-ink">{c.platform}</p>

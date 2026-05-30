@@ -46,6 +46,32 @@ export async function provisionOrganization(orgName: string): Promise<string> {
   return data as string;
 }
 
+/**
+ * Idempotently guarantees the signed-in user has an organization, returning its id.
+ * Safe to call on every authenticated entry: returns the existing org if there is
+ * one, otherwise provisions a new one. This is the app-layer recovery that fixes
+ * B1/B2 even before the 007 auth.users trigger is applied — it runs only once a
+ * real session exists, so it never hits the "no session at signup" timing bug.
+ */
+export async function ensureOrganization(orgName?: string): Promise<string | null> {
+  const existing = await getCurrentOrgId();
+  if (existing) return existing;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null; // not signed in — caller should redirect to /login
+
+  const fallbackName =
+    orgName?.trim() ||
+    (user.user_metadata?.org_name as string | undefined)?.trim() ||
+    ((user.user_metadata?.full_name as string | undefined)?.trim()
+      ? `${(user.user_metadata!.full_name as string).trim()}'s workspace`
+      : undefined) ||
+    (user.email ? `${user.email.split("@")[0]}'s workspace` : "My workspace");
+
+  return provisionOrganization(fallbackName);
+}
+
 export async function inviteMember(email: string, role: OrgRole) {
   const supabase = await createClient();
   const orgId = await getCurrentOrgId();
