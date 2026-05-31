@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentOrgId } from "@/lib/data/organizations";
+import { getCurrentOrgId, isPlatformAdmin } from "@/lib/data/organizations";
 import DashboardShell from "./DashboardShell";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -7,8 +7,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // Guard against the org-less state that caused B2 (and any orphaned account):
     // send them to /onboarding to provision a workspace instead of 500ing every
     // org-scoped page.
-    const orgId = await getCurrentOrgId();
+    const [orgId, platformAdmin] = await Promise.all([
+        getCurrentOrgId(),
+        isPlatformAdmin().catch(() => false),
+    ]);
     if (!orgId) redirect("/onboarding");
 
-    return <DashboardShell>{children}</DashboardShell>;
+    return <DashboardShell platformAdmin={platformAdmin}>{children}</DashboardShell>;
 }

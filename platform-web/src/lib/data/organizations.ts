@@ -92,3 +92,96 @@ export async function acceptInvitation(token: string): Promise<string> {
   if (error) throw new Error(error.message);
   return data as string;
 }
+
+// ── Roles & membership (Phase 2: 3-layer org model) ──────────────────────────
+
+export type OrgMember = { user_id: string; role: OrgRole; email: string | null; full_name: string | null; created_at: string };
+export type Invitation = { id: string; email: string; role: OrgRole; expires_at: string; accepted_at: string | null };
+
+/** True if the current user is a Pratap-AI platform owner (Layer 3 super-admin). */
+export async function isPlatformAdmin(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("is_platform_admin");
+  return data === true;
+}
+
+/** The current user's role in their organization (Layer 1/2), or null. */
+export async function getMyRole(): Promise<OrgRole | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+  return (data?.role as OrgRole | undefined) ?? null;
+}
+
+/** Members of the current org, with email/name (via security-definer RPC). */
+export async function listOrgMembers(): Promise<OrgMember[]> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) return [];
+  const { data } = await supabase.rpc("org_members", { p_org: orgId });
+  return (data as OrgMember[] | null) ?? [];
+}
+
+/** Pending (unaccepted) invitations for the current org. */
+export async function listInvitations(): Promise<Invitation[]> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) return [];
+  const { data } = await supabase
+    .from("invitations")
+    .select("id, email, role, expires_at, accepted_at")
+    .eq("organization_id", orgId)
+    .is("accepted_at", null)
+    .order("expires_at", { ascending: false });
+  return (data as Invitation[] | null) ?? [];
+}
+
+export async function setMemberRole(userId: string, role: OrgRole): Promise<void> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) throw new Error("No organization");
+  const { error } = await supabase.rpc("set_member_role", { p_org: orgId, p_user: userId, p_role: role });
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/team");
+}
+
+export async function removeMember(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) throw new Error("No organization");
+  const { error } = await supabase.rpc("remove_member", { p_org: orgId, p_user: userId });
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/team");
+}
+
+export type RecruiterStat = { user_id: string; jobs: number; applications: number; hires: number; interviews: number };
+
+/** Per-recruiter performance for the company-admin rollup (owner/admin only). */
+export async function listRecruiterStats(): Promise<RecruiterStat[]> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) return [];
+  const { data } = await supabase.rpc("org_recruiter_stats", { p_org: orgId });
+  const rows = (data as Array<Record<string, number | string>> | null) ?? [];
+  return rows.map((r) => ({
+    user_id: String(r.user_id),
+    jobs: Number(r.jobs),
+    applications: Number(r.applications),
+    hires: Number(r.hires),
+    interviews: Number(r.interviews),
+  }));
+}
+
+export async function revokeInvitation(invitationId: string): Promise<void> {
+  const supabase = await createClient();
+  const orgId = await getCurrentOrgId();
+  if (!orgId) throw new Error("No organization");
+  await supabase.from("invitations").delete().eq("id", invitationId).eq("organization_id", orgId);
+  revalidatePath("/dashboard/team");
+}

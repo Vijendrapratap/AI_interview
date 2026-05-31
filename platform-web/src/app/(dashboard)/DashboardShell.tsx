@@ -5,12 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard, Users, Briefcase, Settings, Search, Bell, TrendingUp,
-    LogOut, Kanban, CalendarClock, MessageSquare, Mail, Bot, Radar, Route
+    LogOut, Kanban, CalendarClock, MessageSquare, Mail, Bot, Radar, Route, UserCog, ShieldCheck
 } from "lucide-react";
 import { ToastProvider } from "@/components";
 import { createClient } from "@/lib/supabase/client";
 
-export default function DashboardShell({ children }: { children: React.ReactNode }) {
+export default function DashboardShell({ children, platformAdmin = false }: { children: React.ReactNode; platformAdmin?: boolean }) {
     const [userInitials, setUserInitials] = useState("??");
     const router = useRouter();
 
@@ -58,7 +58,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                             <NavItem href="/dashboard/sourcing" icon={<Radar size={18} />}>Sourcing</NavItem>
                             <NavItem href="/dashboard/automations" icon={<Bot size={18} />}>Automations</NavItem>
                             <NavItem href="/dashboard/analytics" icon={<TrendingUp size={18} />}>Analytics</NavItem>
+                            <NavItem href="/dashboard/team" icon={<UserCog size={18} />}>Team</NavItem>
                             <NavItem href="/dashboard/settings" icon={<Settings size={18} />}>Settings</NavItem>
+                            {platformAdmin && (
+                                <NavItem href="/admin" icon={<ShieldCheck size={18} />}>Platform</NavItem>
+                            )}
                         </div>
 
                         <div className="border-t border-border pt-4">
