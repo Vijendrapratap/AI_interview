@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link";
 import { CheckCircle2, Mail, Send, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import { recruiterFlowSteps, screeningRules, testEmailDrafts } from "@/lib/mockData";
 import { Badge, Card, PageHeader, PreviewBanner } from "@/components";
@@ -28,9 +29,9 @@ export default function HiringFlowPage() {
                             ReCruItAI should feel like one clean hiring checklist, not a complex ATS. Recruiters create one job, collect resumes from every channel, let AI score and explain fit, then approve assessment emails for qualified candidates.
                         </p>
                     </div>
-                    <button className="inline-flex items-center justify-center gap-2 rounded-pill bg-accent px-5 h-10 text-[13px] font-bold text-accent-ink whitespace-nowrap shadow-sm transition hover:bg-accent-hover">
+                    <Link href="/dashboard/jobs/new" className="inline-flex items-center justify-center gap-2 rounded-pill bg-accent px-5 h-10 text-[13px] font-bold text-accent-ink whitespace-nowrap shadow-sm transition hover:bg-accent-hover">
                         <Send size={16} /> Start a hiring run
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -111,9 +112,9 @@ export default function HiringFlowPage() {
                                     <span className="flex items-center gap-1 text-xs font-medium text-ink-3">
                                         <CheckCircle2 size={14} /> {draft.status}
                                     </span>
-                                    <button className="rounded-tile bg-accent px-3 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-hover transition">
-                                        Approve send
-                                    </button>
+                                    <Link href="/dashboard/communications" className="rounded-tile bg-accent px-3 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-hover transition">
+                                        Review &amp; send
+                                    </Link>
                                 </div>
                             </div>
                         ))}

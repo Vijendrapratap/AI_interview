@@ -1,18 +1,23 @@
-"use client"
-
 import { Mail, MessageCircle, Send } from "lucide-react";
 import { mockCommunicationTemplates } from "@/lib/mockData";
-import { PageHeader, Card, SectionCard, Badge, PreviewBanner } from "@/components";
+import { PageHeader, Card, SectionCard, Badge } from "@/components";
+import { listEmailDrafts } from "@/lib/data/emails";
+import EmailApprovalQueue from "./EmailApprovalQueue";
 
-export default function CommunicationsPage() {
+export default async function CommunicationsPage() {
+    const drafts = await listEmailDrafts().catch(() => []);
+
     return (
         <div className="p-8 space-y-8">
-            <PreviewBanner />
             <PageHeader
                 eyebrow="Recruiter Tools"
                 title="Communication Center"
-                subtitle="Templates and candidate updates that reduce repetitive recruiter admin work."
+                subtitle="AI drafts emails; you approve and send. Interview invites and stage updates land here."
             />
+
+            <SectionCard title="Emails ready for approval">
+                <EmailApprovalQueue drafts={drafts} />
+            </SectionCard>
 
             <div className="grid gap-4 md:grid-cols-3">
                 <Panel icon={<Mail />} title="Email templates" body="Interview invites, rejections, follow-ups, and feedback reminders." />
@@ -20,11 +25,9 @@ export default function CommunicationsPage() {
                 <Panel icon={<Send />} title="Bulk sends" body="Draft bulk updates with recruiter approval before sending." />
             </div>
 
-            <SectionCard
-                title="Recruiter Templates"
-            >
+            <SectionCard title="Recruiter Templates">
                 <div className="grid gap-4 md:grid-cols-2">
-                    {mockCommunicationTemplates.map(template => (
+                    {mockCommunicationTemplates.map((template) => (
                         <Card key={template.id} variant="compact">
                             <div className="mb-2 flex items-center justify-between">
                                 <h3 className="text-card-title">{template.name}</h3>
@@ -42,10 +45,12 @@ export default function CommunicationsPage() {
 
 function Panel({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
     return (
-        <Card variant="default">
-            <div className="mb-3 text-accent">{icon}</div>
-            <h2 className="text-card-title">{title}</h2>
-            <p className="mt-2 text-meta">{body}</p>
+        <Card>
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-tile bg-accent-soft text-accent-soft-ink">
+                {icon}
+            </div>
+            <h3 className="text-card-title text-ink">{title}</h3>
+            <p className="mt-1 text-sm text-ink-3">{body}</p>
         </Card>
     );
 }
