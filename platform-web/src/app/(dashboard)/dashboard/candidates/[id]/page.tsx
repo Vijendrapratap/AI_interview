@@ -12,6 +12,8 @@ import {
 import { AnalysisStatus } from "@/components/AnalysisStatus";
 import { getCandidate, getLatestResume, getLatestAnalysis } from "@/lib/data/candidates";
 import { rerunAnalysis } from "@/lib/data/resumes";
+import { createInterviewForApplication, getInterviewForApplication } from "@/lib/data/interviews";
+import { revalidatePath } from "next/cache";
 
 // Thin FormData wrapper so the Re-run form can call the string-based server action.
 // Wrapped so a failure (e.g. no resume) marks the row failed instead of 500ing (B4).
@@ -23,6 +25,21 @@ async function rerunAnalysisAction(formData: FormData) {
     await rerunAnalysis(applicationId);
   } catch (e) {
     console.error("[rerunAnalysis] failed", e);
+  }
+}
+
+// Creates a candidate-link interview and drafts the invite email (B5: the
+// interview goes to the CANDIDATE, it does not open at the recruiter).
+async function sendInterviewAction(formData: FormData) {
+  "use server";
+  const applicationId = String(formData.get("applicationId") ?? "");
+  const candidateId = String(formData.get("candidateId") ?? "");
+  if (!applicationId) return;
+  try {
+    await createInterviewForApplication(applicationId);
+    if (candidateId) revalidatePath(`/dashboard/candidates/${candidateId}`);
+  } catch (e) {
+    console.error("[createInterview] failed", e);
   }
 }
 
@@ -57,6 +74,7 @@ export default async function CandidateDetailPage({
   // Fetch latest resume + its analysis in parallel
   const latestResume = await getLatestResume(id);
   const analysis = latestResume ? await getLatestAnalysis(latestResume.id) : null;
+  const interview = firstApp ? await getInterviewForApplication(firstApp.id).catch(() => null) : null;
 
   const initials = (candidate.full_name as string)
     .split(" ")
@@ -127,11 +145,15 @@ export default async function CandidateDetailPage({
                 initialScore={firstApp.ai_score}
               />
             )}
-            <Link href={`/interview/mock-session-${id}`} target="_blank">
-              <Button variant="primary" size="md">
-                <Send size={16} /> Start Interview Now
-              </Button>
-            </Link>
+            {firstApp && !interview && (
+              <form action={sendInterviewAction}>
+                <input type="hidden" name="applicationId" value={firstApp.id} />
+                <input type="hidden" name="candidateId" value={id} />
+                <Button variant="primary" size="md" type="submit">
+                  <Send size={16} /> Send AI interview
+                </Button>
+              </form>
+            )}
           </>
         }
       />
@@ -375,6 +397,63 @@ export default async function CandidateDetailPage({
                 </form>
               </SectionCard>
             )}
+
+          {/* AI Interview */}
+          {firstApp && (
+            <SectionCard title="AI Interview">
+              {interview ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-ink-2">Status</span>
+                    <Badge tone={interview.status === "completed" ? "success" : "neutral"}>{interview.status}</Badge>
+                  </div>
+                  {interview.overallScore != null && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-ink-2">Interview score</span>
+                      <b className="text-ink">{Math.round(interview.overallScore)}/100</b>
+                    </div>
+                  )}
+                  {interview.recommendation && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-ink-2">Recommendation</span>
+                      <Badge tone="accent">{interview.recommendation}</Badge>
+                    </div>
+                  )}
+                  <div>
+                    <p className="mb-1 text-xs font-bold text-ink-2">Candidate link</p>
+                    <p className="break-all rounded-tile border border-border-card bg-surface-muted p-2 text-xs text-ink-3">
+                      {interview.link}
+                    </p>
+                    <p className="mt-1 text-[11px] text-ink-3">
+                      Sent to {interview.invitedEmail ?? "the candidate"} (also draft in Comms). Share this private link if needed.
+                    </p>
+                  </div>
+                  {interview.status === "completed" && (
+                    <Link
+                      href={`/dashboard/candidates/${id}/scorecard`}
+                      className="text-sm text-accent hover:underline"
+                    >
+                      View full scorecard
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-ink-3">
+                    Generate AI interview questions from this candidate&apos;s resume gaps and email them a private
+                    link to take it — no recruiter time needed.
+                  </p>
+                  <form action={sendInterviewAction}>
+                    <input type="hidden" name="applicationId" value={firstApp.id} />
+                    <input type="hidden" name="candidateId" value={id} />
+                    <Button type="submit" variant="primary" size="md">
+                      <Send size={16} /> Create &amp; send AI interview
+                    </Button>
+                  </form>
+                </div>
+              )}
+            </SectionCard>
+          )}
 
           {/* Score summary */}
           {overallScore != null && (
