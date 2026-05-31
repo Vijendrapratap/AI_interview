@@ -13,11 +13,17 @@ import { AnalysisStatus } from "@/components/AnalysisStatus";
 import { getCandidate, getLatestResume, getLatestAnalysis } from "@/lib/data/candidates";
 import { rerunAnalysis } from "@/lib/data/resumes";
 
-// Thin FormData wrapper so the Re-run form can call the string-based server action
+// Thin FormData wrapper so the Re-run form can call the string-based server action.
+// Wrapped so a failure (e.g. no resume) marks the row failed instead of 500ing (B4).
 async function rerunAnalysisAction(formData: FormData) {
   "use server";
   const applicationId = String(formData.get("applicationId") ?? "");
-  if (applicationId) await rerunAnalysis(applicationId);
+  if (!applicationId) return;
+  try {
+    await rerunAnalysis(applicationId);
+  } catch (e) {
+    console.error("[rerunAnalysis] failed", e);
+  }
 }
 
 export default async function CandidateDetailPage({
@@ -68,6 +74,30 @@ export default async function CandidateDetailPage({
   const overallScore: number | null =
     analysis?.overall_score ?? firstApp?.ai_score ?? null;
 
+  // breakdown is now { scores, summary, recommendation, screening_questions };
+  // tolerate the legacy flat-numeric shape too.
+  const bd = (analysis?.breakdown ?? null) as
+    | {
+        scores?: Record<string, number>;
+        summary?: string;
+        recommendation?: string;
+        screening_questions?: Array<{ question: string; target_competency: string; why_it_matters: string }>;
+      }
+    | Record<string, number>
+    | null;
+  const breakdownScores: Record<string, number> =
+    bd && typeof bd === "object" && "scores" in bd && bd.scores
+      ? (bd.scores as Record<string, number>)
+      : bd && typeof bd === "object"
+        ? (Object.fromEntries(Object.entries(bd).filter(([, v]) => typeof v === "number")) as Record<string, number>)
+        : {};
+  const aiSummary: string =
+    bd && typeof bd === "object" && "summary" in bd ? String((bd as { summary?: string }).summary ?? "") : "";
+  const screeningQuestions =
+    bd && typeof bd === "object" && "screening_questions" in bd && Array.isArray((bd as { screening_questions?: unknown }).screening_questions)
+      ? ((bd as { screening_questions: Array<{ question: string; target_competency: string; why_it_matters: string }> }).screening_questions)
+      : [];
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-8">
       <Link
@@ -107,11 +137,9 @@ export default async function CandidateDetailPage({
       />
 
       {/* Score breakdown — only when analysis is available */}
-      {analysis?.breakdown ? (
+      {Object.keys(breakdownScores).length > 0 ? (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Object.entries(
-            analysis.breakdown as Record<string, number>
-          ).map(([label, score]) => (
+          {Object.entries(breakdownScores).map(([label, score]) => (
             <ScoreCard key={label} label={label} score={score} />
           ))}
         </div>
@@ -120,6 +148,14 @@ export default async function CandidateDetailPage({
           <ScoreCard label="Overall AI fit" score={overallScore} />
         </div>
       ) : null}
+
+      {/* AI screening summary */}
+      {aiSummary && (
+        <div className="rounded-card border border-border-card bg-accent-soft p-6">
+          <h3 className="text-card-title mb-2 text-accent-soft-ink">AI screening summary</h3>
+          <p className="text-sm leading-relaxed text-accent-soft-ink">{aiSummary}</p>
+        </div>
+      )}
 
       {/* Red Flags Alert */}
       {analysis?.red_flags && (analysis.red_flags as string[]).length > 0 && (
@@ -240,6 +276,28 @@ export default async function CandidateDetailPage({
                   </div>
                 </div>
               )}
+            </SectionCard>
+          )}
+
+          {/* AI-generated screening questions (probe the gaps) */}
+          {screeningQuestions.length > 0 && (
+            <SectionCard
+              title="Suggested screening questions"
+              action={<span className="text-sm text-ink-2">AI-generated from resume ↔ JD gaps</span>}
+            >
+              <ol className="space-y-4">
+                {screeningQuestions.map((q, i) => (
+                  <li key={i} className="rounded-tile border border-border-card p-4">
+                    <p className="text-sm font-semibold text-ink">
+                      {i + 1}. {q.question}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-3">
+                      {q.target_competency && <Badge tone="neutral">{q.target_competency}</Badge>}
+                      {q.why_it_matters && <span>{q.why_it_matters}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </SectionCard>
           )}
 
