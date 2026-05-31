@@ -11,12 +11,15 @@ import "server-only";
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
-// Free models on OpenRouter (no spend). First that succeeds wins.
+// Free models on OpenRouter (no spend). First that succeeds wins. Verified
+// available 2026-06; the free tier is rate-limited, so we keep several fallbacks
+// and retry. (Add a one-time OpenRouter credit to raise the free daily limit.)
 const DEFAULT_MODELS = [
-  "deepseek/deepseek-chat-v3-0324:free",
+  "z-ai/glm-4.5-air:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
   "meta-llama/llama-3.3-70b-instruct:free",
-  "qwen/qwen-2.5-72b-instruct:free",
-  "google/gemini-2.0-flash-exp:free",
+  "google/gemma-4-31b-it:free",
+  "nousresearch/hermes-3-llama-3.1-405b:free",
 ];
 
 function models(): string[] {
@@ -37,36 +40,42 @@ export async function chat(
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new LLMUnavailableError("OPENROUTER_API_KEY is not set");
 
+  const list = models();
   let lastErr: unknown = null;
-  for (const model of models()) {
-    try {
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-          // Optional attribution headers (recommended by OpenRouter).
-          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://recruitai-test.vercel.app",
-          "X-Title": "ReCruItAI",
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: opts.temperature ?? 0.2,
-          max_tokens: opts.maxTokens ?? 2000,
-          ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
-        }),
-      });
-      if (!res.ok) {
-        lastErr = new Error(`OpenRouter ${model} -> ${res.status} ${await res.text().catch(() => "")}`.slice(0, 500));
-        continue;
+  // Two passes: the free tier rate-limits (429), so a short backoff + retry of
+  // the whole list materially improves reliability.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1500));
+    for (const model of list) {
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+            // Optional attribution headers (recommended by OpenRouter).
+            "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "https://recruitai-test.vercel.app",
+            "X-Title": "ReCruItAI",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: opts.temperature ?? 0.2,
+            max_tokens: opts.maxTokens ?? 2000,
+            ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
+          }),
+        });
+        if (!res.ok) {
+          lastErr = new Error(`OpenRouter ${model} -> ${res.status} ${await res.text().catch(() => "")}`.slice(0, 500));
+          continue;
+        }
+        const data = await res.json();
+        const content = data?.choices?.[0]?.message?.content;
+        if (typeof content === "string" && content.trim()) return content;
+        lastErr = new Error(`OpenRouter ${model} returned empty content`);
+      } catch (e) {
+        lastErr = e;
       }
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (typeof content === "string" && content.trim()) return content;
-      lastErr = new Error(`OpenRouter ${model} returned empty content`);
-    } catch (e) {
-      lastErr = e;
     }
   }
   throw new LLMUnavailableError(
