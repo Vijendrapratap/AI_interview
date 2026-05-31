@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { extractResumeText } from "@/lib/resume/parse";
 import { chatJSON, type ChatMessage } from "@/lib/llm/openrouter";
@@ -86,9 +87,12 @@ export async function runScreening(params: {
   resumeId: string;
   applicationId: string;
   jobId: string | null;
+  client?: SupabaseClient;
 }): Promise<void> {
   const { resumeId, applicationId, jobId } = params;
-  const supabase = await createClient();
+  // Use the provided client (e.g. service-role for public/candidate applies where
+  // there is no recruiter session); otherwise the cookie-based server client.
+  const supabase = params.client ?? (await createClient());
 
   await supabase
     .from("applications")

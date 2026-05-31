@@ -114,6 +114,30 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                     </ul>
                 </SectionCard>
             )}
+            {/* Public application link */}
+            <SectionCard
+                title="Public application link"
+                subtitle="Share this link anywhere — candidates apply and are screened automatically."
+                action={<Globe size={18} className="text-accent" />}
+            >
+                {job.status === "open" ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <code className="flex-1 break-all rounded-field border border-border-card bg-surface-muted px-3 py-2 text-xs text-ink-2">
+                            {(process.env.NEXT_PUBLIC_SITE_URL || "https://recruitai-test.vercel.app").replace(/\/$/, "")}/jobs/{job.id}
+                        </code>
+                        <a
+                            href={`/jobs/${job.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-sm font-bold text-accent-ink"
+                        >
+                            <ExternalLink size={14} /> Preview
+                        </a>
+                    </div>
+                ) : (
+                    <p className="text-sm text-ink-3">Set this job&apos;s status to <b>Open</b> to publish a public application link.</p>
+                )}
+            </SectionCard>
             {/* Multi-Platform Syndication */}
             <SectionCard
                 title="Multi-Platform Syndication"
