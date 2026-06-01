@@ -35,14 +35,27 @@ export type CreateJobInput = {
   status: JobStatus;
 };
 
+function slugify(title: string): string {
+  const base = (title || "job").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `${base}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export async function createJob(input: CreateJobInput) {
   const supabase = await createClient();
   const orgId = await getCurrentOrgId();
   if (!orgId) throw new Error("No organization");
   const { data: { user } } = await supabase.auth.getUser();
+  // published mirrors an "open" status so the public career page can read it
+  // via the anon RLS policy (no service key needed for browsing).
   const { data, error } = await supabase
     .from("jobs")
-    .insert({ ...input, organization_id: orgId, created_by: user!.id })
+    .insert({
+      ...input,
+      organization_id: orgId,
+      created_by: user!.id,
+      published: input.status === "open",
+      slug: slugify(input.title),
+    })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -52,7 +65,10 @@ export async function createJob(input: CreateJobInput) {
 
 export async function updateJob(id: string, patch: Partial<CreateJobInput>) {
   const supabase = await createClient();
-  const { error } = await supabase.from("jobs").update(patch).eq("id", id);
+  // Keep `published` in sync with status when status changes.
+  const full: Record<string, unknown> = { ...patch };
+  if (patch.status !== undefined) full.published = patch.status === "open";
+  const { error } = await supabase.from("jobs").update(full).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/dashboard/jobs/${id}`);
   revalidatePath("/dashboard/jobs");

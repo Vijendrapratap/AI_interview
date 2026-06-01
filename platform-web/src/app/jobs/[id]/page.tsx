@@ -1,5 +1,5 @@
 import { MapPin, Briefcase, Building2 } from "lucide-react";
-import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import ApplyForm from "./ApplyForm";
 
 function Notice({ title, body }: { title: string; body: string }) {
@@ -13,22 +13,26 @@ function Notice({ title, body }: { title: string; body: string }) {
   );
 }
 
-// Public, shareable job + apply page. status='open' == published.
+const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
+  "full-time": "FULL_TIME",
+  "part-time": "PART_TIME",
+  contract: "CONTRACTOR",
+  internship: "INTERN",
+  temporary: "TEMPORARY",
+};
+
+// Public, shareable job + apply page. Reads via the anon "published" RLS policy
+// (no service key needed to browse; only applying writes via service role).
 export default async function PublicJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-
-  if (!hasServiceRole()) {
-    return <Notice title="Careers page not enabled yet" body="This job link will be available once setup is complete." />;
-  }
-
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, organization_id, title, department, location, employment_type, salary_min, salary_max, currency, description, requirements, status")
+    .select("id, organization_id, title, department, location, employment_type, salary_min, salary_max, currency, description, requirements, status, published, created_at")
     .eq("id", id)
     .maybeSingle();
 
-  if (!job || job.status !== "open") {
+  if (!job || (!job.published && job.status !== "open")) {
     return <Notice title="Position not available" body="This role isn't accepting applications right now." />;
   }
 
@@ -39,8 +43,33 @@ export default async function PublicJobPage({ params }: { params: Promise<{ id: 
       : null;
   const requirements = (Array.isArray(job.requirements) ? job.requirements : []) as string[];
 
+  // Google for Jobs structured data (JobPosting). Free organic distribution.
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "JobPosting",
+    title: job.title,
+    description: `<p>${(job.description || job.title).replace(/</g, "&lt;")}</p>` +
+      (requirements.length ? `<ul>${requirements.map((r) => `<li>${r.replace(/</g, "&lt;")}</li>`).join("")}</ul>` : ""),
+    datePosted: new Date(job.created_at).toISOString().slice(0, 10),
+    employmentType: EMPLOYMENT_TYPE_MAP[(job.employment_type || "").toLowerCase()] || "FULL_TIME",
+    hiringOrganization: { "@type": "Organization", name: org?.name ?? "Company" },
+    jobLocation: job.location
+      ? { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: job.location } }
+      : undefined,
+    ...(job.salary_min && job.salary_max
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: job.currency ?? "USD",
+            value: { "@type": "QuantitativeValue", minValue: job.salary_min, maxValue: job.salary_max, unitText: "YEAR" },
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="min-h-screen bg-surface">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="mx-auto max-w-3xl px-4 py-12">
         <p className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-ink-2">
           <Building2 size={15} /> {org?.name ?? "Careers"}
@@ -59,7 +88,7 @@ export default async function PublicJobPage({ params }: { params: Promise<{ id: 
 
         {requirements.length > 0 && (
           <div className="mt-8">
-            <h2 className="font-serif text-xl text-ink mb-3">What we're looking for</h2>
+            <h2 className="font-serif text-xl text-ink mb-3">What we&apos;re looking for</h2>
             <ul className="space-y-2">
               {requirements.map((r, i) => (
                 <li key={i} className="flex items-start gap-2 text-[15px] text-ink-2">
