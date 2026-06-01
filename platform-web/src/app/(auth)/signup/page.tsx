@@ -33,7 +33,12 @@ export default function SignupPage() {
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { full_name: fullName, org_name: orgName } },
+            options: {
+                data: { full_name: fullName, org_name: orgName },
+                // Send the confirmation link back to THIS origin (prod, not localhost),
+                // to a route that completes the confirmation and signs the user in.
+                emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            },
         })
         if (signUpError) {
             setError(signUpError.message)
