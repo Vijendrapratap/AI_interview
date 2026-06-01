@@ -1,4 +1,4 @@
-import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import InterviewRoom from "./InterviewRoom";
 
 type Question = { question: string; competency: string };
@@ -14,26 +14,13 @@ function Notice({ title, body }: { title: string; body: string }) {
   );
 }
 
-// Public, token-gated candidate interview. The token is the [id] segment.
+// Public, token-gated candidate interview. Reads via the get_interview RPC with
+// the anon key (no service-role key needed).
 export default async function InterviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: token } = await params;
+  const supabase = await createClient();
 
-  if (!hasServiceRole()) {
-    return (
-      <Notice
-        title="Interviews not enabled yet"
-        body="This interview link can't be opened until the workspace finishes setup. Please check back shortly."
-      />
-    );
-  }
-
-  const supabase = createAdminClient();
-  const { data: session } = await supabase
-    .from("interview_sessions")
-    .select("id, status, questions, invited_name, job_id, public_token")
-    .eq("public_token", token)
-    .maybeSingle();
-
+  const { data: session } = await supabase.rpc("get_interview", { p_token: token });
   if (!session) {
     return <Notice title="Invalid or expired link" body="This interview link is not valid. Please use the most recent link sent to you." />;
   }
@@ -41,25 +28,18 @@ export default async function InterviewPage({ params }: { params: Promise<{ id: 
     return <Notice title="Already completed" body="You've already submitted this interview. Thank you — the team will be in touch." />;
   }
 
-  let jobTitle = "the role";
-  if (session.job_id) {
-    const { data: job } = await supabase.from("jobs").select("title").eq("id", session.job_id).maybeSingle();
-    if (job?.title) jobTitle = job.title;
-  }
-
   const questions = (Array.isArray(session.questions) ? session.questions : []) as Question[];
   if (questions.length === 0) {
     return <Notice title="Interview not ready" body="This interview has no questions yet. Please contact the recruiter." />;
   }
 
-  // Mark as started (best effort).
-  await supabase.from("interview_sessions").update({ status: "in_progress", started_at: new Date().toISOString() }).eq("id", session.id);
+  await supabase.rpc("start_interview", { p_token: token });
 
   return (
     <InterviewRoom
       token={token}
       candidateName={session.invited_name ?? ""}
-      jobTitle={jobTitle}
+      jobTitle={session.job_title ?? "the role"}
       questions={questions}
     />
   );

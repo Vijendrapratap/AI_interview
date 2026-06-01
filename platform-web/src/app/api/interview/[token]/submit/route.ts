@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { scoreInterviewTranscript, type InterviewQuestion, type TranscriptTurn } from "@/lib/interview/engine";
 
 export const maxDuration = 120;
 
 /**
- * Candidate submits a completed interview. Public (token-gated) — uses the
- * service-role client because candidates aren't authenticated. Saves the
- * transcript, scores it via OpenRouter, writes interview_reports, and fuses the
- * interview score with the resume score into the application's decision.
+ * Candidate submits a completed interview. Public (token-gated), works with the
+ * ANON key via SECURITY DEFINER RPCs (no service-role key). Saves transcript +
+ * audio, scores the transcript, and fuses resume + interview into the decision.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -22,7 +21,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     tabSwitchCount = Number(form.get("tabSwitchCount")) || 0;
     audio = form.get("audio") as File | null;
   } catch {
-    // Back-compat: accept a JSON body too.
     try {
       const b = await req.json();
       transcript = Array.isArray(b.transcript) ? b.transcript : [];
@@ -33,35 +31,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   }
   if (!Array.isArray(transcript)) transcript = [];
 
-  let supabase;
-  try {
-    supabase = createAdminClient();
-  } catch {
-    return NextResponse.json({ error: "Server not configured for candidate submissions." }, { status: 503 });
-  }
+  const supabase = await createClient();
+  const { data: session } = await supabase.rpc("get_interview", { p_token: token });
+  if (!session) return NextResponse.json({ error: "Interview not found" }, { status: 404 });
+  if (session.status === "completed") return NextResponse.json({ ok: true, alreadyComplete: true });
 
-  const { data: session, error } = await supabase
-    .from("interview_sessions")
-    .select("id, organization_id, application_id, candidate_id, job_id, questions, status, is_analysed")
-    .eq("public_token", token)
-    .maybeSingle();
-  if (error || !session) return NextResponse.json({ error: "Interview not found" }, { status: 404 });
-  if (session.status === "completed" && session.is_analysed) {
-    return NextResponse.json({ ok: true, alreadyComplete: true });
-  }
-
-  // Persist the transcript + completion first, so nothing is lost even if scoring fails.
-  await supabase
-    .from("interview_sessions")
-    .update({
-      transcript,
-      status: "completed",
-      ended_at: new Date().toISOString(),
-      tab_switch_count: tabSwitchCount,
-    })
-    .eq("id", session.id);
-
-  // Upload the session audio recording (best effort) and store its path.
+  // Upload the recording (anon upload policy; org-scoped path so recruiters can read it).
+  let recordingPath: string | null = null;
   if (audio && audio.size > 0) {
     try {
       const path = `${session.organization_id}/${session.id}.webm`;
@@ -69,75 +45,50 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
       const { error: upErr } = await supabase.storage
         .from("interview-recordings")
         .upload(path, bytes, { contentType: audio.type || "audio/webm", upsert: true });
-      if (!upErr) await supabase.from("interview_sessions").update({ recording_url: path }).eq("id", session.id);
+      if (!upErr) recordingPath = path;
     } catch {
-      /* recording is a nice-to-have; never block scoring on it */
+      /* recording is best effort */
     }
   }
 
-  const questions = (session.questions as InterviewQuestion[]) ?? [];
-  let jobTitle = "the role";
-  if (session.job_id) {
-    const { data: job } = await supabase.from("jobs").select("title").eq("id", session.job_id).maybeSingle();
-    if (job?.title) jobTitle = job.title;
-  }
+  // Save transcript + completion + recording.
+  await supabase.rpc("submit_interview", {
+    p_token: token,
+    p_transcript: transcript,
+    p_tabs: tabSwitchCount,
+    p_recording: recordingPath,
+  });
 
   try {
-    const score = await scoreInterviewTranscript({ jobTitle, questions, transcript });
+    const questions = (session.questions as InterviewQuestion[]) ?? [];
+    const score = await scoreInterviewTranscript({
+      jobTitle: session.job_title ?? "the role",
+      questions,
+      transcript,
+    });
 
-    await supabase
-      .from("interview_sessions")
-      .update({
-        scores: score,
-        overall_score: score.overall_score,
-        recommendation: score.recommendation,
-        is_analysed: true,
-      })
-      .eq("id", session.id);
+    const resumeScore = typeof session.resume_score === "number" ? session.resume_score : null;
+    const decisionScore =
+      resumeScore != null ? Math.round(0.3 * resumeScore + 0.7 * score.overall_score) : score.overall_score;
+    const decision = {
+      resume_score: resumeScore,
+      interview_score: score.overall_score,
+      decision_score: decisionScore,
+      recommendation: score.recommendation,
+      computed_at: new Date().toISOString(),
+    };
 
-    await supabase.from("interview_reports").upsert(
-      {
-        session_id: session.id,
-        summary: score.summary,
-        scorecard: score,
-        recommendation: score.recommendation,
-      },
-      { onConflict: "session_id" }
-    );
-
-    // Decision fusion: 0.30 resume + 0.70 interview (interview is higher-signal).
-    if (session.application_id) {
-      const { data: app } = await supabase
-        .from("applications")
-        .select("id, ai_score")
-        .eq("id", session.application_id)
-        .maybeSingle();
-      const resumeScore = typeof app?.ai_score === "number" ? app.ai_score : null;
-      const decisionScore =
-        resumeScore != null
-          ? Math.round(0.3 * resumeScore + 0.7 * score.overall_score)
-          : score.overall_score;
-      await supabase
-        .from("applications")
-        .update({
-          decision: {
-            resume_score: resumeScore,
-            interview_score: score.overall_score,
-            decision_score: decisionScore,
-            recommendation: score.recommendation,
-            computed_at: new Date().toISOString(),
-          },
-        })
-        .eq("id", session.application_id);
-    }
+    await supabase.rpc("save_interview_result", {
+      p_token: token,
+      p_scores: score,
+      p_overall: score.overall_score,
+      p_recommendation: score.recommendation,
+      p_decision: decision,
+    });
 
     return NextResponse.json({ ok: true, overall_score: score.overall_score, recommendation: score.recommendation });
   } catch (e) {
-    // Transcript is saved; scoring can be retried by the recruiter later.
-    return NextResponse.json({
-      ok: true,
-      scored: false,
-      note: e instanceof Error ? e.message : "scoring failed",
-    });
+    // Transcript is saved; scoring can be retried later.
+    return NextResponse.json({ ok: true, scored: false, note: e instanceof Error ? e.message : "scoring failed" });
   }
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
 import { PageHeader, SectionCard, Badge, EmptyState } from "@/components";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient, hasServiceRole } from "@/lib/supabase/admin";
 
 type PerQ = { question: string; score: number; feedback: string };
 type Scores = {
@@ -44,11 +43,10 @@ export default async function InterviewReportPage({ params }: { params: Promise<
   const scores = (session.scores ?? {}) as Scores;
   const transcript = (Array.isArray(session.transcript) ? session.transcript : []) as Turn[];
 
-  // Signed URL for the private recording (needs service role).
+  // Signed URL for the private recording (org members can read via storage policy).
   let audioUrl: string | null = null;
-  if (session.recording_url && hasServiceRole()) {
-    const admin = createAdminClient();
-    const { data } = await admin.storage.from("interview-recordings").createSignedUrl(session.recording_url as string, 3600);
+  if (session.recording_url) {
+    const { data } = await supabase.storage.from("interview-recordings").createSignedUrl(session.recording_url as string, 3600);
     audioUrl = data?.signedUrl ?? null;
   }
 

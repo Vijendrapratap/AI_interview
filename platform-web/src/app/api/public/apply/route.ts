@@ -1,22 +1,18 @@
-import { NextResponse } from "next/server";
-import { after } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { NextResponse, after } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { runScreening } from "@/lib/ai";
+import { extractResumeText } from "@/lib/resume/parse";
 
 export const maxDuration = 60;
 
 /**
  * Public job application — a candidate (not logged in) submits their resume.
- * Uses the service-role client to write past RLS, then screens the resume in the
- * background. This is the inbound "collect resumes" channel for the career page.
+ * Works with the ANON key via SECURITY DEFINER RPCs + scoped storage policies
+ * (no service-role key needed). Screens the resume in the background from the
+ * in-memory bytes (no storage round-trip).
  */
 export async function POST(req: Request) {
-  let supabase;
-  try {
-    supabase = createAdminClient();
-  } catch {
-    return NextResponse.json({ error: "Applications aren't enabled yet. Please try again later." }, { status: 503 });
-  }
+  const supabase = await createClient();
 
   const form = await req.formData();
   const fullName = String(form.get("full_name") || "").trim();
@@ -30,79 +26,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Resume must be under 10 MB." }, { status: 400 });
   }
 
-  // Job must exist and be open to the public.
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("id, organization_id, status")
-    .eq("id", jobId)
-    .maybeSingle();
+  // Job must be open + public (anon can read it via the published RLS policy).
+  const { data: job } = await supabase.from("jobs").select("organization_id, status").eq("id", jobId).maybeSingle();
   if (!job || job.status !== "open") {
     return NextResponse.json({ error: "This job is no longer accepting applications." }, { status: 404 });
   }
   const orgId = job.organization_id as string;
 
-  // Candidate
-  const { data: candidate, error: cErr } = await supabase
-    .from("candidates")
-    .insert({
-      organization_id: orgId,
-      full_name: fullName,
-      email,
-      phone: String(form.get("phone") || "") || null,
-      current_role: String(form.get("current_role") || "") || null,
-      current_company: String(form.get("current_company") || "") || null,
-      source: "careers",
-    })
-    .select("id")
-    .single();
-  if (cErr || !candidate) return NextResponse.json({ error: "Could not save your details." }, { status: 500 });
-  const candidateId = candidate.id as string;
-
-  // Resume file -> storage
+  // Upload resume (anon upload policy). Path is org-scoped so recruiters can read it.
   const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "_");
-  const storagePath = `${orgId}/${candidateId}/${Date.now()}-${safeName}`;
-  const buf = new Uint8Array(await file.arrayBuffer());
+  const storagePath = `${orgId}/careers/${crypto.randomUUID()}-${safeName}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
   const { error: upErr } = await supabase.storage
     .from("resumes")
-    .upload(storagePath, buf, { contentType: file.type || "application/octet-stream" });
+    .upload(storagePath, bytes, { contentType: file.type || "application/octet-stream" });
   if (upErr) return NextResponse.json({ error: "Could not upload your resume." }, { status: 500 });
 
-  const { data: resume, error: rErr } = await supabase
-    .from("resumes")
-    .insert({
-      organization_id: orgId,
-      candidate_id: candidateId,
-      storage_path: storagePath,
-      file_name: file.name,
-      mime_type: file.type || "application/octet-stream",
-      byte_size: file.size,
-    })
-    .select("id")
-    .single();
-  if (rErr || !resume) return NextResponse.json({ error: "Could not save your resume." }, { status: 500 });
+  // Create candidate + resume + application via the definer RPC.
+  const { data: ids, error: applyErr } = await supabase.rpc("public_apply", {
+    p_job: jobId,
+    p_name: fullName,
+    p_email: email,
+    p_phone: String(form.get("phone") || ""),
+    p_role: String(form.get("current_role") || ""),
+    p_company: String(form.get("current_company") || ""),
+    p_storage_path: storagePath,
+    p_file: file.name,
+    p_mime: file.type || "application/octet-stream",
+    p_size: file.size,
+  });
+  if (applyErr || !ids) {
+    return NextResponse.json({ error: "Could not record your application." }, { status: 500 });
+  }
+  const { application_id, resume_id } = ids as { application_id: string; resume_id: string };
 
-  // Application (pending screening)
-  const { data: application, error: aErr } = await supabase
-    .from("applications")
-    .insert({
-      organization_id: orgId,
-      candidate_id: candidateId,
-      job_id: jobId,
-      stage: "new",
-      analysis_status: "pending",
-    })
-    .select("id")
-    .single();
-  if (aErr || !application) return NextResponse.json({ error: "Could not record your application." }, { status: 500 });
-
-  // Screen in the background so the candidate gets an instant confirmation.
+  // Extract text now (we have the bytes) and screen in the background.
+  const text = await extractResumeText(bytes, file.type || "", file.name);
   after(async () => {
-    await runScreening({
-      resumeId: resume.id as string,
-      applicationId: application.id as string,
-      jobId,
-      client: supabase,
-    });
+    await runScreening({ resumeId: resume_id, applicationId: application_id, jobId, client: supabase, text, orgId });
   });
 
   return NextResponse.json({ ok: true });

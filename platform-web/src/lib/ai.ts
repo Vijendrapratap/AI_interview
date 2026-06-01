@@ -88,38 +88,43 @@ export async function runScreening(params: {
   applicationId: string;
   jobId: string | null;
   client?: SupabaseClient;
+  text?: string; // pre-extracted resume text (public-apply path, avoids storage download)
+  orgId?: string;
 }): Promise<void> {
   const { resumeId, applicationId, jobId } = params;
-  // Use the provided client (e.g. service-role for public/candidate applies where
-  // there is no recruiter session); otherwise the cookie-based server client.
   const supabase = params.client ?? (await createClient());
 
-  await supabase
-    .from("applications")
-    .update({ analysis_status: "processing", analysis_error: null })
-    .eq("id", applicationId);
+  // All writes go through SECURITY DEFINER RPCs so this works whether the caller
+  // is an authenticated recruiter OR an anonymous candidate (public apply) — no
+  // service-role key required.
+  await supabase.rpc("set_analysis_status", { p_app: applicationId, p_status: "processing", p_error: null });
 
   try {
-    const { data: resume, error: rErr } = await supabase
-      .from("resumes")
-      .select("id, organization_id, storage_path, file_name, mime_type")
-      .eq("id", resumeId)
-      .single();
-    if (rErr || !resume) throw new Error(rErr?.message ?? "Resume not found");
+    let orgId = params.orgId ?? null;
+    let text = params.text ?? null;
 
-    const { data: file, error: dErr } = await supabase.storage.from("resumes").download(resume.storage_path);
-    if (dErr || !file) throw new Error(`Could not download resume: ${dErr?.message ?? "unknown"}`);
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const text = await extractResumeText(bytes, resume.mime_type ?? "", resume.file_name ?? "");
+    if (!text) {
+      const { data: resume, error: rErr } = await supabase
+        .from("resumes")
+        .select("organization_id, storage_path, file_name, mime_type")
+        .eq("id", resumeId)
+        .single();
+      if (rErr || !resume) throw new Error(rErr?.message ?? "Resume not found");
+      orgId = orgId ?? (resume.organization_id as string);
+      const { data: file, error: dErr } = await supabase.storage.from("resumes").download(resume.storage_path);
+      if (dErr || !file) throw new Error(`Could not download resume: ${dErr?.message ?? "unknown"}`);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      text = await extractResumeText(bytes, resume.mime_type ?? "", resume.file_name ?? "");
+    }
     if (!text || text.trim().length < 30) throw new Error("Could not extract readable text from resume");
+    if (!orgId) {
+      const { data: r } = await supabase.from("resumes").select("organization_id").eq("id", resumeId).maybeSingle();
+      orgId = (r?.organization_id as string) ?? null;
+    }
 
     let job: { title?: string; description?: string; requirements?: string[] } | null = null;
     if (jobId) {
-      const { data: j } = await supabase
-        .from("jobs")
-        .select("title, description, requirements")
-        .eq("id", jobId)
-        .maybeSingle();
+      const { data: j } = await supabase.from("jobs").select("title, description, requirements").eq("id", jobId).maybeSingle();
       job = j ?? null;
     }
 
@@ -154,39 +159,28 @@ export async function runScreening(params: {
         : [],
     };
 
-    const { error: insErr } = await supabase.from("resume_analyses").insert({
-      organization_id: resume.organization_id,
-      resume_id: resumeId,
-      job_id: jobId,
-      overall_score: result.overall_score,
-      ats_score: result.ats_score,
-      breakdown: {
+    const { error: saveErr } = await supabase.rpc("save_resume_analysis", {
+      p_application: applicationId,
+      p_resume: resumeId,
+      p_job: jobId,
+      p_org: orgId,
+      p_overall: result.overall_score,
+      p_ats: result.ats_score,
+      p_breakdown: {
         scores: result.scores,
         summary: result.summary,
         recommendation: result.recommendation,
         screening_questions: result.screening_questions,
       },
-      red_flags: result.red_flags,
-      skills_found: result.skills_found,
-      skills_missing: result.skills_missing,
+      p_red: result.red_flags,
+      p_found: result.skills_found,
+      p_missing: result.skills_missing,
+      p_recommendation: result.recommendation,
     });
-    if (insErr) throw new Error(insErr.message);
-
-    await supabase
-      .from("applications")
-      .update({
-        ai_score: result.overall_score,
-        recommendation: result.recommendation,
-        analysis_status: "complete",
-        analysis_error: null,
-      })
-      .eq("id", applicationId);
+    if (saveErr) throw new Error(saveErr.message);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await supabase
-      .from("applications")
-      .update({ analysis_status: "failed", analysis_error: msg.slice(0, 500) })
-      .eq("id", applicationId);
+    await supabase.rpc("set_analysis_status", { p_app: applicationId, p_status: "failed", p_error: msg.slice(0, 500) });
   }
 }
 
