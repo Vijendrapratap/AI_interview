@@ -35,6 +35,9 @@ export default function InterviewRoom({
   const finalRef = useRef("")
   const tabSwitchRef = useRef(0)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const mediaStreamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
     const SR = typeof window !== "undefined" && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
@@ -118,6 +121,18 @@ export default function InterviewRoom({
 
   const begin = useCallback(async () => {
     setPhase("running")
+    // Best-effort full-session audio capture (recruiter can replay it later).
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+      audioChunksRef.current = []
+      const mr = new MediaRecorder(stream)
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      mr.start(1000)
+      mediaRecorderRef.current = mr
+    } catch {
+      /* mic denied — interview still works (typed/voice transcript), just no recording */
+    }
     const intro = `Hi ${candidateName || "there"}. I'm your AI interviewer for the ${jobTitle} role. I'll ask ${questions.length} questions. Take your time, and answer naturally. Let's begin.`
     setTranscript([{ role: "ai", text: intro }])
     await speak(intro)
@@ -149,12 +164,23 @@ export default function InterviewRoom({
     const closing = "Thank you — that completes the interview. Your responses are being saved and reviewed."
     setTranscript((prev) => [...prev, { role: "ai", text: closing }])
     await speak(closing)
+
+    // Stop recording and collect the audio blob.
+    const audioBlob = await new Promise<Blob | null>((resolve) => {
+      const mr = mediaRecorderRef.current
+      const collect = () => resolve(audioChunksRef.current.length ? new Blob(audioChunksRef.current, { type: "audio/webm" }) : null)
+      if (!mr || mr.state === "inactive") return collect()
+      mr.onstop = collect
+      try { mr.stop() } catch { collect() }
+    })
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop())
+
     try {
-      const res = await fetch(`/api/interview/${token}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: finalTranscript, tabSwitchCount: tabSwitchRef.current }),
-      })
+      const fd = new FormData()
+      fd.append("transcript", JSON.stringify(finalTranscript))
+      fd.append("tabSwitchCount", String(tabSwitchRef.current))
+      if (audioBlob && audioBlob.size > 0) fd.append("audio", audioBlob, "interview.webm")
+      const res = await fetch(`/api/interview/${token}/submit`, { method: "POST", body: fd })
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || "Submit failed")
       setPhase("done")
     } catch (e) {

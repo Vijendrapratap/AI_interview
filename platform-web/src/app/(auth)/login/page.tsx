@@ -16,21 +16,32 @@ export default function LoginPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [needsConfirm, setNeedsConfirm] = useState(false)
+    const [resent, setResent] = useState(false)
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         setIsLoading(true)
         setError("")
+        setNeedsConfirm(false)
 
         const supabase = createClient()
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) {
             setError(authError.message)
+            if (/confirm/i.test(authError.message)) setNeedsConfirm(true)
             setIsLoading(false)
             return
         }
         router.push("/dashboard")
         router.refresh()
+    }
+
+    async function resendConfirmation() {
+        if (!email) return
+        const supabase = createClient()
+        await supabase.auth.resend({ type: "signup", email })
+        setResent(true)
     }
 
     return (
@@ -42,6 +53,17 @@ export default function LoginPage() {
                 {error && (
                     <div role="alert" aria-live="polite" className="mb-4 text-danger text-sm">
                         {error}
+                        {needsConfirm && (
+                            <div className="mt-2">
+                                {resent ? (
+                                    <span className="text-ink-2">Confirmation email re-sent to {email}.</span>
+                                ) : (
+                                    <button type="button" onClick={resendConfirmation} className="text-ink underline underline-offset-2">
+                                        Resend confirmation email
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 

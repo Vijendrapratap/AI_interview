@@ -13,13 +13,25 @@ export const maxDuration = 120;
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  let body: { transcript?: TranscriptTurn[]; tabSwitchCount?: number; durationSeconds?: number };
+  let transcript: TranscriptTurn[] = [];
+  let tabSwitchCount = 0;
+  let audio: File | null = null;
   try {
-    body = await req.json();
+    const form = await req.formData();
+    transcript = JSON.parse(String(form.get("transcript") || "[]"));
+    tabSwitchCount = Number(form.get("tabSwitchCount")) || 0;
+    audio = form.get("audio") as File | null;
   } catch {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    // Back-compat: accept a JSON body too.
+    try {
+      const b = await req.json();
+      transcript = Array.isArray(b.transcript) ? b.transcript : [];
+      tabSwitchCount = Number(b.tabSwitchCount) || 0;
+    } catch {
+      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    }
   }
-  const transcript = Array.isArray(body.transcript) ? body.transcript : [];
+  if (!Array.isArray(transcript)) transcript = [];
 
   let supabase;
   try {
@@ -45,9 +57,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
       transcript,
       status: "completed",
       ended_at: new Date().toISOString(),
-      tab_switch_count: Number(body.tabSwitchCount) || 0,
+      tab_switch_count: tabSwitchCount,
     })
     .eq("id", session.id);
+
+  // Upload the session audio recording (best effort) and store its path.
+  if (audio && audio.size > 0) {
+    try {
+      const path = `${session.organization_id}/${session.id}.webm`;
+      const bytes = new Uint8Array(await audio.arrayBuffer());
+      const { error: upErr } = await supabase.storage
+        .from("interview-recordings")
+        .upload(path, bytes, { contentType: audio.type || "audio/webm", upsert: true });
+      if (!upErr) await supabase.from("interview_sessions").update({ recording_url: path }).eq("id", session.id);
+    } catch {
+      /* recording is a nice-to-have; never block scoring on it */
+    }
+  }
 
   const questions = (session.questions as InterviewQuestion[]) ?? [];
   let jobTitle = "the role";

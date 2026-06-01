@@ -430,10 +430,10 @@ export default async function CandidateDetailPage({
                   </div>
                   {interview.status === "completed" && (
                     <Link
-                      href={`/dashboard/candidates/${id}/scorecard`}
+                      href={`/dashboard/candidates/${id}/interview`}
                       className="text-sm text-accent hover:underline"
                     >
-                      View full scorecard
+                      View interview report
                     </Link>
                   )}
                 </div>
