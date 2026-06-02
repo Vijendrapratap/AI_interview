@@ -51,8 +51,9 @@ export default function SignupPage() {
             setIsLoading(false)
             return
         }
-        // Session exists (confirmation off): the /onboarding guard will ensure the org.
-        router.push("/onboarding")
+        // Session exists (confirmation off): the org is created by the 007 trigger;
+        // go straight to the dashboard (its guard handles the rare no-org case).
+        router.push("/dashboard")
         router.refresh()
     }
 

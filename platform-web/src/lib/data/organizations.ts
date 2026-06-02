@@ -1,22 +1,14 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser, getCachedOrgId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export type OrgRole = "owner" | "admin" | "recruiter" | "hiring_manager" | "interviewer";
 
-/** The current user's organization id, or null if they have none. */
+/** The current user's organization id, or null. Deduped per request (see lib/auth). */
 export async function getCurrentOrgId(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
-  return data?.organization_id ?? null;
+  return getCachedOrgId();
 }
 
 export async function getCurrentOrg() {
@@ -107,9 +99,9 @@ export async function isPlatformAdmin(): Promise<boolean> {
 
 /** The current user's role in their organization (Layer 1/2), or null. */
 export async function getMyRole(): Promise<OrgRole | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
   const { data } = await supabase
     .from("organization_members")
     .select("role")

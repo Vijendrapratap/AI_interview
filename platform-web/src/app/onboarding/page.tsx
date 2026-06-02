@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getCurrentOrgId } from "@/lib/data/organizations";
+import { getCachedUser, getCachedOrgId } from "@/lib/auth";
 import OnboardingForm from "./OnboardingForm";
 
 export default async function OnboardingPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) redirect("/login");
 
     // Already provisioned (e.g. via the 007 trigger or a prior visit): skip ahead.
-    const orgId = await getCurrentOrgId();
+    const orgId = await getCachedOrgId();
     if (orgId) redirect("/dashboard");
 
     const meta = user.user_metadata ?? {};
