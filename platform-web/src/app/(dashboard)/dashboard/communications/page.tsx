@@ -81,8 +81,9 @@ export default async function CommunicationsPage() {
 
       {!smtpReady && (
         <Banner tone="warning" icon={<AlertTriangle size={16} />}>
-          Email sending is not configured yet — set SMTP_HOST/SMTP_USER/SMTP_PASS/EMAIL_FROM in
-          Vercel. Drafts are saved and can be sent once configured.
+          Email sending is not configured yet — set RESEND_API_KEY + EMAIL_FROM (or
+          SMTP_HOST/SMTP_USER/SMTP_PASS + EMAIL_FROM) in Vercel. Drafts are saved and can be
+          sent once configured.
         </Banner>
       )}
 
