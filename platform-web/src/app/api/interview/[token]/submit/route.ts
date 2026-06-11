@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { scoreInterviewTranscript, type InterviewQuestion, type TranscriptTurn } from "@/lib/interview/engine";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export const maxDuration = 120;
 
@@ -11,6 +12,9 @@ export const maxDuration = 120;
  */
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  if (!rateLimit(`isubmit:${clientIp(req)}`, 6, 60_000)) {
+    return NextResponse.json({ error: "Too many submissions. Please wait a minute and try again." }, { status: 429 });
+  }
 
   let transcript: TranscriptTurn[] = [];
   let tabSwitchCount = 0;
@@ -38,6 +42,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const { data: session } = await supabase.rpc("get_interview", { p_token: token });
   if (!session) return NextResponse.json({ error: "Interview not found" }, { status: 404 });
   if (session.status === "completed") return NextResponse.json({ ok: true, alreadyComplete: true });
+  if (session.expired) return NextResponse.json({ error: "This interview link has expired." }, { status: 410 });
 
   // Upload the recording (anon upload policy; org-scoped path so recruiters can read it).
   let recordingPath: string | null = null;

@@ -27,6 +27,9 @@ export default async function InterviewPage({ params }: { params: Promise<{ id: 
   if (session.status === "completed") {
     return <Notice title="Already completed" body="You've already submitted this interview. Thank you — the team will be in touch." />;
   }
+  if (session.expired) {
+    return <Notice title="Link expired" body="This interview link has expired. Please ask the recruiter to send you a new invitation." />;
+  }
 
   const questions = (Array.isArray(session.questions) ? session.questions : []) as Question[];
   if (questions.length === 0) {

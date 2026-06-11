@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-    LayoutDashboard, Users, Briefcase, Settings, Search, Bell, TrendingUp,
-    LogOut, Kanban, CalendarClock, MessageSquare, Mail, Bot, Radar, Route, UserCog, ShieldCheck
+    LayoutDashboard, Users, Briefcase, Settings, Search, TrendingUp,
+    LogOut, Kanban, CalendarClock, Mail, UserCog, ShieldCheck
 } from "lucide-react";
 import { ToastProvider } from "@/components";
 import { createClient } from "@/lib/supabase/client";
@@ -47,16 +47,14 @@ export default function DashboardShell({ children, platformAdmin = false }: { ch
 
                     <nav className="flex h-[calc(100%-4rem)] flex-col justify-between space-y-1 p-4">
                         <div className="space-y-0.5">
+                            {/* Pilot nav: stub pages (hiring-flow, collaboration, sourcing,
+                                automations) are hidden until they have real data behind them. */}
                             <NavItem href="/dashboard" icon={<LayoutDashboard size={18} />}>Dashboard</NavItem>
-                            <NavItem href="/dashboard/hiring-flow" icon={<Route size={18} />}>Hiring Flow</NavItem>
                             <NavItem href="/dashboard/jobs" icon={<Briefcase size={18} />}>Jobs</NavItem>
                             <NavItem href="/dashboard/pipeline" icon={<Kanban size={18} />}>Pipeline</NavItem>
                             <NavItem href="/dashboard/candidates" icon={<Users size={18} />}>Candidates</NavItem>
                             <NavItem href="/dashboard/interviews" icon={<CalendarClock size={18} />}>Interviews</NavItem>
-                            <NavItem href="/dashboard/collaboration" icon={<MessageSquare size={18} />}>Collaboration</NavItem>
                             <NavItem href="/dashboard/communications" icon={<Mail size={18} />}>Comms</NavItem>
-                            <NavItem href="/dashboard/sourcing" icon={<Radar size={18} />}>Sourcing</NavItem>
-                            <NavItem href="/dashboard/automations" icon={<Bot size={18} />}>Automations</NavItem>
                             <NavItem href="/dashboard/analytics" icon={<TrendingUp size={18} />}>Analytics</NavItem>
                             <NavItem href="/dashboard/team" icon={<UserCog size={18} />}>Team</NavItem>
                             <NavItem href="/dashboard/settings" icon={<Settings size={18} />}>Settings</NavItem>
@@ -94,10 +92,6 @@ export default function DashboardShell({ children, platformAdmin = false }: { ch
                             />
                         </div>
                         <div className="flex items-center gap-3">
-                            <Link href="/dashboard/notifications" className="relative rounded-pill border border-border-card bg-card p-2 text-ink-2 transition-colors hover:bg-surface-muted">
-                                <Bell size={18} />
-                                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-pill bg-danger ring-2 ring-card" />
-                            </Link>
                             <Link href="/dashboard/profile" className="block">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-pill bg-accent text-[13px] font-bold text-accent-ink transition-transform hover:-translate-y-0.5">
                                     {userInitials}

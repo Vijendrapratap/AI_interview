@@ -7,7 +7,7 @@ import { ArrowLeft, Save, Loader2, Check } from "lucide-react"
 import { PageHeader, Button } from "@/components"
 import { Label, Input, Textarea, Select } from "@/components"
 import { createJob } from "@/lib/data/jobs"
-import { listConnections, publishJob } from "@/lib/data/connections"
+import { listConnections, publishJob, type Connection } from "@/lib/data/connections"
 
 export default function NewJobPage() {
     const router = useRouter()
@@ -25,7 +25,7 @@ export default function NewJobPage() {
     const [submitting, setSubmitting] = useState(false)
     
     // Platform Connections
-    const [connections, setConnections] = useState<any[]>([])
+    const [connections, setConnections] = useState<Connection[]>([])
     const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
     const [publishingPlatform, setPublishingPlatform] = useState<string | null>(null)
 

@@ -4,11 +4,19 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentOrgId } from "./organizations";
 import { revalidatePath } from "next/cache";
 
+export type ConnectionSettings = {
+  username?: string;
+  apiKey?: string;
+  webhookUrl?: string;
+  enableMcp?: boolean;
+  mcpConfig?: string;
+};
+
 export type Connection = {
   id: string;
   platform: string;
   status: string;
-  settings: any;
+  settings: ConnectionSettings;
   created_at: string;
 };
 
@@ -27,7 +35,7 @@ let mockConnections: Connection[] = [
   { id: "2", platform: "Naukri", status: "connected", settings: { username: "Codesstellar India" }, created_at: new Date().toISOString() },
 ];
 
-let mockPublications: Record<string, Publication[]> = {};
+const mockPublications: Record<string, Publication[]> = {};
 
 export async function listConnections(): Promise<Connection[]> {
   try {
@@ -51,7 +59,7 @@ export async function listConnections(): Promise<Connection[]> {
   }
 }
 
-export async function connectPlatform(platform: string, settings: any): Promise<void> {
+export async function connectPlatform(platform: string, settings: ConnectionSettings): Promise<void> {
   try {
     const supabase = await createClient();
     const orgId = await getCurrentOrgId();

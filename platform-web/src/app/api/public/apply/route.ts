@@ -2,8 +2,13 @@ import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runScreening } from "@/lib/ai";
 import { extractResumeText } from "@/lib/resume/parse";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 export const maxDuration = 60;
+
+// Resume uploads: PDF, Word, or plain text only.
+const ALLOWED_EXT = /\.(pdf|docx?|txt)$/i;
+const ALLOWED_MIME = /(pdf|msword|wordprocessingml|text\/plain|octet-stream)/i;
 
 /**
  * Public job application — a candidate (not logged in) submits their resume.
@@ -12,6 +17,9 @@ export const maxDuration = 60;
  * in-memory bytes (no storage round-trip).
  */
 export async function POST(req: Request) {
+  if (!rateLimit(`apply:${clientIp(req)}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many applications from this network. Please try again in a minute." }, { status: 429 });
+  }
   const supabase = await createClient();
 
   const form = await req.formData();
@@ -24,6 +32,9 @@ export async function POST(req: Request) {
   }
   if (file.size > 10 * 1024 * 1024) {
     return NextResponse.json({ error: "Resume must be under 10 MB." }, { status: 400 });
+  }
+  if (!ALLOWED_EXT.test(file.name) || (file.type && !ALLOWED_MIME.test(file.type))) {
+    return NextResponse.json({ error: "Please upload your resume as a PDF, Word document, or plain text file." }, { status: 400 });
   }
 
   // Job must be open + public (anon can read it via the published RLS policy).
@@ -57,6 +68,12 @@ export async function POST(req: Request) {
   });
   if (applyErr || !ids) {
     return NextResponse.json({ error: "Could not record your application." }, { status: 500 });
+  }
+  if ((ids as { duplicate?: boolean }).duplicate) {
+    return NextResponse.json(
+      { error: "You've already applied to this job recently. The team has your application — no need to resubmit." },
+      { status: 409 }
+    );
   }
   const { application_id, resume_id } = ids as { application_id: string; resume_id: string };
 

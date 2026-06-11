@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { Search, Send, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { listConnections } from "@/lib/data/connections";
+import { listConnections, type Connection } from "@/lib/data/connections";
 import { mockSourcingChannels } from "@/lib/mockData";
 import { PageHeader, Card, SectionCard, Badge, Button, PreviewBanner } from "@/components";
 
 export default function SourcingPage() {
-    const [connections, setConnections] = useState<any[]>([]);
+    const [connections, setConnections] = useState<Connection[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

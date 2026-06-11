@@ -148,7 +148,7 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ id:
                     <p className="text-sm text-ink-3">Not published to external platform connections. Edit this job to distribute it.</p>
                 ) : (
                     <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                        {publications.map((pub: any) => (
+                        {publications.map((pub) => (
                             <div key={pub.id} className="flex items-center justify-between rounded-field border border-border bg-card p-3.5">
                                 <div>
                                     <p className="text-xs font-bold text-ink">{pub.platform}</p>

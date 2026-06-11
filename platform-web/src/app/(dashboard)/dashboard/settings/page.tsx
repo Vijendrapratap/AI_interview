@@ -268,6 +268,7 @@ function IntegrationsTab() {
     const [enableMcp, setEnableMcp] = useState(false);
     const [mcpConfig, setMcpConfig] = useState("");
 
+    // Event-handler refresh: show the loading state, then re-fetch.
     const loadData = () => {
         setLoading(true);
         listConnections()
@@ -276,7 +277,10 @@ function IntegrationsTab() {
     };
 
     useEffect(() => {
-        loadData();
+        // `loading` is initialized to true, so no synchronous setState is needed on mount.
+        listConnections()
+            .then(setConnections)
+            .finally(() => setLoading(false));
     }, []);
 
     const handleConnect = (e: React.FormEvent) => {
@@ -371,7 +375,7 @@ function IntegrationsTab() {
                 {loading ? (
                     <p className="text-meta">Loading custom integrations…</p>
                 ) : connections.filter(c => !["linkedin", "indeed", "glassdoor", "naukri"].includes(c.platform.toLowerCase())).length === 0 ? (
-                    <p className="text-meta text-ink-3 text-center py-6">No custom platforms registered. Click "Add Custom Platform" above to sync with a custom webhook or MCP server.</p>
+                    <p className="text-meta text-ink-3 text-center py-6">No custom platforms registered. Click &ldquo;Add Custom Platform&rdquo; above to sync with a custom webhook or MCP server.</p>
                 ) : (
                     <div className="divide-y divide-border-card">
                         {connections
