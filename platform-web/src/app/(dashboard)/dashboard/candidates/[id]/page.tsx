@@ -384,19 +384,22 @@ export default async function CandidateDetailPage({
             )}
           </SectionCard>
 
-          {/* Re-run screening */}
-          {firstApp &&
-            (firstApp.analysis_status === "failed" ||
-              firstApp.analysis_status === "complete") && (
-              <SectionCard title="Screening">
-                <form action={rerunAnalysisAction}>
-                  <input type="hidden" name="applicationId" value={firstApp.id} />
-                  <Button type="submit" variant="secondary" size="md">
-                    <RefreshCw size={16} /> Re-run AI screening
-                  </Button>
-                </form>
-              </SectionCard>
-            )}
+          {/* Re-run screening — available in every state: if the background
+              screening function dies mid-run, the row stays 'processing'
+              forever, so recruiters need a manual way out of any state. */}
+          {firstApp && (
+            <SectionCard title="Screening">
+              <form action={rerunAnalysisAction}>
+                <input type="hidden" name="applicationId" value={firstApp.id} />
+                <Button type="submit" variant="secondary" size="md">
+                  <RefreshCw size={16} />
+                  {firstApp.analysis_status === "pending" || firstApp.analysis_status === "processing"
+                    ? "Run AI screening now"
+                    : "Re-run AI screening"}
+                </Button>
+              </form>
+            </SectionCard>
+          )}
 
           {/* AI Interview */}
           {firstApp && (
