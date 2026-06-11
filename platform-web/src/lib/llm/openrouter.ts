@@ -118,10 +118,20 @@ export async function chatJSON<T = unknown>(
   messages: ChatMessage[],
   opts: { temperature?: number; maxTokens?: number } = {}
 ): Promise<T> {
-  const raw = await chat(messages, { ...opts, jsonMode: true });
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return JSON.parse(extractJson(raw)) as T;
+  // Free-tier models occasionally emit truncated/malformed JSON; a fresh
+  // completion usually succeeds, so retry the whole call once before failing.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const raw = await chat(messages, { ...opts, jsonMode: true });
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      try {
+        return JSON.parse(extractJson(raw)) as T;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
   }
+  throw lastErr;
 }
