@@ -15,19 +15,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   let transcript: TranscriptTurn[] = [];
   let tabSwitchCount = 0;
   let audio: File | null = null;
+  // Dispatch on content type up front — the body stream can only be read once,
+  // so a failed formData() attempt would leave nothing for req.json() to parse.
+  const contentType = req.headers.get("content-type") ?? "";
   try {
-    const form = await req.formData();
-    transcript = JSON.parse(String(form.get("transcript") || "[]"));
-    tabSwitchCount = Number(form.get("tabSwitchCount")) || 0;
-    audio = form.get("audio") as File | null;
-  } catch {
-    try {
+    if (contentType.includes("application/json")) {
       const b = await req.json();
       transcript = Array.isArray(b.transcript) ? b.transcript : [];
       tabSwitchCount = Number(b.tabSwitchCount) || 0;
-    } catch {
-      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    } else {
+      const form = await req.formData();
+      transcript = JSON.parse(String(form.get("transcript") || "[]"));
+      tabSwitchCount = Number(form.get("tabSwitchCount")) || 0;
+      audio = form.get("audio") as File | null;
     }
+  } catch {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
   if (!Array.isArray(transcript)) transcript = [];
 
@@ -42,9 +45,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     try {
       const path = `${session.organization_id}/${session.id}.webm`;
       const bytes = new Uint8Array(await audio.arrayBuffer());
+      // No upsert: the anon storage policy only grants INSERT, and x-upsert
+      // requires UPDATE too — with it, every recording upload 403s silently.
       const { error: upErr } = await supabase.storage
         .from("interview-recordings")
-        .upload(path, bytes, { contentType: audio.type || "audio/webm", upsert: true });
+        .upload(path, bytes, { contentType: audio.type || "audio/webm" });
       if (!upErr) recordingPath = path;
     } catch {
       /* recording is best effort */

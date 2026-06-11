@@ -11,14 +11,16 @@ import "server-only";
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
-// Free models on OpenRouter (no spend). First that succeeds wins. Verified
-// available 2026-06; the free tier is rate-limited, so we keep several fallbacks
-// and retry. (Add a one-time OpenRouter credit to raise the free daily limit.)
+// Free models on OpenRouter (no spend). First that succeeds wins. Ordered by
+// observed availability (probed 2026-06-11): the small open-weight models accept
+// requests reliably; the large ones 429 upstream most of the time, so they are
+// kept only as fallbacks. (Add a one-time OpenRouter credit to raise the free
+// daily limit, or set OPENROUTER_MODEL to pin a paid model.)
 const DEFAULT_MODELS = [
-  "z-ai/glm-4.5-air:free",
+  "google/gemma-4-31b-it:free",
+  "openai/gpt-oss-20b:free",
   "qwen/qwen3-next-80b-a3b-instruct:free",
   "meta-llama/llama-3.3-70b-instruct:free",
-  "google/gemma-4-31b-it:free",
   "nousresearch/hermes-3-llama-3.1-405b:free",
 ];
 
