@@ -3,27 +3,36 @@ import "server-only";
 import nodemailer from "nodemailer";
 
 /**
- * Provider-agnostic email sender. Two transports, picked by env:
+ * Provider-agnostic email sender. Transports are picked by env, in priority
+ * order — the HTTP APIs come first because they work cleanly on serverless
+ * (no SMTP ports, pooling, or IP-allowlist friction):
  *
- *  1. Resend HTTP API — set RESEND_API_KEY (+ EMAIL_FROM). Free tier:
- *     3k emails/month; no SMTP ports involved, works well on serverless.
- *  2. SMTP via nodemailer — set SMTP_HOST/SMTP_USER/SMTP_PASS/EMAIL_FROM.
- *     Works with any provider (Gmail app password, Brevo, self-hosted Postfix,
+ *  1. Brevo HTTP API — set BREVO_API_KEY (+ EMAIL_FROM). Free tier 300/day.
+ *  2. Resend HTTP API — set RESEND_API_KEY (+ EMAIL_FROM). Free tier 3k/month.
+ *  3. SMTP via nodemailer — set SMTP_HOST/SMTP_USER/SMTP_PASS/EMAIL_FROM.
+ *     Works with any provider (Brevo SMTP relay, Gmail app password, Postfix,
  *     Mailpit in dev).
  *
- * Until one of them is configured, sends are skipped gracefully — drafts stay
- * in the outbox so nothing is lost.
+ * Until one is configured, sends are skipped gracefully — drafts stay in the
+ * outbox so nothing is lost.
  *
- * Env: RESEND_API_KEY | SMTP_HOST, SMTP_PORT (default 587), SMTP_USER,
- *      SMTP_PASS, SMTP_SECURE ("true" for port 465); always EMAIL_FROM.
+ * EMAIL_FROM accepts either "Name <addr@x.com>" or a bare "addr@x.com".
  */
 export function emailConfigured(): boolean {
   return Boolean(
-    process.env.EMAIL_FROM && (process.env.RESEND_API_KEY || process.env.SMTP_HOST)
+    process.env.EMAIL_FROM &&
+      (process.env.BREVO_API_KEY || process.env.RESEND_API_KEY || process.env.SMTP_HOST)
   );
 }
 
 export type SendResult = { sent: boolean; messageId?: string; error?: string };
+
+/** Splits "Name <addr@x.com>" (or a bare address) into its parts. */
+function parseFrom(from: string): { name?: string; email: string } {
+  const m = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  if (m) return { name: m[1] || undefined, email: m[2].trim() };
+  return { email: from.trim() };
+}
 
 export async function sendEmail(msg: {
   to: string;
@@ -32,10 +41,44 @@ export async function sendEmail(msg: {
   text?: string;
 }): Promise<SendResult> {
   if (!emailConfigured()) {
-    return { sent: false, error: "Email not configured (set RESEND_API_KEY or SMTP_HOST, plus EMAIL_FROM)" };
+    return { sent: false, error: "Email not configured (set BREVO_API_KEY, RESEND_API_KEY, or SMTP_HOST, plus EMAIL_FROM)" };
   }
+  if (process.env.BREVO_API_KEY) return sendViaBrevo(msg);
   if (process.env.RESEND_API_KEY) return sendViaResend(msg);
   return sendViaSmtp(msg);
+}
+
+async function sendViaBrevo(msg: {
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+}): Promise<SendResult> {
+  try {
+    const sender = parseFrom(process.env.EMAIL_FROM ?? "");
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": process.env.BREVO_API_KEY as string,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender,
+        to: [{ email: msg.to }],
+        subject: msg.subject,
+        htmlContent: msg.html || msg.text || " ",
+        ...(msg.text ? { textContent: msg.text } : {}),
+      }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { messageId?: string; message?: string };
+    if (!res.ok) {
+      return { sent: false, error: `Brevo ${res.status}: ${data.message ?? "send failed"}`.slice(0, 300) };
+    }
+    return { sent: true, messageId: data.messageId };
+  } catch (e) {
+    return { sent: false, error: e instanceof Error ? e.message : "send failed" };
+  }
 }
 
 async function sendViaResend(msg: {
